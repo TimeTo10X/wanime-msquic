@@ -11,9 +11,7 @@ Abstract:
 
 #include "platform_internal.h"
 
-#ifdef QUIC_CLOG
-#include "datapath_winkernel.c.clog.h"
-#endif
+
 
 //
 // Not yet available in the WDK. When available this code can be removed.
