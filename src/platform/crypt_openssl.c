@@ -34,9 +34,7 @@ Abstract:
 #ifdef _WIN32
 #pragma warning(pop)
 #endif
-#ifdef QUIC_CLOG
-#include "crypt_openssl.c.clog.h"
-#endif
+
 
 EVP_CIPHER *CXPLAT_AES_128_GCM_ALG_HANDLE;
 EVP_CIPHER *CXPLAT_AES_256_GCM_ALG_HANDLE;
