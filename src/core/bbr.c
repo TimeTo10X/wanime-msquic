@@ -10,9 +10,7 @@ Abstract:
 --*/
 
 #include "precomp.h"
-#ifdef QUIC_CLOG
-#include "bbr.c.clog.h"
-#endif
+
 
 typedef enum BBR_STATE {
 
