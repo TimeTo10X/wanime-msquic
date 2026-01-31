@@ -16,9 +16,7 @@ Environment:
 
 
 #include "platform_internal.h"
-#ifdef QUIC_CLOG
-#include "storage_winuser.c.clog.h"
-#endif
+
 
 CXPLAT_STATIC_ASSERT(CXPLAT_STORAGE_TYPE_BINARY == REG_BINARY, "Storage type mismatch");
 CXPLAT_STATIC_ASSERT(CXPLAT_STORAGE_TYPE_UINT32 == REG_DWORD, "Storage type mismatch");
@@ -349,7 +347,7 @@ CxPlatStorageClear(
     )
 {
     //
-    // Clear only values in this registry key, not subkeys, to preserve 
+    // Clear only values in this registry key, not subkeys, to preserve
     // separation between global and per-app settings. RegDeleteTreeA would
     // delete the entire subtree and wipe all app-specific data when clearing
     // global storage.
