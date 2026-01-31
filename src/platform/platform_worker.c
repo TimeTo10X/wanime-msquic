@@ -11,9 +11,7 @@ Abstract:
 
 #include "platform_internal.h"
 
-#ifdef QUIC_CLOG
-#include "platform_worker.c.clog.h"
-#endif
+
 
 typedef struct QUIC_CACHEALIGN CXPLAT_WORKER {
 
