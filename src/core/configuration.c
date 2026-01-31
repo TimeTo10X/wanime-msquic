@@ -12,9 +12,7 @@ Abstract:
 --*/
 
 #include "precomp.h"
-#ifdef QUIC_CLOG
-#include "configuration.c.clog.h"
-#endif
+
 
 _IRQL_requires_max_(PASSIVE_LEVEL)
 QUIC_STATUS
