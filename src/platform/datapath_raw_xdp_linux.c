@@ -23,9 +23,7 @@ Abstract:
 #include <linux/sockios.h>
 #include <netpacket/packet.h>
 
-#ifdef QUIC_CLOG
-#include "datapath_raw_xdp_linux.c.clog.h"
-#endif
+
 
 #define NUM_FRAMES         8192 * 2
 #define CONS_NUM_DESCS     NUM_FRAMES / 2
