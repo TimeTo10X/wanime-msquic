@@ -20,9 +20,7 @@ Abstract:
 --*/
 
 #include "precomp.h"
-#ifdef QUIC_CLOG
-#include "registration.c.clog.h"
-#endif
+
 
 void
 QuicRegistrationClose(
