@@ -11,9 +11,7 @@ Abstract:
 
 #include "platform_internal.h"
 
-#ifdef QUIC_CLOG
-#include "crypt.c.clog.h"
-#endif
+
 
 #ifdef DEBUG
 void
