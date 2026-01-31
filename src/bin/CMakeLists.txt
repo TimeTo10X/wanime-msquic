@@ -1,27 +1,19 @@
 # Copyright (c) Microsoft Corporation.
 # Licensed under the MIT License.
 
-if(WIN32)
-    configure_file(winuser/msquic.rc.in ${CMAKE_CURRENT_BINARY_DIR}/msquic.rc )
-    configure_file(winuser/msquic.def.in ${CMAKE_CURRENT_BINARY_DIR}/msquic.def )
-    set(SOURCES winuser/dllmain.c ${CMAKE_CURRENT_BINARY_DIR}/msquic.rc $<TARGET_OBJECTS:MsQuicEtw_Resource>)
-else()
-    set(SOURCES linux/init.c)
-endif()
+set(SOURCES linux/init.c)
 
 if(BUILD_SHARED_LIBS)
     add_library(msquic SHARED ${SOURCES})
     add_library(msquic::msquic ALIAS msquic)
     target_include_directories(msquic PUBLIC $<INSTALL_INTERFACE:include>)
-    target_link_libraries(msquic PRIVATE core msquic_platform inc warnings logging base_link main_binary_link_args)
+    target_link_libraries(msquic PRIVATE core msquic_platform inc warnings main_binary_link_args)
     set_target_properties(msquic PROPERTIES OUTPUT_NAME ${QUIC_LIBRARY_NAME})
-    if (NOT WIN32)
-        set_target_properties(msquic PROPERTIES SOVERSION ${QUIC_MAJOR_VERSION} VERSION ${QUIC_FULL_VERSION})
-    endif()
+    set_target_properties(msquic PROPERTIES SOVERSION ${QUIC_MAJOR_VERSION} VERSION ${QUIC_FULL_VERSION})
 else()
     add_library(msquic_static STATIC static/empty.c)
     set_target_properties(msquic_static PROPERTIES OUTPUT_NAME "${QUIC_LIBRARY_NAME}${CMAKE_DEBUG_POSTFIX}")
-    target_link_libraries(msquic_static PRIVATE core msquic_platform inc logging main_binary_link_args)
+    target_link_libraries(msquic_static PRIVATE core msquic_platform inc main_binary_link_args)
     target_compile_definitions(msquic_static PUBLIC QUIC_BUILD_STATIC)
     set_property(TARGET msquic_static PROPERTY FOLDER "${QUIC_FOLDER_PREFIX}libraries")
 
@@ -153,37 +145,6 @@ else()
             DEPENDS msquic_platform
             DEPENDS msquic_static
         )
-    elseif(WIN32)
-        set(NODEFAULTS "")
-        foreach(EXCLUDE ${EXCLUDE_LIST})
-            string(APPEND NODEFAULTS "/NODEFAULTLIB:${EXCLUDE}${CMAKE_STATIC_LIBRARY_SUFFIX} ")
-        endforeach()
-
-        # Exclude libraries for the corresponding msvcrts
-        # https://docs.microsoft.com/en-us/cpp/error-messages/tool-errors/linker-tools-warning-lnk4098?view=msvc-160
-        string(APPEND NODEFAULTS "/NODEFAULTLIB:msvcrt.lib /NODEFAULTLIB:msvcrtd.lib /NODEFAULTLIB:libcmt.lib /NODEFAULTLIB:libcmtd.lib")
-        # Uncomment to inspect which libraries will have referenced symbols ignored
-        # message(STATUS "NODEFAULTS: ${NODEFAULTS}")
-
-        # Emit all linker inputs at build time to resolve generator expressions
-        set(QUIC_DEPS_FILE ${CMAKE_CURRENT_BINARY_DIR}/$<IF:$<CONFIG:Debug>,Debug,Release>/quicdeps.txt)
-        file(
-            GENERATE
-            OUTPUT ${QUIC_DEPS_FILE}
-            CONTENT "/OUT:\"${QUIC_STATIC_LIBRARY}\" ${DEPS_STRING} ${NODEFAULTS}"
-        )
-
-        # Run archiver tool (lib.exe) on our generated linker args
-        add_custom_command(
-            OUTPUT ${QUIC_STATIC_LIBRARY}
-            COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_LIBRARY_OUTPUT_DIRECTORY}
-            COMMAND ${CMAKE_AR} @${QUIC_DEPS_FILE}
-            COMMAND ${CMAKE_COMMAND} -E copy "${QUIC_STATIC_LIBRARY}" "${CMAKE_ARCHIVE_OUTPUT_DIRECTORY}"
-            DEPENDS ${QUIC_DEPS_FILE}
-            DEPENDS core
-            DEPENDS msquic_platform
-            DEPENDS msquic_static
-        )
     else()
         # Emit all linker inputs at build time to resolve generator expressions
         set(QUIC_DEPS_FILE ${CMAKE_CURRENT_BINARY_DIR}/$<IF:$<CONFIG:Debug>,Debug,Release>/quicdeps.txt)
@@ -239,23 +200,7 @@ endif()
 
 set_property(TARGET msquic PROPERTY FOLDER "${QUIC_FOLDER_PREFIX}libraries")
 
-if(WIN32)
-    set(MSQUIC_LINK_FLAGS "/DEF:\"${CMAKE_CURRENT_BINARY_DIR}/msquic.def\"")
-
-    # Indicate CET Shadow Stack support for supported architectures
-    if (${SYSTEM_PROCESSOR} STREQUAL "x64" OR
-        ${SYSTEM_PROCESSOR} STREQUAL "AMD64" OR
-        ${SYSTEM_PROCESSOR} STREQUAL "x86" OR
-        ${SYSTEM_PROCESSOR} STREQUAL "win32")
-
-        string(APPEND MSQUIC_LINK_FLAGS " /CETCOMPAT")
-    endif()
-
-    if(QUIC_CI)
-        string(APPEND MSQUIC_LINK_FLAGS " /PROFILE")
-    endif()
-    SET_TARGET_PROPERTIES(msquic PROPERTIES LINK_FLAGS "${MSQUIC_LINK_FLAGS}")
-elseif (CX_PLATFORM STREQUAL "linux")
+if (CX_PLATFORM STREQUAL "linux")
     SET_TARGET_PROPERTIES(msquic
         PROPERTIES LINK_FLAGS "-Wl,--version-script=\"${CMAKE_CURRENT_SOURCE_DIR}/linux/exports.txt\"")
 elseif (CX_PLATFORM STREQUAL "darwin")
@@ -269,12 +214,8 @@ if(QUIC_TLS_LIB STREQUAL "quictls" OR QUIC_TLS_LIB STREQUAL "openssl")
     list(APPEND OTHER_TARGETS OpenSSL OpenSSLQuic)
 endif()
 
-if(WIN32)
-    list(APPEND OTHER_TARGETS MsQuicEtw_Header)
-endif()
-
 if(BUILD_SHARED_LIBS)
-    install(TARGETS msquic msquic_platform inc logging_inc warnings main_binary_link_args ${OTHER_TARGETS}
+    install(TARGETS msquic msquic_platform inc warnings main_binary_link_args ${OTHER_TARGETS}
         EXPORT msquic
         RUNTIME DESTINATION "${CMAKE_INSTALL_BINDIR}"
         LIBRARY DESTINATION "${CMAKE_INSTALL_LIBDIR}"
@@ -293,8 +234,4 @@ install(FILES ${CMAKE_BINARY_DIR}/msquic-config.cmake DESTINATION share/msquic)
 
 if(BUILD_SHARED_LIBS)
     install(EXPORT msquic NAMESPACE msquic:: DESTINATION share/msquic)
-endif()
-
-if (MSVC AND NOT QUIC_SANITIZER_ACTIVE AND BUILD_SHARED_LIBS)
-    target_compile_options(msquic PRIVATE /analyze)
 endif()
