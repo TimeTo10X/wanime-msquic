@@ -50,9 +50,7 @@ Abstract:
 --*/
 
 #include "precomp.h"
-#ifdef QUIC_CLOG
-#include "loss_detection.c.clog.h"
-#endif
+
 
 _IRQL_requires_max_(PASSIVE_LEVEL)
 BOOLEAN
