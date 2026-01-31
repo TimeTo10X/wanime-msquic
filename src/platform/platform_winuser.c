@@ -14,10 +14,7 @@ Environment:
 --*/
 
 #include "platform_internal.h"
-#include <timeapi.h>
-#ifdef QUIC_CLOG
-#include "platform_winuser.c.clog.h"
-#endif
+
 
 uint64_t CxPlatPerfFreq;
 uint64_t CxPlatTotalMemory;
