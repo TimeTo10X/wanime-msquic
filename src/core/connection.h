@@ -4,9 +4,7 @@
     Licensed under the MIT License.
 
 --*/
-#ifdef QUIC_CLOG
-#include "connection.h.clog.h"
-#endif
+
 
 typedef struct QUIC_LISTENER QUIC_LISTENER;
 
