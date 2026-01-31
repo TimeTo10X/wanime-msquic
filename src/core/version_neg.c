@@ -10,9 +10,7 @@ Abstract:
 --*/
 
 #include "precomp.h"
-#ifdef QUIC_CLOG
-#include "version_neg.c.clog.h"
-#endif
+
 
 typedef struct QUIC_COMPATIBLE_VERSION_MAP {
     const uint32_t OriginalVersion;
