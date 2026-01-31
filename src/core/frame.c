@@ -10,9 +10,7 @@ Abstract:
 --*/
 
 #include "precomp.h"
-#ifdef QUIC_CLOG
-#include "frame.c.clog.h"
-#endif
+
 
 _Post_equal_to_(Buffer + sizeof(uint8_t))
 uint8_t*
