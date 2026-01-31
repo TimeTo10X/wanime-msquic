@@ -10,9 +10,7 @@ Abstract:
 --*/
 
 #include "platform_internal.h"
-#ifdef QUIC_CLOG
-#include "pcp.c.clog.h"
-#endif
+
 
 #pragma warning(disable:4221)  // nonstandard extension used: 'Route': cannot be initialized using address of automatic variable 'Route'
 
