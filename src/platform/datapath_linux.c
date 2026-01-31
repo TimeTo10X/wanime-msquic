@@ -12,9 +12,7 @@ Abstract:
 #include "platform_internal.h"
 #include "datapath_linux.h"
 
-#ifdef QUIC_CLOG
-#include "datapath_linux.c.clog.h"
-#endif
+
 
 QUIC_STATUS
 CxPlatSocketUpdateQeo(
