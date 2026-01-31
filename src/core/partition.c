@@ -6,9 +6,7 @@
 --*/
 
 #include "precomp.h"
-#ifdef QUIC_CLOG
-#include "partition.c.clog.h"
-#endif
+
 
 QUIC_STATUS
 QuicPartitionInitialize(
