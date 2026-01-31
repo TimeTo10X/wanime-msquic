@@ -29,9 +29,7 @@ Abstract:
 
 #include "precomp.h"
 
-#ifdef QUIC_CLOG
-#include "connection_pool.c.clog.h"
-#endif
+
 
 #define MAX_CONNECTION_POOL_RETRY_MULTIPLIER 8
 
