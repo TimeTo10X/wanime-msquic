@@ -46,9 +46,7 @@ Abstract:
 --*/
 
 #include "precomp.h"
-#ifdef QUIC_CLOG
-#include "timer_wheel.c.clog.h"
-#endif
+
 
 //
 // The initial count of slots in the timer wheel.
