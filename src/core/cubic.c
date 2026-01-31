@@ -10,9 +10,7 @@ Abstract:
 --*/
 
 #include "precomp.h"
-#ifdef QUIC_CLOG
-#include "cubic.c.clog.h"
-#endif
+
 
 #include "cubic.h"
 
