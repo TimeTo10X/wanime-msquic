@@ -16,9 +16,7 @@ Environment:
 
 
 #include "platform_internal.h"
-#ifdef QUIC_CLOG
-#include "storage_winkernel.c.clog.h"
-#endif
+
 
 CXPLAT_STATIC_ASSERT(CXPLAT_STORAGE_TYPE_BINARY == REG_BINARY, "Storage type mismatch");
 CXPLAT_STATIC_ASSERT(CXPLAT_STORAGE_TYPE_UINT32 == REG_DWORD, "Storage type mismatch");
