@@ -17,9 +17,7 @@ Environment:
 #define QUIC_TEST_APIS 1
 #include "platform_internal.h"
 
-#ifdef QUIC_CLOG
-#include "certificates_capi.c.clog.h"
-#endif
+
 
 #pragma warning(push)
 #pragma warning(disable:6553) // Annotation does not apply to value type.
