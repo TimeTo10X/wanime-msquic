@@ -38,9 +38,7 @@ Abstract:
 --*/
 
 #include "precomp.h"
-#ifdef QUIC_CLOG
-#include "ack_tracker.c.clog.h"
-#endif
+
 
 _IRQL_requires_max_(DISPATCH_LEVEL)
 void
@@ -114,9 +112,9 @@ QuicAckTrackerDidHitReorderingThreshold(
     const uint64_t SmallestTracked = QuicRangeGet(&Tracker->PacketNumbersToAck, 0)->Low;
 
     //
-    // Largest Reported is equal to the largest packet number acknowledged minus the 
+    // Largest Reported is equal to the largest packet number acknowledged minus the
     // Reordering Threshold. If the difference between the largest packet number
-    // acknowledged and the Reordering Threshold is smaller than the smallest packet 
+    // acknowledged and the Reordering Threshold is smaller than the smallest packet
     // in the ack tracker, then the largest reported is the smallest packet in the ack
     // tracker.
     //
@@ -145,8 +143,8 @@ QuicAckTrackerDidHitReorderingThreshold(
             return FALSE;
         }
 
-        // 
-        // Check if largest reported packet is missing. In that case, the smallest missing 
+        //
+        // Check if largest reported packet is missing. In that case, the smallest missing
         // packet becomes the largest reported packet.
         //
 
@@ -262,7 +260,7 @@ QuicAckTrackerAckPacket(
     if (AckType == QUIC_ACK_TYPE_ACK_IMMEDIATE ||
         Connection->Settings.MaxAckDelayMs == 0 ||
         (Tracker->AckElicitingPacketsToAcknowledge >= (uint16_t)Connection->PacketTolerance) ||
-        (NewLargestPacketNumber && 
+        (NewLargestPacketNumber &&
         QuicAckTrackerDidHitReorderingThreshold(Tracker, Connection->ReorderingThreshold))) {
         //
         // Send the ACK immediately.
