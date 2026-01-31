@@ -18,9 +18,7 @@ Environment:
 
 #include <Security/Security.h>
 
-#ifdef QUIC_CLOG
-#include "certificates_darwin.c.clog.h"
-#endif
+
 
 static
 QUIC_STATUS
