@@ -30,9 +30,7 @@ Abstract:
 #ifdef _WIN32
 #pragma warning(pop)
 #endif
-#ifdef QUIC_CLOG
-#include "tls_quictls.c.clog.h"
-#endif
+
 
 #ifdef IS_OPENSSL_3
 __owur uint16_t tls1_nid2group_id(int nid); // Not currently public API
