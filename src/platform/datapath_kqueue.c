@@ -27,9 +27,7 @@ struct in_pktinfo {
 #include "platform_internal.h"
 #include <sys/sysctl.h>
 
-#ifdef QUIC_CLOG
-#include "datapath_kqueue.c.clog.h"
-#endif
+
 
 // Check options
 #if !defined(IP_PKTINFO) && !defined(IP_RECVDSTADDR)
