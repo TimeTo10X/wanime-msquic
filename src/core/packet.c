@@ -10,9 +10,7 @@ Abstract:
 --*/
 
 #include "precomp.h"
-#ifdef QUIC_CLOG
-#include "packet.c.clog.h"
-#endif
+
 
 //
 // The list of supported QUIC version numbers and associated salts/secrets.
