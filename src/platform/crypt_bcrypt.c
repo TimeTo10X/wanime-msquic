@@ -15,9 +15,7 @@ Environment:
 
 #include "platform_internal.h"
 #include <security.h>
-#ifdef QUIC_CLOG
-#include "crypt_bcrypt.c.clog.h"
-#endif
+
 
 typedef struct CXPLAT_HP_KEY {
     BCRYPT_KEY_HANDLE Key;
