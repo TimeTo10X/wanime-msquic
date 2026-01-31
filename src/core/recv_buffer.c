@@ -39,9 +39,7 @@ Abstract:
 --*/
 
 #include "precomp.h"
-#ifdef QUIC_CLOG
-#include "recv_buffer.c.clog.h"
-#endif
+
 
 typedef struct QUIC_RECV_CHUNK_ITERATOR {
     QUIC_RECV_CHUNK* NextChunk;
