@@ -11,9 +11,7 @@ Abstract:
 
 #include "platform_internal.h"
 
-#ifdef QUIC_CLOG
-#include "datapath_xplat.c.clog.h"
-#endif
+
 
 _IRQL_requires_max_(PASSIVE_LEVEL)
 QUIC_STATUS
