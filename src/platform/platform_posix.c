@@ -28,9 +28,7 @@ Environment:
 #include <syslog.h>
 #define QUIC_VERSION_ONLY 1
 #include "msquic.ver"
-#ifdef QUIC_CLOG
-#include "platform_posix.c.clog.h"
-#endif
+
 
 #ifdef CXPLAT_NUMA_AWARE
 #include <numa.h>               // If missing: `apt-get install -y libnuma-dev`
