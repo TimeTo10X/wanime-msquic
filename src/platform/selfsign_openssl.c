@@ -38,9 +38,7 @@ Abstract:
 #ifdef __APPLE__
 #include <TargetConditionals.h>
 #endif
-#ifdef QUIC_CLOG
-#include "selfsign_openssl.c.clog.h"
-#endif
+
 
 
 static uint8_t* ReadPkcs12(const char* Name, uint32_t* Length) {
