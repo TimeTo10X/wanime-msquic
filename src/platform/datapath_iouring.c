@@ -12,9 +12,7 @@ Environment:
 #include "platform_internal.h"
 #include "datapath_linux.h"
 
-#ifdef QUIC_CLOG
-#include "datapath_iouring.c.clog.h"
-#endif
+
 
 CXPLAT_STATIC_ASSERT((SIZEOF_STRUCT_MEMBER(QUIC_BUFFER, Length) <= sizeof(size_t)), "(sizeof(QUIC_BUFFER.Length) == sizeof(size_t) must be TRUE.");
 CXPLAT_STATIC_ASSERT((SIZEOF_STRUCT_MEMBER(QUIC_BUFFER, Buffer) == sizeof(void*)), "(sizeof(QUIC_BUFFER.Buffer) == sizeof(void*) must be TRUE.");
