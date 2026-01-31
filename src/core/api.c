@@ -10,9 +10,7 @@ Abstract:
 --*/
 
 #include "precomp.h"
-#ifdef QUIC_CLOG
-#include "api.c.clog.h"
-#endif
+
 
 #define IS_REGISTRATION_HANDLE(Handle) \
 ( \
