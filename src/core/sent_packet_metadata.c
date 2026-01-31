@@ -17,9 +17,7 @@ Abstract:
 --*/
 
 #include "precomp.h"
-#ifdef QUIC_CLOG
-#include "sent_packet_metadata.c.clog.h"
-#endif
+
 
 void
 QuicSentPacketMetadataReleaseFrames(
