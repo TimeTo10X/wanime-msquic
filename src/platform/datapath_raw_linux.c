@@ -10,9 +10,7 @@ Abstract:
 --*/
 
 #include "datapath_raw_linux.h"
-#ifdef QUIC_CLOG
-#include "datapath_raw_linux.c.clog.h"
-#endif
+
 
 #pragma warning(disable:4116) // unnamed type definition in parentheses
 #pragma warning(disable:4100) // unreferenced formal parameter
