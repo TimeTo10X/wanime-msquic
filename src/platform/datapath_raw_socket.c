@@ -10,9 +10,7 @@ Abstract:
 --*/
 
 #include "datapath_raw.h"
-#ifdef QUIC_CLOG
-#include "datapath_raw_socket.c.clog.h"
-#endif
+
 
 #if defined(CX_PLATFORM_LINUX) || defined(CX_PLATFORM_DARWIN)
 #define CxPlatSocketError() errno
