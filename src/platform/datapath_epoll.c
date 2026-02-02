@@ -346,7 +346,7 @@ CxPlatSocketContextSqeInitialize(
     )
 {
     QUIC_STATUS Status = QUIC_STATUS_SUCCESS;
-    CXPLAT_SOCKET* Binding = SocketContext->Binding;
+    // CXPLAT_SOCKET* Binding = SocketContext->Binding;
     BOOLEAN ShutdownSqeInitialized = FALSE;
     BOOLEAN IoSqeInitialized = FALSE;
 
