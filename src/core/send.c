@@ -304,13 +304,6 @@ QuicSendSetSendFlag(
     }
 
     if (CanSetFlag && (Send->SendFlags & SendFlags) != SendFlags) {
-        QuicTraceLogConnVerbose(
-            ScheduleSendFlags,
-            Connection,
-            "Adding send flags 0x%x (prev: 0x%x, new: 0x%x)",
-            SendFlags,
-            Send->SendFlags,
-            Send->SendFlags | SendFlags);
         Send->SendFlags |= SendFlags;
         QuicSendQueueFlush(Send, REASON_CONNECTION_FLAGS);
     }
@@ -333,11 +326,6 @@ QuicSendClearSendFlag(
     )
 {
     if (Send->SendFlags & SendFlags) {
-        QuicTraceLogConnVerbose(
-            RemoveSendFlagsMsg,
-            QuicSendGetConnection(Send),
-            "Removing flags %x",
-            (SendFlags & Send->SendFlags));
         Send->SendFlags &= ~SendFlags;
     }
 
@@ -418,12 +406,6 @@ QuicSendSetStreamSendFlag(
     if ((Stream->SendFlags | SendFlags) != Stream->SendFlags ||
         (Stream->Flags.SendDelayed && (SendFlags & QUIC_STREAM_SEND_FLAG_DATA))) {
 
-        QuicTraceLogStreamVerbose(
-            SetSendFlag,
-            Stream,
-            "Setting flags 0x%x (existing flags: 0x%x)",
-            (SendFlags & (uint32_t)(~Stream->SendFlags)),
-            Stream->SendFlags);
 
         if (Stream->Flags.Started) {
             //
@@ -450,11 +432,6 @@ QuicSendClearStreamSendFlag(
 
     if (Stream->SendFlags & SendFlags) {
 
-        QuicTraceLogStreamVerbose(
-            ClearSendFlags,
-            Stream,
-            "Removing flags %x",
-            (SendFlags & Stream->SendFlags));
 
         //
         // Remove the flags since they are present.
@@ -1264,10 +1241,6 @@ QuicSendFlush(
         if (Builder.Path->EcnTestingEndingTime != 0) {
             if (!CxPlatTimeAtOrBefore64(TimeNow, Builder.Path->EcnTestingEndingTime)) {
                 Builder.Path->EcnValidationState = ECN_VALIDATION_UNKNOWN;
-                QuicTraceLogConnInfo(
-                    EcnValidationUnknown,
-                    Connection,
-                    "ECN unknown.");
             }
         } else {
             uint64_t ThreePtosInUs =
@@ -1293,10 +1266,6 @@ QuicSendFlush(
     do {
 
         if (Path->Allowance < QUIC_MIN_SEND_ALLOWANCE) {
-            QuicTraceLogConnVerbose(
-                AmplificationProtectionBlocked,
-                Connection,
-                "Cannot send any more because of amplification protection");
             Result = QUIC_SEND_COMPLETE;
             break;
         }
@@ -1471,11 +1440,6 @@ QuicSendFlush(
 
     QuicPacketBuilderCleanup(&Builder);
 
-    QuicTraceLogConnVerbose(
-        SendFlushComplete,
-        Connection,
-        "Flush complete flags=0x%x",
-        Send->SendFlags);
 
     if (Result == QUIC_SEND_INCOMPLETE) {
         //
@@ -1532,11 +1496,6 @@ QuicSendStartDelayedAckTimer(
         !Connection->State.ClosedLocally &&
         !Connection->State.ClosedRemotely) {
 
-        QuicTraceLogConnVerbose(
-            StartAckDelayTimer,
-            Connection,
-            "Starting ACK_DELAY timer for %u ms",
-            Connection->Settings.MaxAckDelayMs);
         QuicConnTimerSet(
             Connection,
             QUIC_CONN_TIMER_ACK_DELAY,
