@@ -34,11 +34,6 @@ RawDataPathInitialize(
 
     CXPLAT_DATAPATH_RAW* DataPath = CXPLAT_ALLOC_PAGED(DatapathSize, QUIC_POOL_DATAPATH);
     if (DataPath == NULL) {
-        QuicTraceEvent(
-            AllocFailure,
-            "Allocation of '%s' failed. (%llu bytes)",
-            "CXPLAT_DATAPATH",
-            DatapathSize);
         return;
     }
     CxPlatZeroMemory(DataPath, DatapathSize);
@@ -225,14 +220,6 @@ CxPlatDpRawRxEthernet(
                 // Found a match. Chain and deliver contiguous packets with the same 4-tuple.
                 //
                 while (i < PacketCount) {
-                    QuicTraceEvent(
-                        DatapathRecv,
-                        "[data][%p] Recv %u bytes (segment=%hu) Src=%!ADDR! Dst=%!ADDR!",
-                        Socket,
-                        Packets[i]->BufferLength,
-                        Packets[i]->BufferLength,
-                        CASTED_CLOG_BYTEARRAY(sizeof(Packets[i]->Route->LocalAddress), &Packets[i]->Route->LocalAddress),
-                        CASTED_CLOG_BYTEARRAY(sizeof(Packets[i]->Route->RemoteAddress), &Packets[i]->Route->RemoteAddress));
                     if (i == PacketCount - 1 ||
                         Packets[i+1]->Reserved != SocketType ||
                         Packets[i+1]->Route->LocalAddress.Ipv4.sin_port != Socket->LocalAddress.Ipv4.sin_port ||
@@ -342,15 +329,6 @@ RawSocketSend(
         return QUIC_STATUS_SUCCESS;
     }
 
-    QuicTraceEvent(
-        RawDatapathSend,
-        "[data][%p] Raw send %u bytes in %hhu buffers (segment=%hu) Dst=%!ADDR!, Src=%!ADDR!",
-        Socket,
-        SendData->Buffer.Length,
-        1,
-        (uint16_t)SendData->Buffer.Length,
-        CASTED_CLOG_BYTEARRAY(sizeof(Route->RemoteAddress), &Route->RemoteAddress),
-        CASTED_CLOG_BYTEARRAY(sizeof(Route->LocalAddress), &Route->LocalAddress));
     CXPLAT_DBG_ASSERT(Route->State == RouteResolved);
     CXPLAT_DBG_ASSERT(Route->Queue != NULL);
 
