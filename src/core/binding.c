@@ -339,10 +339,6 @@ QuicBindingRegisterListener(
         }
 
         if (QuicListenerHasAlpnOverlap(NewListener, ExistingListener)) {
-            QuicTraceLogWarning(
-                BindingListenerAlreadyRegistered,
-                "[bind][%p] Listener (%p) already registered on ALPN",
-                Binding, ExistingListener);
             Status = QUIC_STATUS_ALPN_IN_USE;
             break;
         }
@@ -814,9 +810,6 @@ QuicBindingProcessStatelessOperation(
 
         RecvPacket->ReleaseDeferred = FALSE;
 
-        QuicTraceLogVerbose(
-            PacketTxVersionNegotiation,
-            "[S][TX][-] VN");
 
     } else if (OperationType == QUIC_OPER_TYPE_STATELESS_RESET) {
 
@@ -873,13 +866,6 @@ QuicBindingProcessStatelessOperation(
             RecvPacket->DestCid,
             SendDatagram->Buffer + PacketLength - QUIC_STATELESS_RESET_TOKEN_LENGTH);
 
-        QuicTraceLogVerbose(
-            PacketTxStatelessReset,
-            "[S][TX][-] SR %s",
-            QuicCidBufToStr(
-                SendDatagram->Buffer + PacketLength - QUIC_STATELESS_RESET_TOKEN_LENGTH,
-                QUIC_STATELESS_RESET_TOKEN_LENGTH
-            ).Buffer);
 
         QuicPerfCounterIncrement(Partition, QUIC_PERF_COUNTER_SEND_STATELESS_RESET);
 
@@ -954,14 +940,6 @@ QuicBindingProcessStatelessOperation(
             goto Exit;
         }
 
-        QuicTraceLogVerbose(
-            PacketTxRetry,
-            "[S][TX][-] LH Ver:0x%x DestCid:%s SrcCid:%s Type:R OrigDestCid:%s (Token %hu bytes)",
-            RecvPacket->LH->Version,
-            QuicCidBufToStr(RecvPacket->SourceCid, RecvPacket->SourceCidLen).Buffer,
-            QuicCidBufToStr(NewDestCid, MsQuicLib.CidTotalLength).Buffer,
-            QuicCidBufToStr(RecvPacket->DestCid, RecvPacket->DestCidLen).Buffer,
-            (uint16_t)sizeof(Token));
 
         QuicPerfCounterIncrement(Partition, QUIC_PERF_COUNTER_SEND_STATELESS_RETRY);
 
@@ -1725,10 +1703,6 @@ QuicBindingSend(
                 SendData);
 
         if (Drop) {
-            QuicTraceLogVerbose(
-                BindingSendTestDrop,
-                "[bind][%p] Test dropped packet",
-                Binding);
             CxPlatSendDataFree(SendData);
         } else {
             CxPlatSocketSend(Binding->Socket, &RouteCopy, SendData);
