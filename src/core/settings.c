@@ -1166,11 +1166,6 @@ QuicSettingsLoad(
                 ((uint32_t*)VersionSettings->AcceptableVersions)[i] = CxPlatByteSwapUint32(VersionSettings->AcceptableVersions[i]);
                 if (!QuicIsVersionSupported(VersionSettings->AcceptableVersions[i]) &&
                     !QuicIsVersionReserved(VersionSettings->AcceptableVersions[i])) {
-                    QuicTraceLogError(
-                        SettingsLoadInvalidAcceptableVersion,
-                        "Invalid AcceptableVersion loaded from storage! 0x%x at position %d",
-                        VersionSettings->AcceptableVersions[i],
-                        (int32_t)i);
                     goto VersionSettingsFail;
                 }
             }
@@ -1178,11 +1173,6 @@ QuicSettingsLoad(
                 ((uint32_t*)VersionSettings->OfferedVersions)[i] = CxPlatByteSwapUint32(VersionSettings->OfferedVersions[i]);
                 if (!QuicIsVersionSupported(VersionSettings->OfferedVersions[i]) &&
                     !QuicIsVersionReserved(VersionSettings->OfferedVersions[i])) {
-                    QuicTraceLogError(
-                        SettingsLoadInvalidOfferedVersion,
-                        "Invalid OfferedVersion loaded from storage! 0x%x at position %d",
-                        VersionSettings->OfferedVersions[i],
-                        (int32_t)i);
                     goto VersionSettingsFail;
                 }
             }
@@ -1190,11 +1180,6 @@ QuicSettingsLoad(
                 ((uint32_t*)VersionSettings->FullyDeployedVersions)[i] = CxPlatByteSwapUint32(VersionSettings->FullyDeployedVersions[i]);
                 if (!QuicIsVersionSupported(VersionSettings->FullyDeployedVersions[i]) &&
                     !QuicIsVersionReserved(VersionSettings->FullyDeployedVersions[i])) {
-                    QuicTraceLogError(
-                        SettingsLoadInvalidFullyDeployedVersion,
-                        "Invalid FullyDeployedVersion loaded from storage! 0x%x at position %d",
-                        VersionSettings->FullyDeployedVersions[i],
-                        (int32_t)i);
                     goto VersionSettingsFail;
                 }
             }
@@ -1422,68 +1407,14 @@ QuicSettingsDump(
         const QUIC_SETTINGS_INTERNAL* Settings
     )
 {
-    QuicTraceLogVerbose(SettingDumpSendBufferingEnabled,    "[sett] SendBufferingEnabled   = %hhu", Settings->SendBufferingEnabled);
-    QuicTraceLogVerbose(SettingDumpPacingEnabled,           "[sett] PacingEnabled          = %hhu", Settings->PacingEnabled);
-    QuicTraceLogVerbose(SettingDumpMigrationEnabled,        "[sett] MigrationEnabled       = %hhu", Settings->MigrationEnabled);
-    QuicTraceLogVerbose(SettingDumpDatagramReceiveEnabled,  "[sett] DatagramReceiveEnabled = %hhu", Settings->DatagramReceiveEnabled);
-    QuicTraceLogVerbose(SettingDumpMaxOperationsPerDrain,   "[sett] MaxOperationsPerDrain  = %hhu", Settings->MaxOperationsPerDrain);
-    QuicTraceLogVerbose(SettingDumpRetryMemoryLimit,        "[sett] RetryMemoryLimit       = %hu", Settings->RetryMemoryLimit);
-    QuicTraceLogVerbose(SettingDumpLoadBalancingMode,       "[sett] LoadBalancingMode      = %hu", Settings->LoadBalancingMode);
-    QuicTraceLogVerbose(SettingDumpFixedServerID,           "[sett] FixedServerID          = %u", Settings->FixedServerID);
-    QuicTraceLogVerbose(SettingDumpMaxStatelessOperations,  "[sett] MaxStatelessOperations = %u", Settings->MaxStatelessOperations);
-    QuicTraceLogVerbose(SettingDumpMaxWorkerQueueDelayUs,   "[sett] MaxWorkerQueueDelayUs  = %u", Settings->MaxWorkerQueueDelayUs);
-    QuicTraceLogVerbose(SettingDumpInitialWindowPackets,    "[sett] InitialWindowPackets   = %u", Settings->InitialWindowPackets);
-    QuicTraceLogVerbose(SettingDumpSendIdleTimeoutMs,       "[sett] SendIdleTimeoutMs      = %u", Settings->SendIdleTimeoutMs);
-    QuicTraceLogVerbose(SettingDumpInitialRttMs,            "[sett] InitialRttMs           = %u", Settings->InitialRttMs);
-    QuicTraceLogVerbose(SettingDumpMaxAckDelayMs,           "[sett] MaxAckDelayMs          = %u", Settings->MaxAckDelayMs);
-    QuicTraceLogVerbose(SettingDumpDisconnectTimeoutMs,     "[sett] DisconnectTimeoutMs    = %u", Settings->DisconnectTimeoutMs);
-    QuicTraceLogVerbose(SettingDumpKeepAliveIntervalMs,     "[sett] KeepAliveIntervalMs    = %u", Settings->KeepAliveIntervalMs);
-    QuicTraceLogVerbose(SettingDumpIdleTimeoutMs,           "[sett] IdleTimeoutMs          = %llu", Settings->IdleTimeoutMs);
-    QuicTraceLogVerbose(SettingDumpHandshakeIdleTimeoutMs,  "[sett] HandshakeIdleTimeoutMs = %llu", Settings->HandshakeIdleTimeoutMs);
-    QuicTraceLogVerbose(SettingDumpBidiStreamCount,         "[sett] PeerBidiStreamCount    = %hu", Settings->PeerBidiStreamCount);
-    QuicTraceLogVerbose(SettingDumpUnidiStreamCount,        "[sett] PeerUnidiStreamCount   = %hu", Settings->PeerUnidiStreamCount);
-    QuicTraceLogVerbose(SettingDumpTlsClientMaxSendBuffer,  "[sett] TlsClientMaxSendBuffer = %u", Settings->TlsClientMaxSendBuffer);
-    QuicTraceLogVerbose(SettingDumpTlsServerMaxSendBuffer,  "[sett] TlsServerMaxSendBuffer = %u", Settings->TlsServerMaxSendBuffer);
-    QuicTraceLogVerbose(SettingDumpStreamRecvWindowDefault, "[sett] StreamRecvWindowDefault= %u", Settings->StreamRecvWindowDefault);
-    QuicTraceLogVerbose(SettingDumpStreamRecvWindowBidiLocalDefault,  "[sett] StreamRecvWindowBidiLocalDefault  = %u", Settings->StreamRecvWindowBidiLocalDefault);
-    QuicTraceLogVerbose(SettingDumpStreamRecvWindowBidiRemoteDefault, "[sett] StreamRecvWindowBidiRemoteDefault = %u", Settings->StreamRecvWindowBidiRemoteDefault);
-    QuicTraceLogVerbose(SettingDumpStreamRecvWindowUnidiDefault,      "[sett] StreamRecvWindowUnidiDefault      = %u", Settings->StreamRecvWindowUnidiDefault);
-    QuicTraceLogVerbose(SettingDumpConnFlowControlWindow,   "[sett] ConnFlowControlWindow  = %u", Settings->ConnFlowControlWindow);
-    QuicTraceLogVerbose(SettingDumpMaxBytesPerKey,          "[sett] MaxBytesPerKey         = %llu", Settings->MaxBytesPerKey);
-    QuicTraceLogVerbose(SettingDumpServerResumptionLevel,   "[sett] ServerResumptionLevel  = %hhu", Settings->ServerResumptionLevel);
-    QuicTraceLogVerbose(SettingDumpVersionNegoExtEnabled,   "[sett] Version Negotiation Ext Enabled = %hhu", Settings->VersionNegotiationExtEnabled);
     if (Settings->VersionSettings) {
-        QuicTraceLogVerbose(SettingDumpAcceptedVersionsLength,  "[sett] AcceptedVersionslength = %u", Settings->VersionSettings->AcceptableVersionsLength);
-        QuicTraceLogVerbose(SettingDumpOfferedVersionsLength,   "[sett] OfferedVersionslength  = %u", Settings->VersionSettings->OfferedVersionsLength);
-        QuicTraceLogVerbose(SettingDumpAcceptedVersionsLength,  "[sett] FullyDeployedVerlength = %u", Settings->VersionSettings->FullyDeployedVersionsLength);
         for (uint32_t i = 0; i < Settings->VersionSettings->AcceptableVersionsLength; ++i) {
-            QuicTraceLogVerbose(SettingDumpAcceptableVersions,  "[sett] AcceptableVersions[%u]  = 0x%x", i, Settings->VersionSettings->AcceptableVersions[i]);
         }
         for (uint32_t i = 0; i < Settings->VersionSettings->OfferedVersionsLength; ++i) {
-            QuicTraceLogVerbose(SettingDumpOfferedVersions, "[sett] OfferedVersions[%u]     = 0x%x", i, Settings->VersionSettings->OfferedVersions[i]);
         }
         for (uint32_t i = 0; i < Settings->VersionSettings->FullyDeployedVersionsLength; ++i) {
-            QuicTraceLogVerbose(SettingDumpFullyDeployedVersions,   "[sett] FullyDeployedVersion[%u]= 0x%x", i, Settings->VersionSettings->FullyDeployedVersions[i]);
         }
     }
-    QuicTraceLogVerbose(SettingDumpMinimumMtu,              "[sett] MinimumMtu             = %hu", Settings->MinimumMtu);
-    QuicTraceLogVerbose(SettingDumpMaximumMtu,              "[sett] MaximumMtu             = %hu", Settings->MaximumMtu);
-    QuicTraceLogVerbose(SettingDumpMtuCompleteTimeout,      "[sett] MtuCompleteTimeout     = %llu", Settings->MtuDiscoverySearchCompleteTimeoutUs);
-    QuicTraceLogVerbose(SettingDumpMtuMissingProbeCount,    "[sett] MtuMissingProbeCount   = %hhu", Settings->MtuDiscoveryMissingProbeCount);
-    QuicTraceLogVerbose(SettingDumpMaxBindingStatelessOper, "[sett] MaxBindingStatelessOper= %hu", Settings->MaxBindingStatelessOperations);
-    QuicTraceLogVerbose(SettingDumpStatelessOperExpirMs,    "[sett] StatelessOperExpirMs   = %hu", Settings->StatelessOperationExpirationMs);
-    QuicTraceLogVerbose(SettingCongestionControlAlgorithm,  "[sett] CongestionControlAlgorithm = %hu", Settings->CongestionControlAlgorithm);
-    QuicTraceLogVerbose(SettingDestCidUpdateIdleTimeoutMs,  "[sett] DestCidUpdateIdleTimeoutMs = %u", Settings->DestCidUpdateIdleTimeoutMs);
-    QuicTraceLogVerbose(SettingGreaseQuicBitEnabled,        "[sett] GreaseQuicBitEnabled   = %hhu", Settings->GreaseQuicBitEnabled);
-    QuicTraceLogVerbose(SettingEcnEnabled,                  "[sett] EcnEnabled             = %hhu", Settings->EcnEnabled);
-    QuicTraceLogVerbose(SettingHyStartEnabled,              "[sett] HyStartEnabled         = %hhu", Settings->HyStartEnabled);
-    QuicTraceLogVerbose(SettingEncryptionOffloadAllowed,    "[sett] EncryptionOffloadAllowed = %hhu", Settings->EncryptionOffloadAllowed);
-    QuicTraceLogVerbose(SettingReliableResetEnabled,        "[sett] ReliableResetEnabled   = %hhu", Settings->ReliableResetEnabled);
-    QuicTraceLogVerbose(SettingXdpEnabled,                  "[sett] XdpEnabled             = %hhu", Settings->XdpEnabled);
-    QuicTraceLogVerbose(SettingQTIPEnabled,                 "[sett] QTIPEnabled            = %hhu", Settings->QTIPEnabled);
-    QuicTraceLogVerbose(SettingOneWayDelayEnabled,          "[sett] OneWayDelayEnabled     = %hhu", Settings->OneWayDelayEnabled);
-    QuicTraceLogVerbose(SettingNetStatsEventEnabled,        "[sett] NetStatsEventEnabled   = %hhu", Settings->NetStatsEventEnabled);
-    QuicTraceLogVerbose(SettingsStreamMultiReceiveEnabled,  "[sett] StreamMultiReceiveEnabled= %hhu", Settings->StreamMultiReceiveEnabled);
 }
 
 _IRQL_requires_max_(PASSIVE_LEVEL)
@@ -1494,165 +1425,110 @@ QuicSettingsDumpNew(
     )
 {
     if (Settings->IsSet.SendBufferingEnabled) {
-        QuicTraceLogVerbose(SettingDumpSendBufferingEnabled,        "[sett] SendBufferingEnabled   = %hhu", Settings->SendBufferingEnabled);
     }
     if (Settings->IsSet.PacingEnabled) {
-        QuicTraceLogVerbose(SettingDumpPacingEnabled,               "[sett] PacingEnabled          = %hhu", Settings->PacingEnabled);
     }
     if (Settings->IsSet.MigrationEnabled) {
-        QuicTraceLogVerbose(SettingDumpMigrationEnabled,            "[sett] MigrationEnabled       = %hhu", Settings->MigrationEnabled);
     }
     if (Settings->IsSet.DatagramReceiveEnabled) {
-        QuicTraceLogVerbose(SettingDumpDatagramReceiveEnabled,      "[sett] DatagramReceiveEnabled = %hhu", Settings->DatagramReceiveEnabled);
     }
     if (Settings->IsSet.MaxOperationsPerDrain) {
-        QuicTraceLogVerbose(SettingDumpMaxOperationsPerDrain,       "[sett] MaxOperationsPerDrain  = %hhu", Settings->MaxOperationsPerDrain);
     }
     if (Settings->IsSet.RetryMemoryLimit) {
-        QuicTraceLogVerbose(SettingDumpRetryMemoryLimit,            "[sett] RetryMemoryLimit       = %hu", Settings->RetryMemoryLimit);
     }
     if (Settings->IsSet.LoadBalancingMode) {
-        QuicTraceLogVerbose(SettingDumpLoadBalancingMode,           "[sett] LoadBalancingMode      = %hu", Settings->LoadBalancingMode);
     }
     if (Settings->IsSet.FixedServerID) {
-        QuicTraceLogVerbose(SettingDumpLFixedServerID,              "[sett] FixedServerID          = %u", Settings->FixedServerID);
     }
     if (Settings->IsSet.MaxStatelessOperations) {
-        QuicTraceLogVerbose(SettingDumpMaxStatelessOperations,      "[sett] MaxStatelessOperations = %u", Settings->MaxStatelessOperations);
     }
     if (Settings->IsSet.MaxWorkerQueueDelayUs) {
-        QuicTraceLogVerbose(SettingDumpMaxWorkerQueueDelayUs,       "[sett] MaxWorkerQueueDelayUs  = %u", Settings->MaxWorkerQueueDelayUs);
     }
     if (Settings->IsSet.InitialWindowPackets) {
-        QuicTraceLogVerbose(SettingDumpInitialWindowPackets,        "[sett] InitialWindowPackets   = %u", Settings->InitialWindowPackets);
     }
     if (Settings->IsSet.SendIdleTimeoutMs) {
-        QuicTraceLogVerbose(SettingDumpSendIdleTimeoutMs,           "[sett] SendIdleTimeoutMs      = %u", Settings->SendIdleTimeoutMs);
     }
     if (Settings->IsSet.InitialRttMs) {
-        QuicTraceLogVerbose(SettingDumpInitialRttMs,                "[sett] InitialRttMs           = %u", Settings->InitialRttMs);
     }
     if (Settings->IsSet.MaxAckDelayMs) {
-        QuicTraceLogVerbose(SettingDumpMaxAckDelayMs,               "[sett] MaxAckDelayMs          = %u", Settings->MaxAckDelayMs);
     }
     if (Settings->IsSet.DisconnectTimeoutMs) {
-        QuicTraceLogVerbose(SettingDumpDisconnectTimeoutMs,         "[sett] DisconnectTimeoutMs    = %u", Settings->DisconnectTimeoutMs);
     }
     if (Settings->IsSet.KeepAliveIntervalMs) {
-        QuicTraceLogVerbose(SettingDumpKeepAliveIntervalMs,         "[sett] KeepAliveIntervalMs    = %u", Settings->KeepAliveIntervalMs);
     }
     if (Settings->IsSet.IdleTimeoutMs) {
-        QuicTraceLogVerbose(SettingDumpIdleTimeoutMs,               "[sett] IdleTimeoutMs          = %llu", Settings->IdleTimeoutMs);
     }
     if (Settings->IsSet.HandshakeIdleTimeoutMs) {
-        QuicTraceLogVerbose(SettingDumpHandshakeIdleTimeoutMs,      "[sett] HandshakeIdleTimeoutMs = %llu", Settings->HandshakeIdleTimeoutMs);
     }
     if (Settings->IsSet.PeerBidiStreamCount) {
-        QuicTraceLogVerbose(SettingDumpBidiStreamCount,             "[sett] PeerBidiStreamCount    = %hu", Settings->PeerBidiStreamCount);
     }
     if (Settings->IsSet.PeerUnidiStreamCount) {
-        QuicTraceLogVerbose(SettingDumpUnidiStreamCount,            "[sett] PeerUnidiStreamCount   = %hu", Settings->PeerUnidiStreamCount);
     }
     if (Settings->IsSet.TlsClientMaxSendBuffer) {
-        QuicTraceLogVerbose(SettingDumpTlsClientMaxSendBuffer,      "[sett] TlsClientMaxSendBuffer = %u", Settings->TlsClientMaxSendBuffer);
     }
     if (Settings->IsSet.TlsServerMaxSendBuffer) {
-        QuicTraceLogVerbose(SettingDumpTlsServerMaxSendBuffer,      "[sett] TlsServerMaxSendBuffer = %u", Settings->TlsServerMaxSendBuffer);
     }
     if (Settings->IsSet.StreamRecvWindowDefault) {
-        QuicTraceLogVerbose(SettingDumpStreamRecvWindowDefault,     "[sett] StreamRecvWindowDefault= %u", Settings->StreamRecvWindowDefault);
     }
     if (Settings->IsSet.StreamRecvWindowBidiLocalDefault) {
-        QuicTraceLogVerbose(SettingDumpStreamRecvWindowBidiLocalDefault, "[sett] StreamRecvWindowBidiLocalDefault  = %u", Settings->StreamRecvWindowBidiLocalDefault);
     }
     if (Settings->IsSet.StreamRecvWindowBidiRemoteDefault) {
-        QuicTraceLogVerbose(SettingDumpStreamRecvWindowBidiRemoteDefault, "[sett] StreamRecvWindowBidiRemoteDefault = %u", Settings->StreamRecvWindowBidiRemoteDefault);
     }
     if (Settings->IsSet.StreamRecvWindowUnidiDefault) {
-        QuicTraceLogVerbose(SettingDumpStreamRecvWindowUnidiDefault,  "[sett] StreamRecvWindowUnidiDefault      = %u", Settings->StreamRecvWindowUnidiDefault);
     }
     if (Settings->IsSet.StreamRecvBufferDefault) {
-        QuicTraceLogVerbose(SettingDumpStreamRecvBufferDefault,     "[sett] StreamRecvBufferDefault= %u", Settings->StreamRecvBufferDefault);
     }
     if (Settings->IsSet.ConnFlowControlWindow) {
-        QuicTraceLogVerbose(SettingDumpConnFlowControlWindow,       "[sett] ConnFlowControlWindow  = %u", Settings->ConnFlowControlWindow);
     }
     if (Settings->IsSet.MaxBytesPerKey) {
-        QuicTraceLogVerbose(SettingDumpMaxBytesPerKey,              "[sett] MaxBytesPerKey         = %llu", Settings->MaxBytesPerKey);
     }
     if (Settings->IsSet.ServerResumptionLevel) {
-        QuicTraceLogVerbose(SettingDumpServerResumptionLevel,       "[sett] ServerResumptionLevel  = %hhu", Settings->ServerResumptionLevel);
     }
     if (Settings->IsSet.VersionSettings) {
-        QuicTraceLogVerbose(SettingDumpAcceptedVersionsLength,      "[sett] AcceptedVersionslength = %u", Settings->VersionSettings->AcceptableVersionsLength);
-        QuicTraceLogVerbose(SettingDumpOfferedVersionsLength,       "[sett] OfferedVersionslength  = %u", Settings->VersionSettings->OfferedVersionsLength);
-        QuicTraceLogVerbose(SettingDumpAcceptedVersionsLength,      "[sett] FullyDeployedVerlength = %u", Settings->VersionSettings->FullyDeployedVersionsLength);
         for (uint32_t i = 0; i < Settings->VersionSettings->AcceptableVersionsLength; ++i) {
-            QuicTraceLogVerbose(SettingDumpAcceptableVersions,      "[sett] AcceptableVersions[%u]  = 0x%x", i, Settings->VersionSettings->AcceptableVersions[i]);
         }
         for (uint32_t i = 0; i < Settings->VersionSettings->OfferedVersionsLength; ++i) {
-            QuicTraceLogVerbose(SettingDumpOfferedVersions,         "[sett] OfferedVersions[%u]     = 0x%x", i, Settings->VersionSettings->OfferedVersions[i]);
         }
         for (uint32_t i = 0; i < Settings->VersionSettings->FullyDeployedVersionsLength; ++i) {
-            QuicTraceLogVerbose(SettingDumpFullyDeployedVersions,   "[sett] FullyDeployedVersion[%u]= 0x%x", i, Settings->VersionSettings->FullyDeployedVersions[i]);
         }
     }
     if (Settings->IsSet.VersionNegotiationExtEnabled) {
-        QuicTraceLogVerbose(SettingDumpVersionNegoExtEnabled,       "[sett] Version Negotiation Ext Enabled = %hhu", Settings->VersionNegotiationExtEnabled);
     }
     if (Settings->IsSet.MinimumMtu) {
-        QuicTraceLogVerbose(SettingDumpMinimumMtu,                  "[sett] MinimumMtu             = %hu", Settings->MinimumMtu);
     }
     if (Settings->IsSet.MaximumMtu) {
-        QuicTraceLogVerbose(SettingDumpMaximumMtu,                  "[sett] MaximumMtu             = %hu", Settings->MaximumMtu);
     }
     if (Settings->IsSet.MtuDiscoverySearchCompleteTimeoutUs) {
-        QuicTraceLogVerbose(SettingDumpMtuCompleteTimeout,          "[sett] MtuCompleteTimeout     = %llu", Settings->MtuDiscoverySearchCompleteTimeoutUs);
     }
     if (Settings->IsSet.MtuDiscoveryMissingProbeCount) {
-        QuicTraceLogVerbose(SettingDumpMtuMissingProbeCount,        "[sett] MtuMissingProbeCount   = %hhu", Settings->MtuDiscoveryMissingProbeCount);
     }
     if (Settings->IsSet.MaxBindingStatelessOperations) {
-        QuicTraceLogVerbose(SettingDumpMaxBindingStatelessOper,     "[sett] MaxBindingStatelessOper= %hu", Settings->MaxBindingStatelessOperations);
     }
     if (Settings->IsSet.StatelessOperationExpirationMs) {
-        QuicTraceLogVerbose(SettingDumpStatelessOperExpirMs,        "[sett] StatelessOperExpirMs   = %hu", Settings->StatelessOperationExpirationMs);
     }
     if (Settings->IsSet.CongestionControlAlgorithm) {
-        QuicTraceLogVerbose(SettingCongestionControlAlgorithm,      "[sett] CongestionControlAlgorithm = %hu", Settings->CongestionControlAlgorithm);
     }
     if (Settings->IsSet.DestCidUpdateIdleTimeoutMs) {
-        QuicTraceLogVerbose(SettingDestCidUpdateIdleTimeoutMs,      "[sett] DestCidUpdateIdleTimeoutMs = %u", Settings->DestCidUpdateIdleTimeoutMs);
     }
     if (Settings->IsSet.GreaseQuicBitEnabled) {
-        QuicTraceLogVerbose(SettingGreaseQuicBitEnabled,            "[sett] GreaseQuicBitEnabled   = %hhu", Settings->GreaseQuicBitEnabled);
     }
     if (Settings->IsSet.EcnEnabled) {
-        QuicTraceLogVerbose(SettingEcnEnabled,                      "[sett] EcnEnabled             = %hhu", Settings->EcnEnabled);
     }
     if (Settings->IsSet.HyStartEnabled) {
-        QuicTraceLogVerbose(SettingHyStartEnabled,                  "[sett] HyStartEnabled         = %hhu", Settings->HyStartEnabled);
     }
     if (Settings->IsSet.EncryptionOffloadAllowed) {
-        QuicTraceLogVerbose(SettingEncryptionOffloadAllowed,        "[sett] EncryptionOffloadAllowed   = %hhu", Settings->EncryptionOffloadAllowed);
     }
     if (Settings->IsSet.ReliableResetEnabled) {
-        QuicTraceLogVerbose(SettingReliableResetEnabled,            "[sett] ReliableResetEnabled       = %hhu", Settings->ReliableResetEnabled);
     }
     if (Settings->IsSet.XdpEnabled) {
-        QuicTraceLogVerbose(SettingXdpEnabled,                      "[sett] XdpEnabled                 = %hhu", Settings->XdpEnabled);
     }
     if (Settings->IsSet.QTIPEnabled) {
-        QuicTraceLogVerbose(SettingQTIPEnabled,                     "[sett] QTIPEnabled                = %hhu", Settings->QTIPEnabled);
     }
     if (Settings->IsSet.OneWayDelayEnabled) {
-        QuicTraceLogVerbose(SettingOneWayDelayEnabled,              "[sett] OneWayDelayEnabled         = %hhu", Settings->OneWayDelayEnabled);
     }
     if (Settings->IsSet.NetStatsEventEnabled) {
-        QuicTraceLogVerbose(SettingNetStatsEventEnabled,            "[sett] NetStatsEventEnabled       = %hhu", Settings->NetStatsEventEnabled);
     }
     if (Settings->IsSet.StreamMultiReceiveEnabled) {
-        QuicTraceLogVerbose(SettingStreamMultiReceiveEnabled,       "[sett] StreamMultiReceiveEnabled  = %hhu", Settings->StreamMultiReceiveEnabled);
     }
 }
 
@@ -1723,33 +1599,18 @@ QuicSettingsVersionSettingsToInternal(
     for (uint32_t i = 0; i < Settings->AcceptableVersionsLength; ++i) {
         if (!QuicIsVersionSupported(CxPlatByteSwapUint32(Settings->AcceptableVersions[i])) &&
             !QuicIsVersionReserved(CxPlatByteSwapUint32(Settings->AcceptableVersions[i]))) {
-            QuicTraceLogError(
-                SettingsInvalidAcceptableVersion,
-                "Invalid AcceptableVersion supplied to settings! 0x%x at position %d",
-                Settings->AcceptableVersions[i],
-                (int32_t)i);
             return QUIC_STATUS_INVALID_PARAMETER;
         }
     }
     for (uint32_t i = 0; i < Settings->OfferedVersionsLength; ++i) {
         if (!QuicIsVersionSupported(CxPlatByteSwapUint32(Settings->OfferedVersions[i])) &&
             !QuicIsVersionReserved(CxPlatByteSwapUint32(Settings->OfferedVersions[i]))) {
-            QuicTraceLogError(
-                SettingsInvalidOfferedVersion,
-                "Invalid OfferedVersion supplied to settings! 0x%x at position %d",
-                Settings->OfferedVersions[i],
-                (int32_t)i);
             return QUIC_STATUS_INVALID_PARAMETER;
         }
     }
     for (uint32_t i = 0; i < Settings->FullyDeployedVersionsLength; ++i) {
         if (!QuicIsVersionSupported(CxPlatByteSwapUint32(Settings->FullyDeployedVersions[i])) &&
             !QuicIsVersionReserved(CxPlatByteSwapUint32(Settings->FullyDeployedVersions[i]))) {
-            QuicTraceLogError(
-                SettingsInvalidFullyDeployedVersion,
-                "Invalid FullyDeployedVersion supplied to settings! 0x%x at position %d",
-                Settings->FullyDeployedVersions[i],
-                (int32_t)i);
             return QUIC_STATUS_INVALID_PARAMETER;
         }
     }
