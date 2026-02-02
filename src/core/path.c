@@ -37,11 +37,6 @@ QuicPathInitialize(
         CxPlatRandom(sizeof(Path->Route.TcpState.SequenceNumber), &Path->Route.TcpState.SequenceNumber);
     }
 
-    QuicTraceLogConnInfo(
-        PathInitialized,
-        Connection,
-        "Path[%hhu] Initialized",
-        Path->ID);
 }
 
 _IRQL_requires_max_(PASSIVE_LEVEL)
@@ -60,11 +55,6 @@ QuicPathRemove(
 
     const QUIC_PATH* Path = &Connection->Paths[Index];
     CXPLAT_DBG_ASSERT(Path->InUse);
-    QuicTraceLogConnInfo(
-        PathRemoved,
-        Connection,
-        "Path[%hhu] Removed",
-        Path->ID);
 
 #if DEBUG
     if (Path->DestCid) {
@@ -141,12 +131,6 @@ QuicPathSetValid(
         "Path Response"
     };
 
-    QuicTraceLogConnInfo(
-        PathValidated,
-        Connection,
-        "Path[%hhu] Validated (%s)",
-        Path->ID,
-        ReasonStrings[Reason]);
 
     Path->IsPeerValidated = TRUE;
     QuicPathSetAllowance(Connection, Path, UINT32_MAX);
@@ -288,12 +272,6 @@ QuicPathSetActive(
         *Path = PrevActivePath;
     }
 
-    QuicTraceLogConnInfo(
-        PathActive,
-        Connection,
-        "Path[%hhu] Set active (rebind=%hhu)",
-        Connection->Paths[0].ID,
-        UdpPortChangeOnly);
 
     if (!UdpPortChangeOnly) {
         QuicCongestionControlReset(&Connection->CongestionControl, FALSE);
@@ -348,21 +326,11 @@ QuicPathUpdateQeo(
             QUIC_SUCCEEDED(CxPlatSocketUpdateQeo(Path->Binding->Socket, Offloads, 2))) {
             Connection->Stats.EncryptionOffloaded = TRUE;
             Path->EncryptionOffloading = TRUE;
-            QuicTraceLogConnInfo(
-                PathQeoEnabled,
-                Connection,
-                "Path[%hhu] QEO enabled",
-                Path->ID);
         }
         CxPlatSecureZeroMemory(Offloads, sizeof(Offloads));
     } else {
         CXPLAT_DBG_ASSERT(Path->EncryptionOffloading);
         (void)CxPlatSocketUpdateQeo(Path->Binding->Socket, Offloads, 2);
         Path->EncryptionOffloading = FALSE;
-        QuicTraceLogConnInfo(
-            PathQeoDisabled,
-            Connection,
-            "Path[%hhu] QEO disabled",
-            Path->ID);
     }
 }
