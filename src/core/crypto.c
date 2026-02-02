@@ -2036,6 +2036,7 @@ QuicCryptoDecodeAddr(
     _Out_ QUIC_ADDR* Addr
     )
 {
+    (void)Connection;
     CxPlatZeroMemory(Addr, sizeof(QUIC_ADDR));
 
     if (BufferLength < QUIC_CR_STATE_MIN_ADDR_LENGTH) {
@@ -2118,6 +2119,7 @@ QuicCryptoEncodeCRState(
     _Out_writes_bytes_to_(BufferLength, *CRLength) uint8_t* Buffer
     )
 {
+    (void)Connection;
 
     uint32_t RequiredCRLen = QuicCryptoGetEncodeCRStateSize(CarefulResumeState);
 
