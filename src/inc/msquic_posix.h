@@ -574,6 +574,8 @@ typedef struct CXPLAT_SQE QUIC_SQE;
 #include <sys/epoll.h>
 #include <sys/eventfd.h>
 
+typedef int QUIC_EVENTQ;
+
 typedef struct epoll_event QUIC_CQE;
 
 typedef
