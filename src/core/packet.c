@@ -629,6 +629,7 @@ QuicPacketLogDrop(
     _In_z_ const char* Reason
     )
 {
+    (void)Reason;
     if (Packet->AssignedToConnection) {
         InterlockedIncrement64((int64_t*)&((QUIC_CONNECTION*)Owner)->Stats.Recv.DroppedPackets);
     } else {
@@ -648,6 +649,8 @@ QuicPacketLogDropWithValue(
     _In_ uint64_t Value
     )
 {
+    (void)Reason;
+    (void)Value;
     if (Packet->AssignedToConnection) {
         InterlockedIncrement64((int64_t*)&((QUIC_CONNECTION*)Owner)->Stats.Recv.DroppedPackets);
     } else {
