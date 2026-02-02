@@ -870,12 +870,6 @@ QuicConnLogOutFlowStats(
         &FcAvailable,
         &SendWindow);
 
-    QuicTraceEvent(
-        ConnOutFlowStreamStats,
-        "[conn][%p] OUT: StreamFC=%llu StreamSendWindow=%llu",
-        Connection,
-        FcAvailable,
-        SendWindow);
 }
 
 QUIC_INLINE
@@ -885,11 +879,6 @@ QuicConnLogInFlowStats(
     )
 {
     UNREFERENCED_PARAMETER(Connection);
-    QuicTraceEvent(
-        ConnInFlowStats,
-        "[conn][%p] IN: BytesRecv=%llu",
-        Connection,
-        Connection->Stats.Recv.TotalBytes);
 }
 
 QUIC_INLINE
@@ -901,31 +890,7 @@ QuicConnLogStatistics(
     const QUIC_PATH* Path = &Connection->Paths[0];
     UNREFERENCED_PARAMETER(Path);
 
-    QuicTraceEvent(
-        ConnStatsV3,
-        "[conn][%p] STATS: SRtt=%llu CongestionCount=%u PersistentCongestionCount=%u SendTotalBytes=%llu RecvTotalBytes=%llu CongestionWindow=%u Cc=%s EcnCongestionCount=%u",
-        Connection,
-        Path->SmoothedRtt,
-        Connection->Stats.Send.CongestionCount,
-        Connection->Stats.Send.PersistentCongestionCount,
-        Connection->Stats.Send.TotalBytes,
-        Connection->Stats.Recv.TotalBytes,
-        QuicCongestionControlGetCongestionWindow(&Connection->CongestionControl),
-        Connection->CongestionControl.Name,
-        Connection->Stats.Send.EcnCongestionCount);
 
-    QuicTraceEvent(
-        ConnPacketStats,
-        "[conn][%p] STATS: SendTotalPackets=%llu SendSuspectedLostPackets=%llu SendSpuriousLostPackets=%llu RecvTotalPackets=%llu RecvReorderedPackets=%llu RecvDroppedPackets=%llu RecvDuplicatePackets=%llu RecvDecryptionFailures=%llu",
-        Connection,
-        Connection->Stats.Send.TotalPackets,
-        Connection->Stats.Send.SuspectedLostPackets,
-        Connection->Stats.Send.SpuriousLostPackets,
-        Connection->Stats.Recv.TotalPackets,
-        Connection->Stats.Recv.ReorderedPackets,
-        Connection->Stats.Recv.DroppedPackets,
-        Connection->Stats.Recv.DuplicatePackets,
-        Connection->Stats.Recv.DecryptionFailures);
 }
 
 QUIC_INLINE
@@ -957,11 +922,6 @@ QuicConnAddOutFlowBlockedReason(
         }
 
         Connection->OutFlowBlockedReasons |= Reason;
-        QuicTraceEvent(
-            ConnOutFlowBlocked,
-            "[conn][%p] Send Blocked Flags: %hhu",
-            Connection,
-            Connection->OutFlowBlockedReasons);
         return TRUE;
     }
     return FALSE;
@@ -1008,11 +968,6 @@ QuicConnRemoveOutFlowBlockedReason(
         }
 
         Connection->OutFlowBlockedReasons &= ~Reason;
-        QuicTraceEvent(
-            ConnOutFlowBlocked,
-            "[conn][%p] Send Blocked Flags: %hhu",
-            Connection,
-            Connection->OutFlowBlockedReasons);
         return TRUE;
     }
     return FALSE;
@@ -1294,12 +1249,6 @@ QuicConnGetSourceCidFromSeq(
                     Connection->Paths[0].Binding,
                     SourceCid,
                     Entry);
-                QuicTraceEvent(
-                    ConnSourceCidRemoved,
-                    "[conn][%p] (SeqNum=%llu) Removed Source CID: %!CID!",
-                    Connection,
-                    SourceCid->CID.SequenceNumber,
-                    CASTED_CLOG_BYTEARRAY(SourceCid->CID.Length, SourceCid->CID.Data));
             }
             *IsLastCid = Connection->SourceCids.Next == NULL;
             return SourceCid;
