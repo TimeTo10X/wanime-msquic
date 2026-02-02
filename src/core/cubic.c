@@ -776,13 +776,6 @@ CubicCongestionControlOnSpuriousCongestionEvent(
     return Result;
 }
 
-void
-CubicCongestionControlLogOutFlowStatus(
-    _In_ const QUIC_CONGESTION_CONTROL* Cc
-    )
-{
-}
-
 uint32_t
 CubicCongestionControlGetBytesInFlightMax(
     _In_ const QUIC_CONGESTION_CONTROL* Cc
@@ -839,7 +832,6 @@ static const QUIC_CONGESTION_CONTROL QuicCongestionControlCubic = {
     .QuicCongestionControlOnDataLost = CubicCongestionControlOnDataLost,
     .QuicCongestionControlOnEcn = CubicCongestionControlOnEcn,
     .QuicCongestionControlOnSpuriousCongestionEvent = CubicCongestionControlOnSpuriousCongestionEvent,
-    .QuicCongestionControlLogOutFlowStatus = CubicCongestionControlLogOutFlowStatus,
     .QuicCongestionControlGetExemptions = CubicCongestionControlGetExemptions,
     .QuicCongestionControlGetBytesInFlightMax = CubicCongestionControlGetBytesInFlightMax,
     .QuicCongestionControlIsAppLimited = CubicCongestionControlIsAppLimited,
