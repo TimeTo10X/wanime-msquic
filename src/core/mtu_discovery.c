@@ -57,12 +57,6 @@ QuicMtuDiscoveryMoveToSearchComplete(
         CXPLAT_CONTAINING_RECORD(MtuDiscovery, QUIC_PATH, MtuDiscovery);
     MtuDiscovery->IsSearchComplete = TRUE;
     MtuDiscovery->SearchCompleteEnterTimeUs = CxPlatTimeUs64();
-    QuicTraceLogConnInfo(
-        MtuSearchComplete,
-        Connection,
-        "Path[%hhu] Mtu Discovery Entering Search Complete at MTU %hu",
-        Path->ID,
-        Path->Mtu);
 }
 
 _IRQL_requires_max_(PASSIVE_LEVEL)
@@ -131,12 +125,6 @@ QuicMtuDiscoveryMoveToSearching(
         QuicMtuDiscoveryMoveToSearchComplete(MtuDiscovery, Connection);
         return;
     }
-    QuicTraceLogConnInfo(
-        MtuSearching,
-        Connection,
-        "Path[%hhu] Mtu Discovery Search Packet Sending with MTU %hu",
-        Path->ID,
-        MtuDiscovery->ProbeSize);
 
     QuicMtuDiscoverySendProbePacket(Connection);
 }
@@ -162,13 +150,6 @@ QuicMtuDiscoveryPeerValidated(
     MtuDiscovery->HasProbed1500 = Path->Mtu >= 1500;
     CXPLAT_DBG_ASSERT(Path->Mtu <= MtuDiscovery->MaxMtu);
 
-    QuicTraceLogConnInfo(
-        MtuPathInitialized,
-        Connection,
-        "Path[%hhu] Mtu Discovery Initialized: max_mtu=%u, cur/min_mtu=%u",
-        Path->ID,
-        MtuDiscovery->MaxMtu,
-        Path->Mtu);
 
     QuicMtuDiscoveryMoveToSearching(MtuDiscovery, Connection);
 }
@@ -187,13 +168,6 @@ QuicMtuDiscoveryOnAckedPacket(
     // If out of order receives are received, ignore the packet
     //
     if (PacketMtu != MtuDiscovery->ProbeSize) {
-        QuicTraceLogConnVerbose(
-            MtuIncorrectSize,
-            Connection,
-            "Path[%hhu] Mtu Discovery Received Out of Order: expected=%u received=%u",
-            Path->ID,
-            MtuDiscovery->ProbeSize,
-            PacketMtu);
         return FALSE;
     }
 
@@ -202,12 +176,6 @@ QuicMtuDiscoveryOnAckedPacket(
     // higher, otherwise attept next MTU size.
     //
     Path->Mtu = MtuDiscovery->ProbeSize;
-    QuicTraceLogConnInfo(
-        PathMtuUpdated,
-        Connection,
-        "Path[%hhu] MTU updated to %hu bytes",
-        Path->ID,
-        Path->Mtu);
 
     if (Path->Mtu == MtuDiscovery->MaxMtu) {
         QuicMtuDiscoveryMoveToSearchComplete(MtuDiscovery, Connection);
@@ -232,23 +200,9 @@ QuicMtuDiscoveryProbePacketDiscarded(
     // If out of order receives are received, ignore the packet
     //
     if (PacketMtu != MtuDiscovery->ProbeSize) {
-        QuicTraceLogConnVerbose(
-            MtuIncorrectSize,
-            Connection,
-            "Path[%hhu] Mtu Discovery Received Out of Order: expected=%u received=%u",
-            Path->ID,
-            MtuDiscovery->ProbeSize,
-            PacketMtu);
         return;
     }
 
-    QuicTraceLogConnInfo(
-        MtuDiscarded,
-        Connection,
-        "Path[%hhu] Mtu Discovery Packet Discarded: size=%u, probe_count=%u",
-        Path->ID,
-        MtuDiscovery->ProbeSize,
-        MtuDiscovery->ProbeCount);
 
     //
     // If we've done max probes, we've found our max, enter search complete
