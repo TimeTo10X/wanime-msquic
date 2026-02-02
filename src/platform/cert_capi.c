@@ -656,10 +656,6 @@ CxPlatCertParseChain(
         goto Error;
     }
 
-    QuicTraceLogVerbose(
-        CertCapiParsedChain,
-        "[cert] Successfully parsed chain of %u certificate(s)",
-        CertNumber);
 
     goto Exit;
 
@@ -1063,10 +1059,6 @@ CxPlatCertFormat(
 
 Exit:
 
-    QuicTraceLogVerbose(
-        CertCapiFormattedChain,
-        "[cert] Successfully formatted chain of %u certificate(s)",
-        CertNumber);
 
     return (size_t)(Offset - Buffer);
 }
@@ -1121,12 +1113,6 @@ CxPlatCertVerifyCertChainPolicy(
 
 Exit:
 
-    QuicTraceLogInfo(
-        CertCapiVerifiedChain,
-        "CertVerifyChain: %S 0x%x, result=0x%x",
-        ServerName,
-        CredFlags,
-        Status);
 
     return Status;
 }
@@ -1277,10 +1263,6 @@ CxPlatCertVerify(
 {
     PCCERT_CONTEXT CertCtx = (PCCERT_CONTEXT)Certificate;
 
-    QuicTraceLogVerbose(
-        CertCapiVerify,
-        "[cert] QuicCertVerify alg=0x%4.4x",
-        SignatureAlgorithm);
 
     if (CertListToVerifyLength > MAXUINT32 || SignatureLength > MAXUINT32) {
         return FALSE;
