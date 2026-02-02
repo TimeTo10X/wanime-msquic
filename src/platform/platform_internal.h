@@ -18,8 +18,6 @@
 #include "quic_storage.h"
 #include "quic_tls.h"
 #include "quic_versions.h"
-#include "quic_trace.h"
-
 #include "msquic.h"
 #include "msquicp.h"
 
