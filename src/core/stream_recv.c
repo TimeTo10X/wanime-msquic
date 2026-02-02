@@ -128,10 +128,6 @@ QuicStreamRecvQueueFlush(
             QuicStreamRecvFlush(Stream);
 
         } else if (!Stream->Flags.ReceiveFlushQueued) {
-            QuicTraceLogStreamVerbose(
-                QueueRecvFlush,
-                Stream,
-                "Queuing recv flush");
 
             QUIC_OPERATION* Oper;
             if ((Oper = QuicConnAllocOperation(Stream->Connection, QUIC_OPER_TYPE_FLUSH_STREAM_RECV)) != NULL) {
@@ -155,18 +151,9 @@ QuicStreamIndicatePeerSendAbortedEvent(
     _In_ QUIC_VAR_INT ErrorCode
     )
 {
-    QuicTraceLogStreamInfo(
-        RemoteCloseReset,
-        Stream,
-        "Closed remotely (reset)");
     QUIC_STREAM_EVENT Event;
     Event.Type = QUIC_STREAM_EVENT_PEER_SEND_ABORTED;
     Event.PEER_SEND_ABORTED.ErrorCode = ErrorCode;
-    QuicTraceLogStreamVerbose(
-        IndicatePeerSendAbort,
-        Stream,
-        "Indicating QUIC_STREAM_EVENT_PEER_SEND_ABORTED (0x%llX)",
-        ErrorCode);
     (void)QuicStreamIndicateEvent(Stream, &Event);
 }
 
@@ -186,10 +173,6 @@ QuicStreamProcessReliableResetFrame(
         // The peer tried to use an exprimental feature without
         // negotiating first. Kill the connection.
         //
-        QuicTraceLogStreamWarning(
-            ReliableResetNotNegotiatedError,
-            Stream,
-            "Received ReliableReset without negotiation.");
         QuicConnTransportError(Stream->Connection, QUIC_ERROR_TRANSPORT_PARAMETER_ERROR);
         return;
     }
@@ -202,11 +185,6 @@ QuicStreamProcessReliableResetFrame(
         Stream->RecvMaxLength = ReliableOffset;
         Stream->Flags.RemoteCloseResetReliable = TRUE;
 
-        QuicTraceLogStreamInfo(
-            ReliableRecvOffsetSet,
-            Stream,
-            "Reliable recv offset set to %llu",
-            ReliableOffset);
     }
 
     if (Stream->RecvBuffer.BaseOffset >= Stream->RecvMaxLength) {
@@ -247,10 +225,6 @@ QuicStreamProcessResetFrame(
             // The peer indicated a final offset less than what they have
             // already sent to us. Kill the connection.
             //
-            QuicTraceLogStreamWarning(
-                ResetEarly,
-                Stream,
-                "Tried to reset at earlier final size!");
             QuicConnTransportError(Stream->Connection, QUIC_ERROR_FINAL_SIZE_ERROR);
             return;
         }
@@ -269,10 +243,6 @@ QuicStreamProcessResetFrame(
                 // The peer indicated a final offset more than allowed. Kill the
                 // connection.
                 //
-                QuicTraceLogStreamWarning(
-                    ResetTooBig,
-                    Stream,
-                    "Tried to reset with too big final size!");
                 QuicConnTransportError(Stream->Connection, QUIC_ERROR_FINAL_SIZE_ERROR);
                 return;
             }
@@ -326,20 +296,11 @@ QuicStreamProcessStopSendingFrame(
         // completely closed gracefully (i.e. our close has been acknowledged)
         // or if we have already been reset (abortive closure).
         //
-        QuicTraceLogStreamInfo(
-            LocalCloseStopSending,
-            Stream,
-            "Closed locally (stop sending)");
         Stream->Flags.ReceivedStopSending = TRUE;
 
         QUIC_STREAM_EVENT Event;
         Event.Type = QUIC_STREAM_EVENT_PEER_RECEIVE_ABORTED;
         Event.PEER_RECEIVE_ABORTED.ErrorCode = ErrorCode;
-        QuicTraceLogStreamVerbose(
-            IndicatePeerReceiveAborted,
-            Stream,
-            "Indicating QUIC_STREAM_EVENT_PEER_RECEIVE_ABORTED (0x%llX)",
-            ErrorCode);
         (void)QuicStreamIndicateEvent(Stream, &Event);
 
         //
@@ -375,10 +336,6 @@ QuicStreamProcessStreamFrame(
         // Ignore the data if we are already closed remotely. Likely means we
         // received a copy of already processed data that was resent.
         //
-        QuicTraceLogStreamVerbose(
-            IgnoreRecvAfterClose,
-            Stream,
-            "Ignoring recv after close");
         Status = QUIC_STATUS_SUCCESS;
         goto Error;
     }
@@ -390,17 +347,9 @@ QuicStreamProcessStreamFrame(
         // FIN as a reset.
         //
         if (Frame->Fin) {
-            QuicTraceLogStreamInfo(
-                TreatFinAsReset,
-                Stream,
-                "Treating FIN after receive abort as reset");
             QuicStreamProcessResetFrame(Stream, Frame->Offset + Frame->Length, 0);
 
         } else {
-            QuicTraceLogStreamVerbose(
-                IgnoreRecvAfterAbort,
-                Stream,
-                "Ignoring received frame after receive abort");
         }
         Status = QUIC_STATUS_SUCCESS;
         goto Error;
@@ -519,10 +468,6 @@ QuicStreamProcessStreamFrame(
         CXPLAT_DBG_ASSERT(Stream->Connection->Send.OrderedStreamBytesReceived >= QuotaConsumed);
 
         if (QuicRecvBufferGetTotalLength(&Stream->RecvBuffer) == Stream->MaxAllowedRecvOffset) {
-            QuicTraceLogStreamVerbose(
-                FlowControlExhausted,
-                Stream,
-                "Flow control window exhausted!");
         }
 
         if (EncryptedWith0Rtt) {
@@ -557,27 +502,12 @@ QuicStreamProcessStreamFrame(
             Stream->RecvBuffer.BaseOffset == Stream->RecvMaxLength);
     }
 
-    QuicTraceLogStreamVerbose(
-        Receive,
-        Stream,
-        "Received %hu bytes, offset=%llu Ready=%hhu",
-        (uint16_t)Frame->Length,
-        Frame->Offset,
-        ReadyToDeliver);
 
 Error:
 
     if (Status == QUIC_STATUS_INVALID_PARAMETER) {
-        QuicTraceLogStreamWarning(
-            ReceiveTooBig,
-            Stream,
-            "Tried to write beyond end of buffer!");
         QuicConnTransportError(Stream->Connection, QUIC_ERROR_FINAL_SIZE_ERROR);
     } else if (Status == QUIC_STATUS_BUFFER_TOO_SMALL) {
-        QuicTraceLogStreamWarning(
-            ReceiveBeyondFlowControl,
-            Stream,
-            "Tried to write beyond flow control limit!");
         QuicConnTransportError(Stream->Connection, QUIC_ERROR_FLOW_CONTROL_ERROR);
     }
 
@@ -680,11 +610,6 @@ QuicStreamRecv(
             return QUIC_STATUS_INVALID_PARAMETER;
         }
 
-        QuicTraceLogStreamVerbose(
-            RemoteBlocked,
-            Stream,
-            "Remote FC blocked (%llu)",
-            Frame.StreamDataLimit);
 
         QuicSendSetStreamSendFlag(
             &Stream->Connection->Send,
@@ -800,14 +725,6 @@ QuicStreamOnBytesDelivered(
                     &Stream->RecvBuffer,
                     Stream->RecvBuffer.VirtualBufferLength * 2);
 
-                QuicTraceLogStreamVerbose(
-                    IncreaseRxBuffer,
-                    Stream,
-                    "Increasing max RX buffer size to %u (MinRtt=%llu; TimeNow=%llu; LastUpdate=%llu)",
-                    Stream->RecvBuffer.VirtualBufferLength * 2,
-                    Stream->Connection->Paths[0].MinRtt,
-                    TimeNow,
-                    Stream->RecvWindowLastUpdate);
             }
         }
 
@@ -827,10 +744,6 @@ QuicStreamOnBytesDelivered(
     // Advance MaxAllowedRecvOffset.
     //
 
-    QuicTraceLogStreamVerbose(
-        UpdateFlowControl,
-        Stream,
-        "Updating flow control window");
 
     CXPLAT_DBG_ASSERT(
         Stream->RecvBuffer.BaseOffset + Stream->RecvBuffer.VirtualBufferLength >=
@@ -865,10 +778,6 @@ QuicStreamRecvFlush(
     }
 
     if (!Stream->Flags.ReceiveEnabled) {
-        QuicTraceLogStreamVerbose(
-            IgnoreRecvFlush,
-            Stream,
-            "Ignoring recv flush (recv disabled)");
         return;
     }
 
@@ -1126,10 +1035,6 @@ QuicStreamReceiveComplete(
 
         QUIC_STREAM_EVENT Event;
         Event.Type = QUIC_STREAM_EVENT_PEER_SEND_SHUTDOWN;
-        QuicTraceLogStreamVerbose(
-            IndicatePeerSendShutdown,
-            Stream,
-            "Indicating QUIC_STREAM_EVENT_PEER_SEND_SHUTDOWN");
         (void)QuicStreamIndicateEvent(Stream, &Event);
 
         //
