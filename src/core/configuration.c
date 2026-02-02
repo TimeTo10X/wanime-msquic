@@ -124,11 +124,6 @@ MsQuicConfigurationOpen(
                 CXPLAT_STORAGE_OPEN_FLAG_READ,
                 &Configuration->Storage);
         if (QUIC_FAILED(Status)) {
-            QuicTraceLogWarning(
-                ConfigurationOpenStorageFailed,
-                "[cnfg][%p] Failed to open settings, 0x%x",
-                Configuration,
-                Status);
             Status = QUIC_STATUS_SUCCESS; // Non-fatal, as the process may not have access
         }
     }
@@ -153,11 +148,6 @@ MsQuicConfigurationOpen(
                 CXPLAT_STORAGE_OPEN_FLAG_READ,
                 &Configuration->AppSpecificStorage);
         if (QUIC_FAILED(Status)) {
-            QuicTraceLogWarning(
-                ConfigurationOpenAppStorageFailed,
-                "[cnfg][%p] Failed to open app specific settings, 0x%x",
-                Configuration,
-                Status);
             Status = QUIC_STATUS_SUCCESS; // Non-fatal, as the process may not have access
         }
     }
@@ -379,11 +369,6 @@ QuicConfigurationSettingsChanged(
         QuicSettingsLoad(&Configuration->Settings, Configuration->AppSpecificStorage);
     }
 
-    QuicTraceLogInfo(
-        ConfigurationSettingsUpdated,
-        "[cnfg][%p] Settings %p Updated",
-        Configuration,
-        &Configuration->Settings);
     QuicSettingsDump(&Configuration->Settings);
 }
 
@@ -443,10 +428,6 @@ QuicConfigurationParamSet(
             return QUIC_STATUS_INVALID_PARAMETER;
         }
 
-        QuicTraceLogInfo(
-            ConfigurationSetSettings,
-            "[cnfg][%p] Setting new settings",
-            Configuration);
 
         Status =
             QuicSettingsSettingsToInternal(
@@ -473,10 +454,6 @@ QuicConfigurationParamSet(
             return QUIC_STATUS_INVALID_PARAMETER;
         }
 
-        QuicTraceLogInfo(
-            ConfigurationSetSettings,
-            "[cnfg][%p] Setting new settings",
-            Configuration);
 
         Status =
             QuicSettingsVersionSettingsToInternal(
