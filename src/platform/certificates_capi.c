@@ -64,11 +64,6 @@ CxPlatCertVerifyRawCertificate(
                 CERT_CREATE_CONTEXT_NOCOPY_FLAG,
                 NULL);
     if (CertContext == NULL) {
-        QuicTraceEvent(
-            LibraryErrorStatus,
-            "[ lib] ERROR, %u, %s.",
-            GetLastError(),
-            "CertGetCertificateChain failed");
         goto Exit;
     }
 
@@ -134,11 +129,6 @@ CxPlatAddChainToStore(
     if (!CertCreateCertificateChainEngine(&CertChainEngineConfig, &CertChainEngine)) {
         LastError = GetLastError();
         Status = HRESULT_FROM_WIN32(LastError);
-        QuicTraceEvent(
-            LibraryErrorStatus,
-            "[ lib] ERROR, %u, %s.",
-            LastError,
-            "CertCreateCertificateChainEngine");
         goto Exit;
     }
 
@@ -156,11 +146,6 @@ CxPlatAddChainToStore(
             &CertChainContext)) {
         LastError = GetLastError();
         Status = HRESULT_FROM_WIN32(LastError);
-        QuicTraceEvent(
-            LibraryErrorStatus,
-            "[ lib] ERROR, %u, %s.",
-            LastError,
-            "CertGetCertificateChain");
         goto Exit;
     }
 
@@ -169,11 +154,6 @@ CxPlatAddChainToStore(
     //
     if (CertChainContext->cChain == 0) {
         Status = CERT_E_CHAINING;
-        QuicTraceEvent(
-            LibraryErrorStatus,
-            "[ lib] ERROR, %u, %s.",
-            Status,
-            "CertGetCertificateChain didn't build a chain");
         goto Exit;
     }
 
@@ -209,11 +189,6 @@ CxPlatAddChainToStore(
             CertChainContext,
             &PolicyPara,
             &PolicyStatus)) {
-        QuicTraceEvent(
-            LibraryErrorStatus,
-            "[ lib] ERROR, %u, %s.",
-            GetLastError(),
-            "CertVerifyCertificateChainPolicy");
     }
 
     QuicTraceLogVerbose(
@@ -257,11 +232,6 @@ CxPlatCertExtractPrivateKey(
     if (QUIC_FAILED(
         Status =
             CxPlatCertCreate(CredConfig, &Cert))) {
-        QuicTraceEvent(
-            LibraryErrorStatus,
-            "[ lib] ERROR, %u, %s.",
-            Status,
-            "CxPlatCertCreate");
         goto Exit;
     }
 
@@ -284,19 +254,10 @@ CxPlatCertExtractPrivateKey(
             (PBYTE)&ExportPolicyProperty,
             sizeof(ExportPolicyProperty),
             &ExportPolicyLength, 0))) {
-        QuicTraceEvent(
-            LibraryErrorStatus,
-            "[ lib] ERROR, %u, %s.",
-            Status,
-            "NCryptGetProperty failed");
         goto Exit;
     }
 
     if ((ExportPolicyProperty & NCRYPT_ALLOW_PLAINTEXT_EXPORT_FLAG) == 0) {
-        QuicTraceEvent(
-            LibraryError,
-            "[ lib] ERROR, %s.",
-            "Requested certificate does not support exporting. An exportable certificate is required");
         //
         // This probably should be a specific error.
         //
@@ -314,11 +275,6 @@ CxPlatCertExtractPrivateKey(
     if (NULL == TempCertStore) {
         LastError = GetLastError();
         Status = HRESULT_FROM_WIN32(LastError);
-        QuicTraceEvent(
-            LibraryErrorStatus,
-            "[ lib] ERROR, %u, %s.",
-            LastError,
-            "CertOpenStore failed");
         goto Exit;
     }
 
@@ -334,11 +290,6 @@ CxPlatCertExtractPrivateKey(
             NULL)) {
         LastError = GetLastError();
         Status = HRESULT_FROM_WIN32(LastError);
-        QuicTraceEvent(
-            LibraryErrorStatus,
-            "[ lib] ERROR, %u, %s.",
-            LastError,
-            "CertAddCertificateContextToStore failed");
         goto Exit;
     }
 
@@ -348,11 +299,6 @@ CxPlatCertExtractPrivateKey(
             QUIC_POOL_PLATFORM_TMP_ALLOC,
             &PasswordW);
     if (QUIC_FAILED(Status)) {
-        QuicTraceEvent(
-            LibraryErrorStatus,
-            "[ lib] ERROR, %u, %s.",
-            Status,
-            "Convert temporary password to unicode");
         goto Exit;
     }
 
@@ -369,21 +315,11 @@ CxPlatCertExtractPrivateKey(
             Flags)) {
         LastError = GetLastError();
         Status = HRESULT_FROM_WIN32(LastError);
-        QuicTraceEvent(
-            LibraryErrorStatus,
-            "[ lib] ERROR, %u, %s.",
-            LastError,
-            "PFXExportCertStoreEx get size failed");
         goto Exit;
     }
 
     PfxDataBlob.pbData = CXPLAT_ALLOC_NONPAGED(PfxDataBlob.cbData, QUIC_POOL_TLS_PFX);
     if (PfxDataBlob.pbData == NULL) {
-        QuicTraceEvent(
-            AllocFailure,
-            "Allocation of '%s' failed. (%llu bytes)",
-            "PFX data",
-            PfxDataBlob.cbData);
         Status = QUIC_STATUS_OUT_OF_MEMORY;
         goto Exit;
     }
@@ -396,11 +332,6 @@ CxPlatCertExtractPrivateKey(
             Flags)) {
         LastError = GetLastError();
         Status = HRESULT_FROM_WIN32(LastError);
-        QuicTraceEvent(
-            LibraryErrorStatus,
-            "[ lib] ERROR, %u, %s.",
-            LastError,
-            "PFXExportCertStoreEx get size failed");
         goto Exit;
     }
 
