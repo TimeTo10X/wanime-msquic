@@ -98,9 +98,9 @@ QuicTimerWheelUninitialize(
             CXPLAT_LIST_ENTRY* ListHead = &TimerWheel->Slots[i];
             CXPLAT_LIST_ENTRY* Entry = ListHead->Flink;
             while (Entry != ListHead) {
-                QUIC_CONNECTION* Connection =
-                    CXPLAT_CONTAINING_RECORD(Entry, QUIC_CONNECTION, TimerLink);
-                CXPLAT_DBG_ASSERT(!Connection);
+                // QUIC_CONNECTION* Connection =
+                //     CXPLAT_CONTAINING_RECORD(Entry, QUIC_CONNECTION, TimerLink);
+                // CXPLAT_DBG_ASSERT(!Connection);
                 Entry = Entry->Flink;
             }
             CXPLAT_TEL_ASSERT(CxPlatListIsEmpty(&TimerWheel->Slots[i]));
