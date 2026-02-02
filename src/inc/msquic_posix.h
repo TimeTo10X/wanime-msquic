@@ -549,7 +549,11 @@ extern "C++" {
 } // extern "C++"
 #endif
 
-typedef struct CXPLAT_EVENTQ QUIC_EVENTQ;
+#if CXPLAT_USE_IO_URING && defined(__x86_64__) // liburing
+    typedef struct CXPLAT_EVENTQ QUIC_EVENTQ;   // ← io_uring path
+#else // epoll
+    typedef int QUIC_EVENTQ;                     // ← epoll path (int)
+#endif
 typedef struct io_uring_cqe* CXPLAT_CQE;
 typedef
 _IRQL_requires_max_(PASSIVE_LEVEL)
@@ -573,8 +577,6 @@ typedef struct CXPLAT_SQE QUIC_SQE;
 
 #include <sys/epoll.h>
 #include <sys/eventfd.h>
-
-typedef int QUIC_EVENTQ;
 
 typedef struct epoll_event QUIC_CQE;
 
