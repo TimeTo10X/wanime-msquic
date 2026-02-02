@@ -132,11 +132,6 @@ QuicCryptoInitialize(
     Crypto->TlsState.BufferAllocLength = SendBufferLength;
     Crypto->TlsState.Buffer = CXPLAT_ALLOC_NONPAGED(SendBufferLength, QUIC_POOL_TLS_BUFFER);
     if (Crypto->TlsState.Buffer == NULL) {
-        QuicTraceEvent(
-            AllocFailure,
-            "Allocation of '%s' failed. (%llu bytes)",
-            "crypto send buffer",
-            SendBufferLength);
         Status = QUIC_STATUS_OUT_OF_MEMORY;
         goto Exit;
     }
@@ -186,12 +181,6 @@ QuicCryptoInitialize(
             &Crypto->TlsState.ReadKeys[QUIC_PACKET_KEY_INITIAL],
             &Crypto->TlsState.WriteKeys[QUIC_PACKET_KEY_INITIAL]);
     if (QUIC_FAILED(Status)) {
-        QuicTraceEvent(
-            ConnErrorStatus,
-            "[conn][%p] ERROR, %u, %s.",
-            Connection,
-            Status,
-            "Creating initial keys");
         goto Exit;
     }
     CXPLAT_DBG_ASSERT(Crypto->TlsState.ReadKeys[QUIC_PACKET_KEY_INITIAL] != NULL);
@@ -333,12 +322,6 @@ QuicCryptoInitializeTls(
 
     Status = CxPlatTlsInitialize(&TlsConfig, &Crypto->TlsState, &Crypto->TLS);
     if (QUIC_FAILED(Status)) {
-        QuicTraceEvent(
-            ConnErrorStatus,
-            "[conn][%p] ERROR, %u, %s.",
-            Connection,
-            Status,
-            "CxPlatTlsInitialize");
         CXPLAT_FREE(TlsConfig.LocalTPBuffer, QUIC_POOL_TLS_TRANSPARAMS);
         goto Error;
     }
@@ -449,12 +432,6 @@ QuicCryptoOnVersionChange(
             &Crypto->TlsState.ReadKeys[QUIC_PACKET_KEY_INITIAL],
             &Crypto->TlsState.WriteKeys[QUIC_PACKET_KEY_INITIAL]);
     if (QUIC_FAILED(Status)) {
-        QuicTraceEvent(
-            ConnErrorStatus,
-            "[conn][%p] ERROR, %u, %s.",
-            Connection,
-            Status,
-            "Creating initial keys");
         QuicConnFatalError(Connection, Status, "New version key OOM");
         goto Exit;
     }
@@ -1300,11 +1277,6 @@ QuicCryptoProcessDataFrame(
         CXPLAT_DBG_ASSERT(BufferSizeNeeded == 0);
         if (QUIC_FAILED(Status)) {
             if (Status == QUIC_STATUS_BUFFER_TOO_SMALL) {
-                QuicTraceEvent(
-                    ConnError,
-                    "[conn][%p] ERROR, %s.",
-                    Connection,
-                    "Tried to write beyond crypto flow control limit.");
                 QuicConnTransportError(Connection, QUIC_ERROR_CRYPTO_BUFFER_EXCEEDED);
             }
             goto Error;
@@ -1398,12 +1370,6 @@ QuicCryptoProcessTlsCompletion(
     QUIC_CONNECTION* Connection = QuicCryptoGetConnection(Crypto);
 
     if (Crypto->ResultFlags & CXPLAT_TLS_RESULT_ERROR) {
-        QuicTraceEvent(
-            ConnErrorStatus,
-            "[conn][%p] ERROR, %u, %s.",
-            Connection,
-            Crypto->TlsState.AlertCode,
-            "Received alert from TLS");
         QuicConnTransportError(
             Connection,
             QUIC_ERROR_CRYPTO_ERROR(0xFF & Crypto->TlsState.AlertCode));
@@ -1435,11 +1401,6 @@ QuicCryptoProcessTlsCompletion(
     }
 
     if (Crypto->ResultFlags & CXPLAT_TLS_RESULT_WRITE_KEY_UPDATED) {
-        QuicTraceEvent(
-            ConnWriteKeyUpdated,
-            "[conn][%p] Write Key Updated, %hhu.",
-            Connection,
-            Crypto->TlsState.WriteKey);
         CXPLAT_DBG_ASSERT(Crypto->TlsState.WriteKey <= QUIC_PACKET_KEY_1_RTT);
         _Analysis_assume_(Crypto->TlsState.WriteKey >= 0);
         CXPLAT_TEL_ASSERT(Crypto->TlsState.WriteKeys[Crypto->TlsState.WriteKey] != NULL);
@@ -1488,21 +1449,11 @@ QuicCryptoProcessTlsCompletion(
         // at the previous encryption level.
         //
         if (QuicRecvBufferHasUnreadData(&Crypto->RecvBuffer)) {
-            QuicTraceEvent(
-                ConnError,
-                "[conn][%p] ERROR, %s.",
-                Connection,
-                "Leftover crypto data in previous encryption level.");
             QuicConnTransportError(Connection, QUIC_ERROR_PROTOCOL_VIOLATION);
             return;
         }
 
         Crypto->RecvEncryptLevelStartOffset = Crypto->RecvTotalConsumed;
-        QuicTraceEvent(
-            ConnReadKeyUpdated,
-            "[conn][%p] Read Key Updated, %hhu.",
-            Connection,
-            Crypto->TlsState.ReadKey);
 
         CXPLAT_DBG_ASSERT(Crypto->TlsState.ReadKey <= QUIC_PACKET_KEY_1_RTT);
         _Analysis_assume_(Crypto->TlsState.ReadKey >= 0);
@@ -1581,10 +1532,6 @@ QuicCryptoProcessTlsCompletion(
         CXPLAT_TEL_ASSERT(!Connection->State.Connected);
         CXPLAT_DBG_ASSERT(!Crypto->TicketValidationPending && !Crypto->CertValidationPending);
 
-        QuicTraceEvent(
-            ConnHandshakeComplete,
-            "[conn][%p] Handshake complete",
-            Connection);
 
         //
         // We should have the 1-RTT keys by connection complete time.
@@ -1625,12 +1572,6 @@ QuicCryptoProcessTlsCompletion(
             CXPLAT_DBG_ASSERT(InitialSourceCid->CID.IsInitial);
             Connection->SourceCids.Next->Next = Connection->SourceCids.Next->Next->Next;
             CXPLAT_DBG_ASSERT(!InitialSourceCid->CID.IsInLookupTable);
-            QuicTraceEvent(
-                ConnSourceCidRemoved,
-                "[conn][%p] (SeqNum=%llu) Removed Source CID: %!CID!",
-                Connection,
-                InitialSourceCid->CID.SequenceNumber,
-                CASTED_CLOG_BYTEARRAY(InitialSourceCid->CID.Length, InitialSourceCid->CID.Data));
             CXPLAT_FREE(InitialSourceCid, QUIC_POOL_CIDHASH);
         }
 
@@ -1757,11 +1698,6 @@ QuicCryptoCustomCertValidationComplete(
             QuicCryptoProcessData(Crypto, FALSE);
         }
     } else {
-        QuicTraceEvent(
-            ConnError,
-            "[conn][%p] ERROR, %s.",
-            QuicCryptoGetConnection(Crypto),
-            "Custom cert validation failed.");
         CXPLAT_DBG_ASSERT(TlsAlert <= QUIC_TLS_ALERT_CODE_MAX);
         QuicConnTransportError(
             QuicCryptoGetConnection(Crypto),
@@ -2041,12 +1977,6 @@ QuicCryptoGenerateNewKeys(
                 Connection->Crypto.TlsState.ReadKeys[QUIC_PACKET_KEY_1_RTT],
                 NewReadKey);
         if (QUIC_FAILED(Status)) {
-            QuicTraceEvent(
-                ConnErrorStatus,
-                "[conn][%p] ERROR, %u, %s.",
-                Connection,
-                Status,
-                "Failed to update read packet key.");
             goto Error;
         }
 
@@ -2056,12 +1986,6 @@ QuicCryptoGenerateNewKeys(
                 Connection->Crypto.TlsState.WriteKeys[QUIC_PACKET_KEY_1_RTT],
                 NewWriteKey);
         if (QUIC_FAILED(Status)) {
-            QuicTraceEvent(
-                ConnErrorStatus,
-                "[conn][%p] ERROR, %u, %s.",
-                Connection,
-                Status,
-                "Failed to update write packet key");
             goto Error;
         }
     }
@@ -2072,10 +1996,6 @@ Error:
         QuicPacketKeyFree(*NewReadKey);
         *NewReadKey = NULL;
     } else {
-        QuicTraceEvent(
-            ConnNewPacketKeys,
-            "[conn][%p] New packet keys created successfully.",
-            Connection);
     }
 
     return Status;
@@ -2145,11 +2065,6 @@ QuicCryptoUpdateKeyPhase(
     QUIC_PACKET_SPACE* PacketSpace = Connection->Packets[QUIC_ENCRYPT_LEVEL_1_RTT];
 
     UNREFERENCED_PARAMETER(LocalUpdate);
-    QuicTraceEvent(
-        ConnKeyPhaseChange,
-        "[conn][%p] Key phase change (locally initiated=%hhu).",
-        Connection,
-        LocalUpdate);
 
     PacketSpace->WriteKeyPhaseStartPacketNumber = Connection->Send.NextPacketNumber;
     PacketSpace->CurrentKeyPhase = !PacketSpace->CurrentKeyPhase;
@@ -2241,33 +2156,18 @@ QuicCryptoDecodeAddr(
     CxPlatZeroMemory(Addr, sizeof(QUIC_ADDR));
 
     if (BufferLength < QUIC_CR_STATE_MIN_ADDR_LENGTH) {
-        QuicTraceEvent(
-            ConnError,
-            "[conn][%p] ERROR, %s.",
-            Connection,
-            "Careful Resume State address buffer too small");
         return FALSE;
     }
 
     uint16_t Offset = 0;
     QUIC_VAR_INT Family = 0;
     if (!QuicVarIntDecode(BufferLength, Buffer, &Offset, &Family)) {
-        QuicTraceEvent(
-            ConnError,
-            "[conn][%p] ERROR, %s.",
-            Connection,
-            "Invalid Careful Resume State address family");
         return FALSE;
     }
 
     QuicAddrSetFamily(Addr, (QUIC_ADDRESS_FAMILY)Family);
     if (Family == QUIC_ADDRESS_FAMILY_INET) {
         if (BufferLength < Offset + sizeof(Addr->Ipv4.sin_addr)) {
-            QuicTraceEvent(
-                ConnError,
-                "[conn][%p] ERROR, %s.",
-                Connection,
-                "Invalid Careful Resume State IPv4 address");
             return FALSE;
         }
         CxPlatCopyMemory(&Addr->Ipv4.sin_addr, Buffer + Offset, sizeof(Addr->Ipv4.sin_addr));
@@ -2275,22 +2175,12 @@ QuicCryptoDecodeAddr(
     }
     else if (Family == QUIC_ADDRESS_FAMILY_INET6) {
         if (BufferLength < Offset + sizeof(Addr->Ipv6.sin6_addr)) {
-            QuicTraceEvent(
-                ConnError,
-                "[conn][%p] ERROR, %s.",
-                Connection,
-                "Invalid Careful Resume State IPv6 address");
             return FALSE;
         }
         CxPlatCopyMemory(&Addr->Ipv6.sin6_addr, Buffer + Offset, sizeof(Addr->Ipv6.sin6_addr));
         Offset += sizeof(Addr->Ipv6.sin6_addr);
     }
     else {
-        QuicTraceEvent(
-            ConnError,
-            "[conn][%p] ERROR, %s.",
-            Connection,
-            "Unsupported address family in Careful Resume State");
         return FALSE;
     }
 
@@ -2353,11 +2243,6 @@ QuicCryptoEncodeCRState(
     uint32_t RequiredCRLen = QuicCryptoGetEncodeCRStateSize(CarefulResumeState);
 
     if (BufferLength < RequiredCRLen) {
-        QuicTraceEvent(
-            ConnError,
-            "[conn] [%p] ERROR, %s.",
-            Connection,
-            "Buffer too small for Careful Resume State");
         CXPLAT_DBG_ASSERT(FALSE);
         return;
     }
@@ -2369,11 +2254,6 @@ QuicCryptoEncodeCRState(
 
     QuicCryptoEncodeAddr(EncodedAddr, &AddrLen, &CarefulResumeState->RemoteEndpoint);
     if (AddrLen > sizeof(EncodedAddr)) {
-        QuicTraceEvent(
-            ConnError,
-            "[conn][%p] ERROR, %s.",
-            Connection,
-            "Unexpected address size");
         CXPLAT_DBG_ASSERT(FALSE);
         return;
     }
@@ -2414,11 +2294,6 @@ QuicCryptoDecodeCRState(
         CRBufLength);
 
     if (CRBufLength < QUIC_CR_STATE_ENCODED_MIN_LENGTH()) {
-        QuicTraceEvent(
-            ConnError,
-            "[conn][%p] ERROR, %s.",
-            Connection,
-            "Careful Resume State buffer too small");
         return FALSE;
     }
 
@@ -2433,11 +2308,6 @@ QuicCryptoDecodeCRState(
     if (!QuicVarIntDecode(CRBufLength, Buffer, &Offset, &AddrLen) ||
         AddrLen < QUIC_CR_STATE_MIN_ADDR_LENGTH ||
         AddrLen > QUIC_CR_STATE_MAX_ADDR_LENGTH) {
-        QuicTraceEvent(
-            ConnError,
-            "[conn][%p] ERROR, %s.",
-            Connection,
-            "Invalid Careful Resume State address length");
         return FALSE;
     }
 
@@ -2446,11 +2316,6 @@ QuicCryptoDecodeCRState(
     //
     if (!QuicVarIntDecode(CRBufLength, Buffer, &Offset, &CarefulResumeState->SmoothedRtt) ||
         !QuicVarIntDecode(CRBufLength, Buffer, &Offset, &CarefulResumeState->MinRtt)) {
-        QuicTraceEvent(
-            ConnError,
-            "[conn][%p] ERROR, %s.",
-            Connection,
-            "Invalid Careful Resume State RTT values");
         return FALSE;
     }
 
@@ -2458,20 +2323,10 @@ QuicCryptoDecodeCRState(
     // Read the variable length address field
     //
     if (CRBufLength < Offset + AddrLen) {
-        QuicTraceEvent(
-            ConnError,
-            "[conn][%p] ERROR, %s.",
-            Connection,
-            "CR buffer is too small for address");
         return FALSE;
     }
 
     if (!QuicCryptoDecodeAddr(Buffer + Offset, (uint16_t)AddrLen, Connection, &CarefulResumeState->RemoteEndpoint)) {
-        QuicTraceEvent(
-            ConnError,
-            "[conn][%p] ERROR, %s.",
-            Connection,
-            "Invalid Careful Resume State address");
         return FALSE;
     }
 
@@ -2481,43 +2336,22 @@ QuicCryptoDecodeCRState(
     // Read the remaining var int values
     //
     if (!QuicVarIntDecode(CRBufLength, Buffer, &Offset, &CarefulResumeState->Expiration)) {
-        QuicTraceEvent(
-            ConnError,
-            "[conn][%p] ERROR, %s.",
-            Connection,
-            "Invalid Careful Resume State Expiration");
         return FALSE;
     }
 
     QUIC_VAR_INT Value = 0;
     if (!QuicVarIntDecode(CRBufLength, Buffer, &Offset, &Value) ||
         Value >= (uint8_t)QUIC_CONGESTION_CONTROL_ALGORITHM_MAX) {
-        QuicTraceEvent(
-            ConnErrorStatus,
-            "[conn][%p] ERROR, %u, %s.",
-            Connection,
-            (uint16_t)Value,
-            "Invalid Careful Resume State algorithm");
         return FALSE;
     }
     CarefulResumeState->Algorithm = (QUIC_CONGESTION_CONTROL_ALGORITHM)Value;
 
     if (!QuicVarIntDecode(CRBufLength, Buffer, &Offset, &Value)) {
-        QuicTraceEvent(
-            ConnError,
-            "[conn][%p] ERROR, %s.",
-            Connection,
-            "Invalid Careful Resume State congestion window");
         return FALSE;
     }
     CarefulResumeState->CongestionWindow = (uint32_t)Value;
 
     if (Offset != CRBufLength) {
-        QuicTraceEvent(
-            ConnError,
-            "[conn][%p] ERROR, %s.",
-            Connection,
-            "Careful Resume State buffer length mismatch");
         return FALSE;
     }
     return TRUE;
@@ -2601,11 +2435,6 @@ QuicCryptoEncodeServerTicket(
 
     TicketBuffer = CXPLAT_ALLOC_NONPAGED(TotalTicketLength, QUIC_POOL_SERVER_CRYPTO_TICKET);
     if (TicketBuffer == NULL) {
-        QuicTraceEvent(
-            AllocFailure,
-            "Allocation of '%s' failed. (%llu bytes)",
-            "Server resumption ticket",
-            TotalTicketLength);
         Status = QUIC_STATUS_OUT_OF_MEMORY;
         goto Error;
     }
@@ -2692,107 +2521,52 @@ QuicCryptoDecodeServerTicket(
     }
 
     if (!QuicVarIntDecode(TicketLength, Ticket, &Offset, &TicketVersion)) {
-        QuicTraceEvent(
-            ConnError,
-            "[conn][%p] ERROR, %s.",
-            Connection,
-            "Resumption Ticket version failed to decode");
         goto Error;
     }
 
     if (!IsQuicIncomingResumptionTicketSupported(TicketVersion)) {
-        QuicTraceEvent(
-            ConnError,
-            "[conn][%p] ERROR, %s.",
-            Connection,
-            "Resumption Ticket version unsupported");
         goto Error;
     }
 
     if (TicketLength < Offset + sizeof(uint32_t)) {
-        QuicTraceEvent(
-            ConnError,
-            "[conn][%p] ERROR, %s.",
-            Connection,
-            "Resumption Ticket too short to hold QUIC version");
         goto Error;
     }
 
     uint32_t QuicVersion;
     memcpy(&QuicVersion, Ticket + Offset, sizeof(QuicVersion));
     if (!QuicVersionNegotiationExtIsVersionClientSupported(Connection, QuicVersion)) {
-        QuicTraceEvent(
-            ConnError,
-            "[conn][%p] ERROR, %s.",
-            Connection,
-            "Resumption Ticket for different QUIC version");
         goto Error;
     }
     Offset += sizeof(QuicVersion);
 
     if (!QuicVarIntDecode(TicketLength, Ticket, &Offset, &AlpnLength)) {
-        QuicTraceEvent(
-            ConnError,
-            "[conn][%p] ERROR, %s.",
-            Connection,
-            "Resumption Ticket ALPN length failed to decode");
         goto Error;
     }
 
     if (!QuicVarIntDecode(TicketLength, Ticket, &Offset, &TPLength)) {
-        QuicTraceEvent(
-            ConnError,
-            "[conn][%p] ERROR, %s.",
-            Connection,
-            "Resumption Ticket TP length failed to decode");
         goto Error;
     }
 
     if (TicketVersion == CXPLAT_TLS_RESUMPTION_TICKET_VERSION_V2) {
         if (!QuicVarIntDecode(TicketLength, Ticket, &Offset, &CRLength)) {
-            QuicTraceEvent(
-                ConnError,
-                "[conn][%p] ERROR, %s.",
-                Connection,
-                "Resumption Ticket CR length failed to decode");
             goto Error;
         }
     }
 
     if (!QuicVarIntDecode(TicketLength, Ticket, &Offset, &AppTicketLength)) {
-        QuicTraceEvent(
-            ConnError,
-            "[conn][%p] ERROR, %s.",
-            Connection,
-            "Resumption Ticket app data length failed to decode");
         goto Error;
     }
 
     if (TicketLength < Offset + AlpnLength) {
-        QuicTraceEvent(
-            ConnError,
-            "[conn][%p] ERROR, %s.",
-            Connection,
-            "Resumption Ticket too small for ALPN");
         goto Error;
     }
 
     if (CxPlatTlsAlpnFindInList(AlpnListLength, AlpnList, (uint8_t)AlpnLength, Ticket + Offset) == NULL) {
-        QuicTraceEvent(
-            ConnError,
-            "[conn][%p] ERROR, %s.",
-            Connection,
-            "Resumption Ticket ALPN not present in ALPN list");
         goto Error;
     }
     Offset += (uint16_t)AlpnLength;
 
     if (TicketLength < Offset + TPLength) {
-        QuicTraceEvent(
-            ConnError,
-            "[conn][%p] ERROR, %s.",
-            Connection,
-            "Resumption Ticket too small for Transport Parameters");
         goto Error;
     }
 
@@ -2802,22 +2576,12 @@ QuicCryptoDecodeServerTicket(
             Ticket + Offset,
             (uint16_t)TPLength,
             DecodedTP)) {
-        QuicTraceEvent(
-            ConnError,
-            "[conn][%p] ERROR, %s.",
-            Connection,
-            "Resumption Ticket TParams failed to decode");
         goto Error;
     }
     Offset += (uint16_t)TPLength;
 
     if (TicketVersion == CXPLAT_TLS_RESUMPTION_TICKET_VERSION_V2) {
         if (TicketLength < Offset + CRLength) {
-            QuicTraceEvent(
-                ConnError,
-                "[conn][%p] ERROR, %s.",
-                Connection,
-                "Resumption Ticket too small for V2 extensions");
             goto Error;
         }
 
@@ -2827,11 +2591,6 @@ QuicCryptoDecodeServerTicket(
                 Ticket + Offset,
                 (uint16_t)CRLength,
                 Connection)) {
-            QuicTraceEvent(
-                ConnError,
-                "[conn][%p] ERROR, %s.",
-                Connection,
-                "Resumption Ticket V2 extensions failed to decode");
             goto Error;
         }
 
@@ -2845,11 +2604,6 @@ QuicCryptoDecodeServerTicket(
             *AppData = Ticket + Offset;
         }
     } else {
-        QuicTraceEvent(
-            ConnError,
-            "[conn][%p] ERROR, %s.",
-            Connection,
-            "Resumption Ticket app data length corrupt");
     }
 
 Error:
@@ -2917,11 +2671,6 @@ QuicCryptoEncodeClientTicket(
 
     ClientTicketBuffer = CXPLAT_ALLOC_NONPAGED(ClientTicketBufferLength, QUIC_POOL_CLIENT_CRYPTO_TICKET);
     if (ClientTicketBuffer == NULL) {
-        QuicTraceEvent(
-            AllocFailure,
-            "Allocation of '%s' failed. (%llu bytes)",
-            "Client resumption ticket",
-            ClientTicketBufferLength);
         Status = QUIC_STATUS_OUT_OF_MEMORY;
         goto Error;
     }
@@ -2986,61 +2735,26 @@ QuicCryptoDecodeClientTicket(
     *QuicVersion = 0;
 
     if (!QuicVarIntDecode(ClientTicketLength, ClientTicket, &Offset, &TicketVersion)) {
-        QuicTraceEvent(
-            ConnError,
-            "[conn][%p] ERROR, %s.",
-            Connection,
-            "Client Ticket version failed to decode");
         goto Error;
     }
     if (TicketVersion != CXPLAT_TLS_RESUMPTION_CLIENT_TICKET_VERSION) {
-        QuicTraceEvent(
-            ConnError,
-            "[conn][%p] ERROR, %s.",
-            Connection,
-            "Client Ticket version unsupported");
         goto Error;
     }
     if (ClientTicketLength < Offset + sizeof(uint32_t)) {
-        QuicTraceEvent(
-            ConnError,
-            "[conn][%p] ERROR, %s.",
-            Connection,
-            "Client Ticket not long enough for QUIC version");
         goto Error;
     }
     CxPlatCopyMemory(QuicVersion, ClientTicket + Offset, sizeof(*QuicVersion));
     if (!QuicIsVersionSupported(*QuicVersion)) {
-        QuicTraceEvent(
-            ConnError,
-            "[conn][%p] ERROR, %s.",
-            Connection,
-            "Resumption Ticket for unsupported QUIC version");
         goto Error;
     }
     Offset += sizeof(*QuicVersion);
     if (!QuicVarIntDecode(ClientTicketLength, ClientTicket, &Offset, &TPLength)) {
-        QuicTraceEvent(
-            ConnError,
-            "[conn][%p] ERROR, %s.",
-            Connection,
-            "Client Ticket TP length failed to decode");
         goto Error;
     }
     if (!QuicVarIntDecode(ClientTicketLength, ClientTicket, &Offset, &TicketLength)) {
-        QuicTraceEvent(
-            ConnError,
-            "[conn][%p] ERROR, %s.",
-            Connection,
-            "Resumption Ticket data length failed to decode");
         goto Error;
     }
     if (ClientTicketLength < Offset + TPLength) {
-        QuicTraceEvent(
-            ConnError,
-            "[conn][%p] ERROR, %s.",
-            Connection,
-            "Client Ticket not long enough for Client Transport Parameters");
         goto Error;
     }
     if (!QuicCryptoTlsDecodeTransportParameters(
@@ -3049,30 +2763,15 @@ QuicCryptoDecodeClientTicket(
             ClientTicket + Offset,
             (uint16_t)TPLength,
             DecodedTP)) {
-        QuicTraceEvent(
-            ConnError,
-            "[conn][%p] ERROR, %s.",
-            Connection,
-            "Resumption Ticket TParams failed to decode");
         goto Error;
     }
     Offset += (uint16_t)TPLength;
     if (Offset + TicketLength != ClientTicketLength) {
-        QuicTraceEvent(
-            ConnError,
-            "[conn][%p] ERROR, %s.",
-            Connection,
-            "Client resumption ticket length is corrupt");
         goto Error;
     }
     if (TicketLength != 0) {
         *ServerTicket = CXPLAT_ALLOC_NONPAGED((uint32_t)TicketLength, QUIC_POOL_CRYPTO_RESUMPTION_TICKET);
         if (*ServerTicket == NULL) {
-            QuicTraceEvent(
-                AllocFailure,
-                "Allocation of '%s' failed. (%llu bytes)",
-                "Resumption ticket copy",
-                TicketLength);
             Status = QUIC_STATUS_OUT_OF_MEMORY;
             goto Error;
         }
@@ -3124,11 +2823,6 @@ QuicCryptoReNegotiateAlpn(
     }
 
     if (NewNegotiatedAlpn == NULL) {
-        QuicTraceEvent(
-            ConnError,
-            "[conn][%p] ERROR, %s.",
-            Connection,
-            "No ALPN match found");
         QuicConnTransportError(
             Connection,
             QUIC_ERROR_CRYPTO_NO_APPLICATION_PROTOCOL);
@@ -3150,11 +2844,6 @@ QuicCryptoReNegotiateAlpn(
     } else {
         NegotiatedAlpn = CXPLAT_ALLOC_NONPAGED(NegotiatedAlpnLength + sizeof(uint8_t), QUIC_POOL_ALPN);
         if (NegotiatedAlpn == NULL) {
-            QuicTraceEvent(
-                AllocFailure,
-                "Allocation of '%s' failed. (%llu bytes)",
-                "NegotiatedAlpn",
-                NegotiatedAlpnLength);
             QuicConnTransportError(
                 Connection,
                 QUIC_ERROR_INTERNAL_ERROR);
