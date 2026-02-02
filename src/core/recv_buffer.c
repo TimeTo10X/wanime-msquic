@@ -296,11 +296,6 @@ QuicRecvBufferInitialize(
         } else {
             Chunk = CXPLAT_ALLOC_NONPAGED(sizeof(QUIC_RECV_CHUNK) + AllocBufferLength, QUIC_POOL_RECVBUF);
             if (Chunk == NULL) {
-                QuicTraceEvent(
-                    AllocFailure,
-                    "Allocation of '%s' failed. (%llu bytes)",
-                    "recv_buffer",
-                    sizeof(QUIC_RECV_CHUNK) + AllocBufferLength);
                 return QUIC_STATUS_OUT_OF_MEMORY;
             }
             QuicRecvChunkInitialize(Chunk, AllocBufferLength, (uint8_t*)(Chunk + 1), FALSE);
@@ -488,11 +483,6 @@ QuicRecvBufferResize(
     QUIC_RECV_CHUNK* NewChunk =
         CXPLAT_ALLOC_NONPAGED(sizeof(QUIC_RECV_CHUNK) + TargetBufferLength, QUIC_POOL_RECVBUF);
     if (NewChunk == NULL) {
-        QuicTraceEvent(
-            AllocFailure,
-            "Allocation of '%s' failed. (%llu bytes)",
-            "recv_buffer",
-            sizeof(QUIC_RECV_CHUNK) + TargetBufferLength);
         return FALSE;
     }
 
@@ -720,11 +710,6 @@ QuicRecvBufferWrite(
             WriteLength,
             &WrittenRangesUpdated);
     if (!UpdatedRange) {
-        QuicTraceEvent(
-            AllocFailure,
-            "Allocation of '%s' failed. (%llu bytes)",
-            "recv_buffer range",
-            0);
         return QUIC_STATUS_OUT_OF_MEMORY;
     }
     if (!WrittenRangesUpdated) {
