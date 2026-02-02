@@ -53,6 +53,7 @@ QuicMtuDiscoveryMoveToSearchComplete(
     _In_ QUIC_CONNECTION* Connection
     )
 {
+    (void)Connection;
     // QUIC_PATH* Path =
     //     CXPLAT_CONTAINING_RECORD(MtuDiscovery, QUIC_PATH, MtuDiscovery);
     MtuDiscovery->IsSearchComplete = TRUE;
