@@ -146,11 +146,6 @@ XdpSocketContextSetEvents(
             xsk_socket__fd(Queue->XskInfo->Xsk),
             &SockFdEpEvt);
     if (Ret != 0) {
-        QuicTraceEvent(
-            XdpEpollErrorStatus,
-            "[ xdp]ERROR, %u, %s.",
-            errno,
-            "epoll_ctl failed");
     }
 }
 
@@ -505,21 +500,11 @@ CxPlatDpRawInterfaceInitialize(
     Status = CxPlatGetInterfaceRssQueueCount(Interface->IfIndex, &Interface->QueueCount);
     if (QUIC_FAILED(Status) || Interface->QueueCount == 0) {
         Status = QUIC_STATUS_INVALID_STATE;
-        QuicTraceEvent(
-            LibraryErrorStatus,
-            "[ lib] ERROR, %u, %s.",
-            Status,
-            "CxPlatGetInterfaceRssQueueCount");
         goto Error;
     }
 
     Interface->Queues = CxPlatAlloc(Interface->QueueCount * sizeof(*Interface->Queues), QUEUE_TAG);
     if (Interface->Queues == NULL) {
-        QuicTraceEvent(
-            AllocFailure,
-            "Allocation of '%s' failed. (%llu bytes)",
-            "XDP Queues",
-            Interface->QueueCount * sizeof(*Interface->Queues));
         Status = QUIC_STATUS_OUT_OF_MEMORY;
         goto Error;
     }
@@ -730,11 +715,6 @@ CxPlatDpRawInitialize(
             if (!Initialized) {
                 Interface = CxPlatAlloc(sizeof(XDP_INTERFACE), IF_TAG);
                 if (Interface == NULL) {
-                    QuicTraceEvent(
-                        AllocFailure,
-                        "Allocation of '%s' failed. (%llu bytes)",
-                        "XDP interface",
-                        sizeof(*Interface));
                     Status = QUIC_STATUS_OUT_OF_MEMORY;
                     goto Error;
                 }
@@ -745,11 +725,6 @@ CxPlatDpRawInitialize(
 
                 if (QUIC_FAILED(CxPlatDpRawInterfaceInitialize(
                         Xdp, Interface, ClientRecvContextLength))) {
-                    QuicTraceEvent(
-                        LibraryErrorStatus,
-                        "[ lib] ERROR, %u, %s.",
-                        Status,
-                        "CxPlatDpRawInterfaceInitialize");
                     CxPlatFree(Interface, IF_TAG);
                     continue;
                 }
@@ -760,10 +735,6 @@ CxPlatDpRawInitialize(
     freeifaddrs(ifaddr);
 
     if (CxPlatListIsEmpty(&Xdp->Interfaces)) {
-        QuicTraceEvent(
-            LibraryError,
-            "[ lib] ERROR, %s.",
-            "no XDP capable interface");
         Status = QUIC_STATUS_NOT_FOUND;
         goto Error;
     }
@@ -1297,11 +1268,6 @@ CxPlatXdpRx(
             &Packet->RecvData,
             FrameBuffer,
             (uint16_t)Len);
-        QuicTraceEvent(
-            RxConstructPacket,
-            "[ xdp][rx  ] Constructing Packet from Rx, local=%!ADDR!, remote=%!ADDR!",
-            CASTED_CLOG_BYTEARRAY(sizeof(Packet->RouteStorage.LocalAddress), &Packet->RouteStorage.LocalAddress),
-            CASTED_CLOG_BYTEARRAY(sizeof(Packet->RouteStorage.RemoteAddress), &Packet->RouteStorage.RemoteAddress));
 
         //
         // The route has been filled in with the packet's src/dst IP and ETH addresses, so
