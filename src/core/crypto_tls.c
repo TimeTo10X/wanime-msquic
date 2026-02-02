@@ -250,6 +250,7 @@ QuicCryptoTlsReadAlpnExtension(
        } ProtocolNameList;
     */
 
+    (void)Connection;
     //
     // The client-side ALPN extension contains a protocol ID list with at least
     // one protocol ID 1 to 255 bytes long, plus 1 byte of protocol ID size, plus
