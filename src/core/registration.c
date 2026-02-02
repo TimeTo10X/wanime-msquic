@@ -205,8 +205,6 @@ _IRQL_requires_max_(PASSIVE_LEVEL) QUIC_STATUS QUIC_API
     "SAL doesn't understand checking whether memory is tracked by Verifier.")
   if (MsQuicLib.IsVerifying && CxPlatVerifierEnabledByAddr(NewRegistration)) {
     Registration->IsVerifying = TRUE;
-    QuicTraceLogInfo(RegistrationVerifierEnabled,
-                     "[ reg][%p] Verifing enabled!", Registration);
   } else {
     Registration->IsVerifying = FALSE;
   }
