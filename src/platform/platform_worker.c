@@ -379,7 +379,7 @@ CxPlatWorkerPoolCreateExternal(
 
         CXPLAT_WORKER* Worker = &WorkerPool->Workers[i];
         if (!CxPlatWorkerPoolInitWorker(
-                Worker, IdealProcessor, Configs[i].EventQ, NULL)) {
+                Worker, IdealProcessor, (CXPLAT_EVENTQ*)Configs[i].EventQ, NULL)) {
             goto Error;
         }
         Executions[i] = (QUIC_EXECUTION*)Worker;
