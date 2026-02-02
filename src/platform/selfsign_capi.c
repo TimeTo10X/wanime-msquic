@@ -82,11 +82,6 @@ CleanTestCertificatesFromStore(BOOLEAN UserStore)
         CertDeleteCertificateFromStore(CertDuplicateCertificateContext(Cert));
         ++Deleted;
     }
-    QuicTraceLogInfo(
-        CertCleanTestCerts,
-        "[cert] %d test certificates found, and %d deleted",
-        Found,
-        Deleted);
 
     CertCloseStore(CertStore, 0);
 }
@@ -425,9 +420,6 @@ ReadKey:
             0,
             NCRYPT_SILENT_FLAG);
     if (hr == ERROR_SUCCESS) {
-        QuicTraceLogInfo(
-            CertOpenRsaKeySuccess,
-            "[cert] Successfully opened RSA key");
         goto Cleanup;
     } else if (hr != NTE_BAD_KEYSET) {
         goto Cleanup;
@@ -484,9 +476,6 @@ ReadKey:
         goto Cleanup;
     }
 
-    QuicTraceLogInfo(
-        CertCreateRsaKeySuccess,
-        "[cert] Successfully created key");
 
 Cleanup:
 
@@ -751,9 +740,6 @@ Done:
             Cert = NULL;
         }
     } else {
-        QuicTraceLogWarning(
-            CertFindCertificateFriendlyName,
-            "[test] No certificate found by FriendlyName");
     }
     return Cert;
 }
@@ -788,16 +774,8 @@ FindOrCreateCertificate(
     // continue anyway.
     //
     if (GetLastError() == ERROR_ALREADY_EXISTS) {
-        QuicTraceLogInfo(
-            CertCreationEventAlreadyCreated,
-            "[test] CreateEvent opened existing event");
         DWORD WaitResult = WaitForSingleObject(Event, CXPLAT_CERT_CREATION_EVENT_WAIT);
         if (WaitResult != WAIT_OBJECT_0) {
-            QuicTraceLogWarning(
-                CertWaitForCreationEvent,
-                "[test] WaitForSingleObject returned 0x%x, proceeding without caution... (GLE: 0x%x)",
-                WaitResult,
-                GetLastError());
         }
     } else {
         First = TRUE;
