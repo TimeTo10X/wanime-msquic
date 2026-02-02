@@ -142,11 +142,6 @@ CxPlatDataPathResolveAddress(
         goto Exit;
     }
 
-    QuicTraceLogError(
-        DatapathResolveHostNameFailed,
-        "[%p] Couldn't resolve hostname '%s' to an IP address",
-        Datapath,
-        HostName);
     Status = (QUIC_STATUS)Result;
 
 Exit:
