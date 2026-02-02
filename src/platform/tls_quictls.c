@@ -1616,7 +1616,7 @@ CxPlatTlsProcessData(
                 (OSSL_ENCRYPTION_LEVEL)TlsContext->State->ReadKey,
                 Buffer,
                 *BufferLength) != 1) {
-            char buf[256];
+            // char buf[256];
             TlsContext->ResultFlags |= CXPLAT_TLS_RESULT_ERROR;
             goto Exit;
         }
