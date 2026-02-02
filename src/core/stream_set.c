@@ -308,12 +308,6 @@ QuicStreamSetIndicateStreamsAvailable(
     Event.STREAMS_AVAILABLE.UnidirectionalCount =
         QuicStreamSetGetCountAvailable(StreamSet, Type | STREAM_ID_FLAG_IS_UNI_DIR);
 
-    QuicTraceLogConnVerbose(
-        IndicateStreamsAvailable,
-        Connection,
-        "Indicating QUIC_CONNECTION_EVENT_STREAMS_AVAILABLE [bi=%hu uni=%hu]",
-        Event.STREAMS_AVAILABLE.BidirectionalCount,
-        Event.STREAMS_AVAILABLE.UnidirectionalCount);
     (void)QuicConnIndicateEvent(Connection, &Event);
 }
 
@@ -326,10 +320,6 @@ QuicStreamIndicatePeerAccepted(
     if (Stream->Flags.IndicatePeerAccepted) {
         QUIC_STREAM_EVENT Event;
         Event.Type = QUIC_STREAM_EVENT_PEER_ACCEPTED;
-        QuicTraceLogStreamVerbose(
-            IndicatePeerAccepted,
-            Stream,
-            "Indicating QUIC_STREAM_EVENT_PEER_ACCEPTED");
         (void)QuicStreamIndicateEvent(Stream, &Event);
     }
 }
@@ -460,12 +450,6 @@ QuicStreamSetUpdateMaxStreams(
 
     if (MaxStreams > Info->MaxTotalStreamCount) {
 
-        QuicTraceLogConnVerbose(
-            PeerStreamCountsUpdated,
-            Connection,
-            "Peer updated max stream count (%hhu, %llu).",
-            BidirectionalStreams,
-            MaxStreams);
 
         BOOLEAN FlushSend = FALSE;
 
@@ -534,12 +518,6 @@ QuicStreamSetUpdateMaxCount(
     QUIC_CONNECTION* Connection = QuicStreamSetGetConnection(StreamSet);
     QUIC_STREAM_TYPE_INFO* Info = &StreamSet->Types[Type];
 
-    QuicTraceLogConnInfo(
-        MaxStreamCountUpdated,
-        Connection,
-        "App configured max stream count of %hu (type=%hhu).",
-        Count,
-        Type);
 
     if (!Connection->State.Started) {
         Info->MaxTotalStreamCount = Count;
@@ -808,23 +786,12 @@ QuicStreamSetGetStreamForPeer(
             Event.PEER_STREAM_STARTED.Stream = (HQUIC)Stream;
             Event.PEER_STREAM_STARTED.Flags = StreamFlags;
 
-            QuicTraceLogConnVerbose(
-                IndicatePeerStreamStarted,
-                Connection,
-                "Indicating QUIC_CONNECTION_EVENT_PEER_STREAM_STARTED [%p, 0x%x]",
-                Event.PEER_STREAM_STARTED.Stream,
-                Event.PEER_STREAM_STARTED.Flags);
 
             Stream->Flags.PeerStreamStartEventActive = TRUE;
             Status = QuicConnIndicateEvent(Connection, &Event);
             Stream->Flags.PeerStreamStartEventActive = FALSE;
 
             if (QUIC_FAILED(Status)) {
-                QuicTraceLogStreamWarning(
-                    NotAccepted,
-                    Stream,
-                    "New stream wasn't accepted, 0x%x",
-                    Status);
                 QuicStreamClose(Stream);
                 Stream = NULL;
             } else if (Stream->Flags.HandleClosed) {
@@ -835,10 +802,6 @@ QuicStreamSetGetStreamForPeer(
                     "App MUST set callback handler!");
                 if (Event.PEER_STREAM_STARTED.Flags & QUIC_STREAM_OPEN_FLAG_DELAY_ID_FC_UPDATES) {
                     Stream->Flags.DelayIdFcUpdate = TRUE;
-                    QuicTraceLogStreamVerbose(
-                        ConfiguredForDelayedIDFC,
-                        Stream,
-                        "Configured for delayed ID FC updates");
                 }
             }
 
