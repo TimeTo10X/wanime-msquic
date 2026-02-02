@@ -111,40 +111,24 @@ GenerateX509Cert(
     // Generate private key (RSA)
     PKey = EVP_PKEY_new();
     if (PKey == NULL) {
-        QuicTraceEvent(
-            LibraryError,
-            "[ lib] ERROR, %s.",
-            "EVP_PKEY_new failed");
         Status = QUIC_STATUS_TLS_ERROR;
         goto Exit;
     }
 
     EcKeyCtx = EVP_PKEY_CTX_new_id(EVP_PKEY_RSA, NULL);
     if (EcKeyCtx == NULL) {
-        QuicTraceEvent(
-            LibraryError,
-            "[ lib] ERROR, %s.",
-            "EVP_PKEY_CTX_new_id failed");
         Status = QUIC_STATUS_TLS_ERROR;
         goto Exit;
     }
 
     Ret = EVP_PKEY_keygen_init(EcKeyCtx);
     if (Ret != 1) {
-        QuicTraceEvent(
-            LibraryError,
-            "[ lib] ERROR, %s.",
-            "EVP_PKEY_keygen_init failed");
         Status = QUIC_STATUS_TLS_ERROR;
         goto Exit;
     }
 
     Ret = EVP_PKEY_keygen(EcKeyCtx, &PKey);
     if (Ret != 1) {
-        QuicTraceEvent(
-            LibraryError,
-            "[ lib] ERROR, %s.",
-            "EVP_PKEY_keygen failed");
         Status = QUIC_STATUS_TLS_ERROR;
         goto Exit;
     }
@@ -152,10 +136,6 @@ GenerateX509Cert(
     // Generate X509 certificate
     Cert = X509_new();
     if (Cert == NULL) {
-        QuicTraceEvent(
-            LibraryError,
-            "[ lib] ERROR, %s.",
-            "X509_new failed");
         Status = QUIC_STATUS_TLS_ERROR;
         goto Exit;
     }
@@ -164,10 +144,6 @@ GenerateX509Cert(
 
     Ret = ASN1_INTEGER_set(X509_get_serialNumber(Cert), 1);
     if (Ret != 1) {
-        QuicTraceEvent(
-            LibraryError,
-            "[ lib] ERROR, %s.",
-            "ASN1_INTEGER_set failed");
         Status = QUIC_STATUS_TLS_ERROR;
         goto Exit;
     }
@@ -189,10 +165,6 @@ GenerateX509Cert(
             -1,
             0);
     if (Ret != 1) {
-        QuicTraceEvent(
-            LibraryError,
-            "[ lib] ERROR, %s.",
-            "X509_NAME_add_entry_by_txt failed");
         Status = QUIC_STATUS_TLS_ERROR;
         goto Exit;
     }
@@ -207,10 +179,6 @@ GenerateX509Cert(
             -1,
             0);
     if (Ret != 1) {
-        QuicTraceEvent(
-            LibraryError,
-            "[ lib] ERROR, %s.",
-            "X509_NAME_add_entry_by_txt failed");
         Status = QUIC_STATUS_TLS_ERROR;
         goto Exit;
     }
@@ -225,10 +193,6 @@ GenerateX509Cert(
             -1,
             0);
     if (Ret != 1) {
-        QuicTraceEvent(
-            LibraryError,
-            "[ lib] ERROR, %s.",
-            "X509_NAME_add_entry_by_txt failed");
         Status = QUIC_STATUS_TLS_ERROR;
         goto Exit;
     }
@@ -243,10 +207,6 @@ GenerateX509Cert(
 
     Ret = X509_set_issuer_name(Cert, IssuerName);
     if (Ret != 1) {
-        QuicTraceEvent(
-            LibraryError,
-            "[ lib] ERROR, %s.",
-            "X509_set_issuer_name failed");
         Status = QUIC_STATUS_TLS_ERROR;
         goto Exit;
     }
@@ -261,10 +221,6 @@ GenerateX509Cert(
         ex = X509V3_EXT_conf_nid(NULL, &ctx, NID_basic_constraints,
                                  "critical,CA:TRUE");
         if (ex == NULL) {
-            QuicTraceEvent(
-                LibraryError,
-                "[ lib] ERROR, %s.",
-                "X509V3_EXT_conf_nid failed");
             Status = QUIC_STATUS_TLS_ERROR;
             goto Exit;
         }
@@ -273,10 +229,6 @@ GenerateX509Cert(
         X509_EXTENSION_free(ex);
 
         if (Ret <= 0) {
-            QuicTraceEvent(
-                LibraryError,
-                "[ lib] ERROR, %s.",
-                "X509_add_ext failed");
             Status = QUIC_STATUS_TLS_ERROR;
             goto Exit;
         }
@@ -290,10 +242,6 @@ GenerateX509Cert(
     }
 
     if (Ret <= 0) {
-        QuicTraceEvent(
-            LibraryError,
-            "[ lib] ERROR, %s.",
-            "X509_sign failed");
         Status = QUIC_STATUS_TLS_ERROR;
         goto Exit;
     }
@@ -368,20 +316,12 @@ CxPlatTlsGenerateSelfSignedCert(
     if (CaFileName != NULL) {
         Fd = fopen(CaFileName, "wb");
         if (Fd == NULL) {
-            QuicTraceEvent(
-                LibraryError,
-                "[ lib] ERROR, %s.",
-                "fopen failed");
             Status = QUIC_STATUS_TLS_ERROR;
             goto Exit;
         }
 
         Ret = PEM_write_X509(Fd, CaX509);
         if (Ret != 1) {
-            QuicTraceEvent(
-                LibraryError,
-                "[ lib] ERROR, %s.",
-                "PEM_write_X509 failed");
             Status = QUIC_STATUS_TLS_ERROR;
             goto Exit;
         }
@@ -394,10 +334,6 @@ CxPlatTlsGenerateSelfSignedCert(
 
         Fd = fopen(PrivateKeyFileName, "wb");
         if (Fd == NULL) {
-            QuicTraceEvent(
-                LibraryError,
-                "[ lib] ERROR, %s.",
-                "fopen failed");
             Status = QUIC_STATUS_TLS_ERROR;
             goto Exit;
         }
@@ -412,10 +348,6 @@ CxPlatTlsGenerateSelfSignedCert(
                 NULL,
                 Password);
         if (Ret != 1) {
-            QuicTraceEvent(
-                LibraryError,
-                "[ lib] ERROR, %s.",
-                "PEM_write_PrivateKey failed");
             Status = QUIC_STATUS_TLS_ERROR;
             goto Exit;
         }
@@ -425,20 +357,12 @@ CxPlatTlsGenerateSelfSignedCert(
 
         Fd = fopen(CertFileName, "wb");
         if (Fd == NULL) {
-            QuicTraceEvent(
-                LibraryError,
-                "[ lib] ERROR, %s.",
-                "fopen failed");
             Status = QUIC_STATUS_TLS_ERROR;
             goto Exit;
         }
 
         Ret = PEM_write_X509(Fd, x509);
         if (Ret != 1) {
-            QuicTraceEvent(
-                LibraryError,
-                "[ lib] ERROR, %s.",
-                "PEM_write_X509 failed");
             Status = QUIC_STATUS_TLS_ERROR;
             goto Exit;
         }
@@ -460,30 +384,18 @@ CxPlatTlsGenerateSelfSignedCert(
                 0, 0, 0);
 
         if (Pkcs12 == NULL) {
-            QuicTraceEvent(
-                LibraryError,
-                "[ lib] ERROR, %s.",
-                "PKCS12_create failed");
             Status = QUIC_STATUS_TLS_ERROR;
             goto Exit;
         }
 
         Fd = fopen(CertFileName, "wb");
         if (Fd == NULL) {
-            QuicTraceEvent(
-                LibraryError,
-                "[ lib] ERROR, %s.",
-                "fopen failed");
             Status = QUIC_STATUS_TLS_ERROR;
             goto Exit;
         }
 
         Ret = i2d_PKCS12_fp(Fd, Pkcs12);
         if (Ret != 1) {
-            QuicTraceEvent(
-                LibraryError,
-                "[ lib] ERROR, %s.",
-                "i2d_PKCS12_fp failed");
             Status = QUIC_STATUS_TLS_ERROR;
             goto Exit;
         }
@@ -579,10 +491,6 @@ FindOrCreateTempFiles(
     char TempCaPath[MAX_PATH] = {0};
     DWORD PathLength = GetTempPathA(sizeof(TempPath), TempPath);
     if (PathLength > MAX_PATH || PathLength <= 0) {
-        QuicTraceEvent(
-            LibraryError,
-            "[ lib] ERROR, %s.",
-            "GetTempPathA failed");
         return FALSE;
     }
     CxPlatCopyMemory(
@@ -612,10 +520,6 @@ FindOrCreateTempFiles(
                 0,
                 CertFilePath);
         if (TempFileStatus == 0) {
-            QuicTraceEvent(
-                LibraryError,
-                "[ lib] ERROR, %s.",
-                "GetTempFileNameA Cert Path failed");
             return FALSE;
         }
     } else {
@@ -655,10 +559,6 @@ FindOrCreateTempFiles(
                     0,
                     KeyFilePath);
             if (TempFileStatus == 0) {
-                QuicTraceEvent(
-                    LibraryError,
-                    "[ lib] ERROR, %s.",
-                    "GetTempFileNameA Key Path failed");
                 return FALSE;
             }
         } else {
@@ -699,10 +599,6 @@ FindOrCreateTempFiles(
                     0,
                     CaFilePath);
             if (TempFileStatus == 0) {
-                QuicTraceEvent(
-                    LibraryError,
-                    "[ lib] ERROR, %s.",
-                    "GetTempFileNameA Key Path failed");
                 return FALSE;
             }
         } else {
@@ -731,10 +627,6 @@ FindOrCreateTempFiles(
 
         TempDir = mkdtemp(TempPath);
         if (TempDir == NULL) {
-            QuicTraceEvent(
-                LibraryError,
-                "[ lib] ERROR, %s.",
-                "mkdtemp failed");
             return FALSE;
         }
     } else {
@@ -809,10 +701,6 @@ FindOrCreateTempCaFile(
     char TempCaPath[MAX_PATH] = {0};
     DWORD PathLength = GetTempPathA(sizeof(TempPath), TempPath);
     if (PathLength > MAX_PATH || PathLength <= 0) {
-        QuicTraceEvent(
-            LibraryError,
-            "[ lib] ERROR, %s.",
-            "GetTempPathA failed");
         return FALSE;
     }
 
@@ -844,10 +732,6 @@ FindOrCreateTempCaFile(
                     0,
                     CaFilePath);
             if (TempFileStatus == 0) {
-                QuicTraceEvent(
-                    LibraryError,
-                    "[ lib] ERROR, %s.",
-                    "GetTempFileNameA Key Path failed");
                 return FALSE;
             }
         } else {
@@ -876,10 +760,6 @@ FindOrCreateTempCaFile(
 
         TempDir = mkdtemp(TempPath);
         if (TempDir == NULL) {
-            QuicTraceEvent(
-                LibraryError,
-                "[ lib] ERROR, %s.",
-                "mkdtemp failed");
             return FALSE;
         }
     } else {
