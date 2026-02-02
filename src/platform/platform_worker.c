@@ -685,10 +685,6 @@ CxPlatProcessDynamicPoolAllocators(
     _In_ CXPLAT_WORKER* Worker
     )
 {
-    QuicTraceLogVerbose(
-        PlatformWorkerProcessPools,
-        "[ lib][%p] Processing pools",
-        Worker);
 
     CxPlatLockAcquire(&Worker->ECLock);
     CXPLAT_LIST_ENTRY* Entry = Worker->DynamicPoolList.Flink;
@@ -758,10 +754,6 @@ CXPLAT_THREAD_CALLBACK(CxPlatWorkerThread, Context)
     CXPLAT_WORKER* Worker = (CXPLAT_WORKER*)Context;
     CXPLAT_DBG_ASSERT(Worker != NULL);
 
-    QuicTraceLogInfo(
-        PlatformWorkerThreadStart,
-        "[ lib][%p] Worker start",
-        Worker);
 #if DEBUG
     Worker->ThreadStarted = TRUE;
 #endif
@@ -804,10 +796,6 @@ CXPLAT_THREAD_CALLBACK(CxPlatWorkerThread, Context)
     Worker->ThreadFinished = TRUE;
 #endif
 
-    QuicTraceLogInfo(
-        PlatformWorkerThreadStop,
-        "[ lib][%p] Worker stop",
-        Worker);
 
     CXPLAT_THREAD_RETURN(0);
 }
