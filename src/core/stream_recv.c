@@ -105,11 +105,6 @@ QuicStreamRecvShutdown(
 
 Exit:
 
-    QuicTraceEvent(
-        StreamRecvState,
-        "[strm][%p] Recv State: %hhu",
-        Stream,
-        QuicStreamRecvGetState(Stream));
 
     if (Silent) {
         QuicStreamTryCompleteShutdown(Stream);
@@ -145,11 +140,6 @@ QuicStreamRecvQueueFlush(
                 QuicConnQueueOper(Stream->Connection, Oper);
                 Stream->Flags.ReceiveFlushQueued = TRUE;
             } else {
-                QuicTraceEvent(
-                    AllocFailure,
-                    "Allocation of '%s' failed. (%llu bytes)",
-                    "Flush Stream Recv operation",
-                    0);
             }
         }
     }
@@ -220,11 +210,6 @@ QuicStreamProcessReliableResetFrame(
     }
 
     if (Stream->RecvBuffer.BaseOffset >= Stream->RecvMaxLength) {
-        QuicTraceEvent(
-            StreamRecvState,
-            "[strm][%p] Recv State: %hhu",
-            Stream,
-            QuicStreamRecvGetState(Stream));
         QuicStreamIndicatePeerSendAbortedEvent(Stream, ErrorCode);
         QuicStreamRecvShutdown(Stream, TRUE, ErrorCode);
     } else {
@@ -307,11 +292,6 @@ QuicStreamProcessResetFrame(
                 QUIC_CONN_SEND_FLAG_MAX_DATA);
         }
 
-        QuicTraceEvent(
-            StreamRecvState,
-            "[strm][%p] Recv State: %hhu",
-            Stream,
-            QuicStreamRecvGetState(Stream));
 
         if (!Stream->Flags.SentStopSending) {
             QuicStreamIndicatePeerSendAbortedEvent(Stream, ErrorCode);
@@ -386,11 +366,6 @@ QuicStreamProcessStreamFrame(
     uint64_t EndOffset = Frame->Offset + Frame->Length;
 
     if (Stream->Flags.RemoteNotAllowed) {
-        QuicTraceEvent(
-            StreamError,
-            "[strm][%p] ERROR, %s.",
-            Stream,
-            "Receive on unidirectional stream");
         Status = QUIC_STATUS_INVALID_STATE;
         goto Error;
     }
@@ -624,11 +599,6 @@ QuicStreamRecv(
 {
     QUIC_STATUS Status = QUIC_STATUS_SUCCESS;
 
-    QuicTraceEvent(
-        StreamReceiveFrame,
-        "[strm][%p] Processing frame in packet %llu",
-        Stream,
-        Packet->PacketId);
 
     switch (FrameType) {
 
@@ -754,10 +724,6 @@ QuicStreamRecv(
     }
     }
 
-    QuicTraceEvent(
-        StreamReceiveFrameComplete,
-        "[strm][%p] Done processing frame",
-        Stream);
 
     return Status;
 }
@@ -999,13 +965,6 @@ QuicStreamRecvFlush(
         Stream->RecvPendingLength += Event.RECEIVE.TotalBufferLength;
         CXPLAT_DBG_ASSERT(Stream->RecvPendingLength <= Stream->RecvBuffer.ReadPendingLength);
 
-        QuicTraceEvent(
-            StreamAppReceive,
-            "[strm][%p] Indicating QUIC_STREAM_EVENT_RECEIVE [%llu bytes, %u buffers, 0x%x flags]",
-            Stream,
-            Event.RECEIVE.TotalBufferLength,
-            Event.RECEIVE.BufferCount,
-            Event.RECEIVE.Flags);
 
         QUIC_STATUS Status = QuicStreamIndicateEvent(Stream, &Event);
 
@@ -1101,11 +1060,6 @@ QuicStreamReceiveComplete(
         return FALSE;
     }
 
-    QuicTraceEvent(
-        StreamAppReceiveComplete,
-        "[strm][%p] Receive complete [%llu bytes]",
-        Stream,
-        BufferLength);
 
     CXPLAT_TEL_ASSERTMSG(
         BufferLength <= Stream->RecvPendingLength,
@@ -1148,11 +1102,6 @@ QuicStreamReceiveComplete(
         // The application layer can't drain any more right now. Pause the
         // receive callbacks until the application re-enables them.
         //
-        QuicTraceEvent(
-            StreamRecvState,
-            "[strm][%p] Recv State: %hhu",
-            Stream,
-            QuicStreamRecvGetState(Stream));
         return FALSE;
     }
 
@@ -1174,11 +1123,6 @@ QuicStreamReceiveComplete(
         Stream->Flags.RemoteCloseFin = TRUE;
         Stream->Flags.RemoteCloseAcked = TRUE;
 
-        QuicTraceEvent(
-            StreamRecvState,
-            "[strm][%p] Recv State: %hhu",
-            Stream,
-            QuicStreamRecvGetState(Stream));
 
         QUIC_STREAM_EVENT Event;
         Event.Type = QUIC_STREAM_EVENT_PEER_SEND_SHUTDOWN;
@@ -1207,11 +1151,6 @@ QuicStreamReceiveComplete(
         // ReliableReset was initiated by the peer, and we sent enough data to the app, we can alert the app
         // we're done and shutdown the RECV direction of this stream.
         //
-        QuicTraceEvent(
-            StreamRecvState,
-            "[strm][%p] Recv State: %hhu",
-            Stream,
-            QuicStreamRecvGetState(Stream));
         QuicStreamIndicatePeerSendAbortedEvent(Stream, Stream->RecvShutdownErrorCode);
         QuicStreamRecvShutdown(Stream, TRUE, Stream->RecvShutdownErrorCode);
     }
@@ -1244,11 +1183,6 @@ QuicStreamRecvSetEnabledState(
             // The application just resumed receive callbacks. Queue a
             // flush receive operation to start draining the receive buffer.
             //
-            QuicTraceEvent(
-                StreamRecvState,
-                "[strm][%p] Recv State: %hhu",
-                Stream,
-                QuicStreamRecvGetState(Stream));
             QuicStreamRecvQueueFlush(Stream, TRUE);
         }
     }
