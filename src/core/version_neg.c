@@ -180,11 +180,6 @@ QuicVersionNegotiationExtParseVersionInfo(
 {
     uint16_t Offset = 0;
     if (BufferLength < sizeof(uint32_t)) {
-        QuicTraceLogConnError(
-            VersionInfoDecodeFailed1,
-            Connection,
-            "Version info too short to contain Chosen Version (%hu bytes)",
-            BufferLength);
         return QUIC_STATUS_INVALID_PARAMETER;
     }
     CxPlatCopyMemory(&VersionInfo->ChosenVersion, Buffer, sizeof(VersionInfo->ChosenVersion));
@@ -195,22 +190,11 @@ QuicVersionNegotiationExtParseVersionInfo(
         // Client-sent Version Info *MUST* contain AvailableVersions.
         //
         if ((unsigned)(BufferLength - Offset) < sizeof(uint32_t)) {
-            QuicTraceLogConnError(
-                VersionInfoDecodeFailed2,
-                Connection,
-                "Version info too short to contain any Available Versions (%hu bytes)",
-                (unsigned)(BufferLength - Offset));
             return QUIC_STATUS_INVALID_PARAMETER;
         }
     }
 
     if ((BufferLength - Offset) % sizeof(uint32_t) > 0) {
-        QuicTraceLogConnError(
-            ServerVersionInfoDecodeFailed3,
-            Connection,
-            "Version info contains partial Other Version (%hu bytes vs. %u bytes)",
-            (unsigned)(BufferLength - Offset),
-            (BufferLength - Offset) / (unsigned)sizeof(uint32_t));
         return QUIC_STATUS_INVALID_PARAMETER;
     }
 
@@ -219,21 +203,9 @@ QuicVersionNegotiationExtParseVersionInfo(
     Offset += (uint16_t)(VersionInfo->AvailableVersionsCount * sizeof(uint32_t));
 
     if (Offset != BufferLength) {
-        QuicTraceLogConnError(
-            ServerVersionInfoDecodeFailed4,
-            Connection,
-            "Version info parsed less than full buffer (%hu bytes vs. %hu bytes",
-            Offset,
-            BufferLength);
         return QUIC_STATUS_INVALID_PARAMETER;
     }
 
-    QuicTraceLogConnInfo(
-        ServerVersionInfoDecoded,
-        Connection,
-        "VerInfo Decoded: Chosen Ver:%x Other Ver Count:%u",
-        VersionInfo->ChosenVersion,
-        VersionInfo->AvailableVersionsCount);
 
 
     return QUIC_STATUS_SUCCESS;
@@ -285,12 +257,6 @@ QuicVersionNegotiationExtEncodeVersionInfo(
             AvailableVersionsList,
             AvailableVersionsListLength * sizeof(uint32_t));
 
-        QuicTraceLogConnInfo(
-            ServerVersionNegotiationInfoEncoded,
-            Connection,
-            "Server VI Encoded: Chosen Ver:%x Other Ver Count:%u",
-            Connection->Stats.QuicVersion,
-            AvailableVersionsListLength);
 
     } else {
         //
@@ -337,15 +303,6 @@ QuicVersionNegotiationExtEncodeVersionInfo(
                 MsQuicLib.DefaultCompatibilityList,
                 MsQuicLib.DefaultCompatibilityListLength * sizeof(uint32_t));
         }
-        QuicTraceLogConnInfo(
-            ClientVersionInfoEncoded,
-            Connection,
-            "Client VI Encoded: Current Ver:%x Prev Ver:%x Compat Ver Count:%u",
-            Connection->Stats.QuicVersion,
-            Connection->PreviousQuicVersion,
-            CompatibilityListByteLength == 0 ?
-                MsQuicLib.DefaultCompatibilityListLength :
-                (uint32_t)(CompatibilityListByteLength / sizeof(uint32_t)));
 
         }
     *VerInfoLength = VILen;
