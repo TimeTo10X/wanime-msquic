@@ -1349,7 +1349,6 @@ QuicFrameLog(
     switch (FrameType) {
 
     case QUIC_FRAME_PADDING: {
-        uint16_t Start = *Offset;
         while (*Offset < PacketLength &&
             Packet[*Offset] == QUIC_FRAME_PADDING) {
             (*Offset) += sizeof(uint8_t);
@@ -1614,20 +1613,4 @@ QuicFrameLog(
     }
 
     return TRUE;
-}
-
-_IRQL_requires_max_(DISPATCH_LEVEL)
-void
-{
-    BOOLEAN ProcessFrames = TRUE;
-    while (ProcessFrames && Offset < PacketLength) {
-        ProcessFrames =
-            QuicFrameLog(
-                Connection,
-                Rx,
-                PacketNumber,
-                PacketLength,
-                Packet,
-                &Offset);
-    }
 }
