@@ -514,11 +514,6 @@ Return Value:
     if (*HashTable == NULL) {
         Table = CXPLAT_ALLOC_NONPAGED(sizeof(CXPLAT_HASHTABLE), QUIC_POOL_HASHTABLE);
         if (Table == NULL) {
-            QuicTraceEvent(
-                AllocFailure,
-                "Allocation of '%s' failed. (%llu bytes)",
-                "CXPLAT_HASHTABLE",
-                sizeof(CXPLAT_HASHTABLE));
             return FALSE;
         }
 
@@ -550,11 +545,6 @@ Return Value:
                 CxPlatComputeSecondLevelDirSize(0) * sizeof(CXPLAT_LIST_ENTRY),
                 QUIC_POOL_HASHTABLE_MEMBER);
         if (Table->SecondLevelDir == NULL) {
-            QuicTraceEvent(
-                AllocFailure,
-                "Allocation of '%s' failed. (%llu bytes)",
-                "second level dir (0)",
-                CxPlatComputeSecondLevelDirSize(0) * sizeof(CXPLAT_LIST_ENTRY));
             CxPlatHashtableUninitialize(Table);
             return FALSE;
         }
@@ -590,11 +580,6 @@ Return Value:
                     CxPlatComputeSecondLevelDirSize(i) * sizeof(CXPLAT_LIST_ENTRY),
                     QUIC_POOL_HASHTABLE_MEMBER);
             if (Table->FirstLevelDir[i] == NULL) {
-                QuicTraceEvent(
-                    AllocFailure,
-                    "Allocation of '%s' failed. (%llu bytes)",
-                    "second level dir (i)",
-                    CxPlatComputeSecondLevelDirSize(i) * sizeof(CXPLAT_LIST_ENTRY));
                 CxPlatHashtableUninitialize(Table);
                 return FALSE;
             }
