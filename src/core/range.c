@@ -72,11 +72,6 @@ QuicRangeGrow(
 
     QUIC_SUBRANGE* NewSubRanges = CXPLAT_ALLOC_NONPAGED(NewAllocSize, QUIC_POOL_RANGE);
     if (NewSubRanges == NULL) {
-        QuicTraceEvent(
-            AllocFailure,
-            "Allocation of '%s' failed. (%llu bytes)",
-            "range (realloc)",
-            NewAllocLength);
         return FALSE;
     }
 
