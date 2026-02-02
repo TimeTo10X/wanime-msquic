@@ -51,11 +51,6 @@ CxPlatDataPathRouteWorkerInitialize(
         CXPLAT_ALLOC_NONPAGED(
             sizeof(CXPLAT_ROUTE_RESOLUTION_WORKER), QUIC_POOL_ROUTE_RESOLUTION_WORKER);
     if (Worker == NULL) {
-        QuicTraceEvent(
-            AllocFailure,
-            "Allocation of '%s' failed. (%llu bytes)",
-            "CXPLAT_DATAPATH",
-            sizeof(CXPLAT_ROUTE_RESOLUTION_WORKER));
         Status = QUIC_STATUS_OUT_OF_MEMORY;
         goto Error;
     }
@@ -81,11 +76,6 @@ CxPlatDataPathRouteWorkerInitialize(
 
     Status = CxPlatThreadCreate(&ThreadConfig, &Worker->Thread);
     if (QUIC_FAILED(Status)) {
-        QuicTraceEvent(
-            LibraryErrorStatus,
-            "[ lib] ERROR, %u, %s.",
-            Status,
-            "CxPlatThreadCreate");
         goto Error;
     }
 
