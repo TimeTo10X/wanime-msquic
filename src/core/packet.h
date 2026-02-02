@@ -606,12 +606,6 @@ QuicPacketHash(
     return Key;
 }
 
-//
-// Logs a packet header.
-//
-_IRQL_requires_max_(DISPATCH_LEVEL)
-void
-
 _IRQL_requires_max_(DISPATCH_LEVEL)
 void
 QuicPacketLogDrop(
