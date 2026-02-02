@@ -623,16 +623,6 @@ QuicLongHeaderTypeToStringV2(uint8_t Type)
 
 _IRQL_requires_max_(DISPATCH_LEVEL)
 void
-QuicPacketLogHeader(
-    _In_opt_ QUIC_CONNECTION* Connection,
-    _In_ BOOLEAN Rx,
-    _In_ uint8_t CIDLength,
-    _In_ uint64_t PacketNumber,
-    _In_ uint16_t PacketLength,
-    _In_reads_bytes_(PacketLength)
-        const uint8_t * const Packet,
-    _In_ uint32_t Version             // Network Byte Order. Used for Short Headers
-    )
 {
     const QUIC_HEADER_INVARIANT* Invariant = (QUIC_HEADER_INVARIANT*)Packet;
     uint16_t Offset;
@@ -648,22 +638,8 @@ QuicPacketLogHeader(
 
         switch (Invariant->LONG_HDR.Version) {
         case QUIC_VERSION_VER_NEG: {
-            QuicTraceLogVerbose(
-                LogPacketVersionNegotiation,
-                "[%c][%cX][-] VerNeg DestCid:%s SrcCid:%s (Payload %hu bytes)",
-                PtkConnPre(Connection),
-                (uint8_t)PktRxPre(Rx),
-                QuicCidBufToStr(DestCid, DestCidLen).Buffer,
-                QuicCidBufToStr(SourceCid, SourceCidLen).Buffer,
-                (uint16_t)(PacketLength - Offset));
 
             while (Offset < PacketLength) {
-                QuicTraceLogVerbose(
-                    LogPacketVersionNegotiationVersion,
-                    "[%c][%cX][-]   Ver:0x%x",
-                    PtkConnPre(Connection),
-                    (uint8_t)PktRxPre(Rx),
-                    *(uint32_t*)(Packet + Offset));
                 Offset += sizeof(uint32_t);
             }
             break;
@@ -693,15 +669,6 @@ QuicPacketLogHeader(
             } else if ((LongHdr->Version != QUIC_VERSION_2 && LongHdr->Type == QUIC_RETRY_V1) ||
                 (LongHdr->Version == QUIC_VERSION_2 && LongHdr->Type == QUIC_RETRY_V2)) {
 
-                QuicTraceLogVerbose(
-                    LogPacketRetry,
-                    "[%c][%cX][-] LH Ver:0x%x DestCid:%s SrcCid:%s Type:R (Token %hu bytes)",
-                    PtkConnPre(Connection),
-                    PktRxPre(Rx),
-                    LongHdr->Version,
-                    QuicCidBufToStr(DestCid, DestCidLen).Buffer,
-                    QuicCidBufToStr(SourceCid, SourceCidLen).Buffer,
-                    (uint16_t)(PacketLength - (Offset + QUIC_RETRY_INTEGRITY_TAG_LENGTH_V1)));
                 break;
 
             } else {
@@ -718,45 +685,12 @@ QuicPacketLogHeader(
 
             if ((LongHdr->Version != QUIC_VERSION_2 && LongHdr->Type == QUIC_INITIAL_V1) ||
                 (LongHdr->Version == QUIC_VERSION_2 && LongHdr->Type == QUIC_INITIAL_V2)) {
-                QuicTraceLogVerbose(
-                    LogPacketLongHeaderInitial,
-                    "[%c][%cX][%llu] LH Ver:0x%x DestCid:%s SrcCid:%s Type:I (Token %hu bytes) (Payload %hu bytes)",
-                    PtkConnPre(Connection),
-                    PktRxPre(Rx),
-                    PacketNumber,
-                    LongHdr->Version,
-                    QuicCidBufToStr(DestCid, DestCidLen).Buffer,
-                    QuicCidBufToStr(SourceCid, SourceCidLen).Buffer,
-                    (uint16_t)TokenLength,
-                    (uint16_t)Length);
             } else {
-                QuicTraceLogVerbose(
-                    LogPacketLongHeader,
-                    "[%c][%cX][%llu] LH Ver:0x%x DestCid:%s SrcCid:%s Type:%s (Payload %hu bytes)",
-                    PtkConnPre(Connection),
-                    PktRxPre(Rx),
-                    PacketNumber,
-                    LongHdr->Version,
-                    QuicCidBufToStr(DestCid, DestCidLen).Buffer,
-                    QuicCidBufToStr(SourceCid, SourceCidLen).Buffer,
-                    LongHdr->Version == QUIC_VERSION_2 ?
-                        QuicLongHeaderTypeToStringV2(LongHdr->Type) :
-                        QuicLongHeaderTypeToStringV1(LongHdr->Type),
-                    (uint16_t)Length);
             }
             break;
         }
 
         default:
-            QuicTraceLogVerbose(
-                LogPacketLongHeaderUnsupported,
-                "[%c][%cX][%llu] LH Ver:[UNSUPPORTED,0x%x] DestCid:%s SrcCid:%s",
-                PtkConnPre(Connection),
-                PktRxPre(Rx),
-                PacketNumber,
-                Invariant->LONG_HDR.Version,
-                QuicCidBufToStr(DestCid, DestCidLen).Buffer,
-                QuicCidBufToStr(SourceCid, SourceCidLen).Buffer);
             break;
         }
 
@@ -775,16 +709,6 @@ QuicPacketLogHeader(
 
             Offset = sizeof(QUIC_SHORT_HEADER_V1) + DestCidLen;
 
-            QuicTraceLogVerbose(
-                LogPacketShortHeader,
-                "[%c][%cX][%llu] SH DestCid:%s KP:%hu SB:%hu (Payload %hu bytes)",
-                PtkConnPre(Connection),
-                PktRxPre(Rx),
-                PacketNumber,
-                QuicCidBufToStr(DestCid, DestCidLen).Buffer,
-                Header->KeyPhase,
-                Header->SpinBit,
-                (uint16_t)(PacketLength - Offset));
             break;
         }
 
