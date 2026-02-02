@@ -457,11 +457,6 @@ CxPlatDataPathInitialize(
 
     CXPLAT_DATAPATH* Datapath = (CXPLAT_DATAPATH*)CXPLAT_ALLOC_PAGED(DatapathLength, QUIC_POOL_DATAPATH);
     if (Datapath == NULL) {
-        QuicTraceEvent(
-            AllocFailure,
-            "Allocation of '%s' failed. (%llu bytes)",
-            "CXPLAT_DATAPATH",
-            DatapathLength);
         return QUIC_STATUS_OUT_OF_MEMORY;
     }
 
@@ -580,11 +575,6 @@ CxPlatDataPathAllocRxIoBlock(
     DATAPATH_RX_IO_BLOCK* IoBlock =
         CxPlatPoolAlloc(&DatapathPartition->RecvBlockPool);
     if (IoBlock == NULL) {
-        QuicTraceEvent(
-            AllocFailure,
-            "Allocation of '%s' failed. (%llu bytes)",
-            "DATAPATH_RX_IO_BLOCK",
-            0);
     } else {
         CxPlatZeroMemory(IoBlock, sizeof(*IoBlock));
         IoBlock->Route.State = RouteResolved;
@@ -629,12 +619,6 @@ CxPlatSocketContextInitialize(
             IPPROTO_UDP);
     if (SocketContext->SocketFd == INVALID_SOCKET) {
         Status = errno;
-        QuicTraceEvent(
-            DatapathErrorStatus,
-            "[data][%p] ERROR, %u, %s.",
-            Binding,
-            Status,
-            "socket() failed");
         goto Exit;
     }
 
@@ -662,12 +646,6 @@ CxPlatSocketContextInitialize(
                 sizeof(Option));
         if (Result == SOCKET_ERROR) {
             Status = errno;
-            QuicTraceEvent(
-                DatapathErrorStatus,
-                "[data][%p] ERROR, %u, %s.",
-                Binding,
-                Status,
-                "setsockopt(IPV6_V6ONLY) failed");
             goto Exit;
         }
     }
@@ -682,12 +660,6 @@ CxPlatSocketContextInitialize(
             NULL);
     if (Flags < 0) {
         Status = errno;
-        QuicTraceEvent(
-            DatapathErrorStatus,
-            "[data][%p] ERROR, %u, %s.",
-            Binding,
-            Status,
-            "fcntl(F_GETFL) failed");
         goto Exit;
     }
 
@@ -699,12 +671,6 @@ CxPlatSocketContextInitialize(
             Flags);
     if (Result < 0) {
         Status = errno;
-        QuicTraceEvent(
-            DatapathErrorStatus,
-            "[data][%p] ERROR, %u, %s.",
-            Binding,
-            Status,
-            "fcntl(F_SETFL) failed");
         goto Exit;
     }
 
@@ -737,12 +703,6 @@ CxPlatSocketContextInitialize(
             sizeof(Option));
     if (Result == SOCKET_ERROR) {
         Status = errno;
-        QuicTraceEvent(
-            DatapathErrorStatus,
-            "[data][%p] ERROR, %u, %s.",
-            Binding,
-            Status,
-            "setsockopt(IPV6_RECVPKTINFO) failed");
         goto Exit;
     }
 
@@ -754,12 +714,6 @@ CxPlatSocketContextInitialize(
                 (const void*)&Option, sizeof(Option));
         if (Result == SOCKET_ERROR) {
             Status = errno;
-            QuicTraceEvent(
-                DatapathErrorStatus,
-                "[data][%p] ERROR, %u, %s.",
-                Binding,
-                Status,
-                "setsockopt(IP_RECVIF) failed");
             goto Exit;
         }
     }
@@ -779,12 +733,6 @@ CxPlatSocketContextInitialize(
             sizeof(Option));
     if (Result == SOCKET_ERROR) {
         Status = errno;
-        QuicTraceEvent(
-            DatapathErrorStatus,
-            "[data][%p] ERROR, %u, %s.",
-            Binding,
-            Status,
-            "setsockopt(IPV6_RECVTCLASS) failed");
         goto Exit;
     }
 
@@ -843,12 +791,6 @@ CxPlatSocketContextInitialize(
                 ForceIpv4 ? sizeof(struct sockaddr_in) : sizeof(struct sockaddr_in6));
         if (Result == SOCKET_ERROR) {
             Status = errno;
-            QuicTraceEvent(
-                DatapathErrorStatus,
-                "[data][%p] ERROR, %u, %s.",
-                Binding,
-                Status,
-                "bind failed");
             goto Exit;
         }
     }
@@ -873,12 +815,6 @@ CxPlatSocketContextInitialize(
                 ForceIpv4 ? sizeof(struct sockaddr_in) : sizeof(struct sockaddr_in6));
         if (Result == SOCKET_ERROR) {
             Status = errno;
-            QuicTraceEvent(
-                DatapathErrorStatus,
-                "[data][%p] ERROR, %u, %s.",
-                Binding,
-                Status,
-                "connect failed");
             goto Exit;
         }
 
@@ -898,12 +834,6 @@ CxPlatSocketContextInitialize(
             &AssignedLocalAddressLength);
     if (Result == SOCKET_ERROR) {
         Status = errno;
-        QuicTraceEvent(
-            DatapathErrorStatus,
-            "[data][%p] ERROR, %u, %s.",
-            Binding,
-            Status,
-            "getsockname failed");
         goto Exit;
     }
     CxPlatConvertToMappedV6(&MappedAddress, &Binding->LocalAddress);
@@ -1025,11 +955,6 @@ CxPlatSocketContextPrepareReceive(
         SocketContext->CurrentRecvBlock =
             CxPlatDataPathAllocRxIoBlock(SocketContext->DatapathPartition);
         if (SocketContext->CurrentRecvBlock == NULL) {
-            QuicTraceEvent(
-                AllocFailure,
-                "Allocation of '%s' failed. (%llu bytes)",
-                "DATAPATH_RX_IO_BLOCK",
-                0);
             return QUIC_STATUS_OUT_OF_MEMORY;
         }
     }
@@ -1069,12 +994,6 @@ CxPlatSocketContextStartReceive(
             EVFILT_READ,
             EV_ADD | EV_ENABLE)) {
         Status = errno;
-        QuicTraceEvent(
-            DatapathErrorStatus,
-            "[data][%p] ERROR, %u, %s.",
-            SocketContext->Binding,
-            Status,
-            "CxPlatEventQEnqueueEx failed");
         goto Error;
     }
 
@@ -1172,14 +1091,6 @@ CxPlatSocketContextRecvComplete(
     CXPLAT_FRE_ASSERT(FoundTOS);
     CXPLAT_FRE_ASSERT(FoundIfIdx);
 
-    QuicTraceEvent(
-        DatapathRecv,
-        "[data][%p] Recv %u bytes (segment=%hu) Src=%!ADDR! Dst=%!ADDR!",
-        SocketContext->Binding,
-        (uint32_t)BytesTransferred,
-        (uint32_t)BytesTransferred,
-        CASTED_CLOG_BYTEARRAY(sizeof(*LocalAddr), LocalAddr),
-        CASTED_CLOG_BYTEARRAY(sizeof(*RemoteAddr), RemoteAddr));
 
     CXPLAT_DBG_ASSERT(BytesTransferred <= RecvPacket->BufferLength);
     RecvPacket->BufferLength = BytesTransferred;
@@ -1206,12 +1117,6 @@ CxPlatSocketContextRecvComplete(
 
     if (!QUIC_SUCCEEDED(Status)) {
         CXPLAT_DBG_ASSERT(Status == QUIC_STATUS_OUT_OF_MEMORY);
-        QuicTraceEvent(
-            DatapathErrorStatus,
-            "[data][%p] ERROR, %u, %s.",
-            SocketContext->Binding,
-            Status,
-            "CxPlatSocketContextPrepareReceive failed multiple times. Receive will no longer work.");
     }
 }
 
@@ -1328,12 +1233,6 @@ CxPlatSocketContextIoEventComplete(
             if (Ret < 0) {
                 int ErrNum = errno;
                 if (ErrNum != EAGAIN && ErrNum != EWOULDBLOCK) {
-                    QuicTraceEvent(
-                        DatapathErrorStatus,
-                        "[data][%p] ERROR, %u, %s.",
-                        SocketContext->Binding,
-                        errno,
-                        "recvmsg failed");
 
                     //
                     // The read can also return unreachable events. There is no
@@ -1391,20 +1290,9 @@ CxPlatSocketCreateUdp(
         (CXPLAT_SOCKET*)CXPLAT_ALLOC_PAGED(BindingLength, QUIC_POOL_SOCKET);
     if (Binding == NULL) {
         Status = QUIC_STATUS_OUT_OF_MEMORY;
-        QuicTraceEvent(
-            AllocFailure,
-            "Allocation of '%s' failed. (%llu bytes)",
-            "CXPLAT_SOCKET",
-            BindingLength);
         goto Exit;
     }
 
-    QuicTraceEvent(
-        DatapathCreated,
-        "[data][%p] Created, local=%!ADDR!, remote=%!ADDR!",
-        Binding,
-        CASTED_CLOG_BYTEARRAY(Config->LocalAddress ? sizeof(*Config->LocalAddress) : 0, Config->LocalAddress),
-        CASTED_CLOG_BYTEARRAY(Config->RemoteAddress ? sizeof(*Config->RemoteAddress) : 0, Config->RemoteAddress));
 
     CxPlatZeroMemory(Binding, BindingLength);
     Binding->Datapath = Datapath;
@@ -1521,10 +1409,6 @@ CxPlatSocketDelete(
     )
 {
     CXPLAT_DBG_ASSERT(Socket != NULL);
-    QuicTraceEvent(
-        DatapathDestroyed,
-        "[data][%p] Destroyed",
-        Socket);
 
 #if DEBUG
     CXPLAT_DBG_ASSERT(!Socket->Uninitialized);
@@ -1865,14 +1749,8 @@ CxPlatSendDataComplete(
     _In_ uint64_t IoResult
     )
 {
-    if (IoResult != QUIC_STATUS_SUCCESS) {
-        QuicTraceEvent(
-            DatapathErrorStatus,
-            "[data][%p] ERROR, %u, %s.",
-            SocketContext->Binding,
-            IoResult,
-            "sendmmsg completion");
-    }
+    (void)SocketContext;
+    (void)IoResult;
 
     // TODO to add TCP
     // if (SocketContext->Parent->Type != CXPLAT_SOCKET_UDP) {
@@ -1917,15 +1795,6 @@ CxPlatSocketSendInternal(
             SendData->Iovs[i].iov_base = SendData->Buffers[i].Buffer;
             SendData->Iovs[i].iov_len = SendData->Buffers[i].Length;
         }
-        QuicTraceEvent(
-            DatapathSend,
-            "[data][%p] Send %u bytes in %hhu buffers (segment=%hu) Dst=%!ADDR!, Src=%!ADDR!",
-            SocketContext->Binding,
-            SendData->TotalSize,
-            SendData->BufferCount,
-            SendData->SegmentSize,
-            CASTED_CLOG_BYTEARRAY(sizeof(*RemoteAddress), RemoteAddress),
-            CASTED_CLOG_BYTEARRAY(sizeof(*LocalAddress), LocalAddress));
 
         //
         // Check to see if we need to pend.
@@ -2023,24 +1892,12 @@ CxPlatSocketSendInternal(
                     EVFILT_WRITE,
                     EV_ADD | EV_ONESHOT | EV_CLEAR)) {
                 Status = errno;
-                QuicTraceEvent(
-                    DatapathErrorStatus,
-                    "[data][%p] ERROR, %u, %s.",
-                    SocketContext->Binding,
-                    Status,
-                    "CxPlatEventQEnqueueEx failed");
                 goto Exit;
             }
             Status = QUIC_STATUS_PENDING;
             goto Exit;
         } else {
             Status = errno;
-            QuicTraceEvent(
-                DatapathErrorStatus,
-                "[data][%p] ERROR, %u, %s.",
-                SocketContext->Binding,
-                Status,
-                "sendmsg failed");
 
             //
             // Unreachable events can sometimes come synchronously.
