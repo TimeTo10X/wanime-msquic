@@ -18,7 +18,7 @@ import os
 import sys
 
 EXTENSIONS = {".c", ".cpp", ".h", ".hpp"}
-MARKER = "QuicTraceEvent"
+MARKER = "QuicTraceLogStreamInfo"
 
 
 def strip_trace_events(text: str) -> str:
