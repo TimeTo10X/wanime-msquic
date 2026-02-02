@@ -968,9 +968,6 @@ QuicStreamFrameSkip(
 //
 // Logs all the frames in a decrypted packet.
 //
-_IRQL_requires_max_(DISPATCH_LEVEL)
-void
-
 #if defined(__cplusplus)
 }
 #endif
