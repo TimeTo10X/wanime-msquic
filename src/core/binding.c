@@ -44,11 +44,6 @@ QuicBindingInitialize(
 
     Binding = CXPLAT_ALLOC_NONPAGED(sizeof(QUIC_BINDING), QUIC_POOL_BINDING);
     if (Binding == NULL) {
-        QuicTraceEvent(
-            AllocFailure,
-            "Allocation of '%s' failed. (%llu bytes)",
-            "QUIC_BINDING",
-            sizeof(QUIC_BINDING));
         Status = QUIC_STATUS_OUT_OF_MEMORY;
         goto Error;
     }
@@ -92,12 +87,6 @@ QuicBindingInitialize(
     if (PrevCompartmentId != UdpConfig->CompartmentId) {
         Status = QuicCompartmentIdSetCurrent(UdpConfig->CompartmentId);
         if (QUIC_FAILED(Status)) {
-            QuicTraceEvent(
-                BindingErrorStatus,
-                "[bind][%p] ERROR, %u, %s.",
-                Binding,
-                Status,
-                "Set current compartment Id");
             goto Error;
         }
         RevertCompartmentId = TRUE;
@@ -149,25 +138,12 @@ QuicBindingInitialize(
 #endif
 
     if (QUIC_FAILED(Status)) {
-        QuicTraceEvent(
-            BindingErrorStatus,
-            "[bind][%p] ERROR, %u, %s.",
-            Binding,
-            Status,
-            "Create datapath binding");
         goto Error;
     }
 
     QUIC_ADDR DatapathLocalAddr, DatapathRemoteAddr;
     QuicBindingGetLocalAddress(Binding, &DatapathLocalAddr);
     QuicBindingGetRemoteAddress(Binding, &DatapathRemoteAddr);
-    QuicTraceEvent(
-        BindingCreated,
-        "[bind][%p] Created, Udp=%p LocalAddr=%!ADDR! RemoteAddr=%!ADDR!",
-        Binding,
-        Binding->Socket,
-        CASTED_CLOG_BYTEARRAY(sizeof(DatapathLocalAddr), &DatapathLocalAddr),
-        CASTED_CLOG_BYTEARRAY(sizeof(DatapathRemoteAddr), &DatapathRemoteAddr));
 
     *NewBinding = Binding;
     Status = QUIC_STATUS_SUCCESS;
@@ -198,10 +174,6 @@ QuicBindingUninitialize(
     _In_ QUIC_BINDING* Binding
     )
 {
-    QuicTraceEvent(
-        BindingCleanup,
-        "[bind][%p] Cleaning up",
-        Binding);
 
     CXPLAT_TEL_ASSERT(Binding->RefCount == 0);
     CXPLAT_TEL_ASSERT(CxPlatListIsEmpty(&Binding->Listeners));
@@ -240,10 +212,6 @@ QuicBindingUninitialize(
 #endif
     CxPlatDispatchRwLockUninitialize(&Binding->RwLock);
 
-    QuicTraceEvent(
-        BindingDestroyed,
-        "[bind][%p] Destroyed",
-        Binding);
     CXPLAT_FREE(Binding, QUIC_POOL_BINDING);
 }
 
@@ -258,13 +226,6 @@ QuicBindingTraceRundown(
     QUIC_ADDR DatapathLocalAddr, DatapathRemoteAddr;
     QuicBindingGetLocalAddress(Binding, &DatapathLocalAddr);
     QuicBindingGetRemoteAddress(Binding, &DatapathRemoteAddr);
-    QuicTraceEvent(
-        BindingRundown,
-        "[bind][%p] Rundown, Udp=%p LocalAddr=%!ADDR! RemoteAddr=%!ADDR!",
-        Binding,
-        Binding->Socket,
-        CASTED_CLOG_BYTEARRAY(sizeof(DatapathLocalAddr), &DatapathLocalAddr),
-        CASTED_CLOG_BYTEARRAY(sizeof(DatapathRemoteAddr), &DatapathRemoteAddr));
 
     CxPlatDispatchRwLockAcquireShared(&Binding->RwLock, PrevIrql);
 
@@ -471,17 +432,7 @@ Done:
     CxPlatDispatchRwLockReleaseShared(&Binding->RwLock, PrevIrql);
 
     if (FailedAddrMatch) {
-        QuicTraceEvent(
-            ConnNoListenerIp,
-            "[conn][%p] No Listener for IP address: %!ADDR!",
-            Connection,
-            CASTED_CLOG_BYTEARRAY(sizeof(*Addr), Addr));
     } else if (FailedAlpnMatch) {
-        QuicTraceEvent(
-            ConnNoListenerAlpn,
-            "[conn][%p] No listener matching ALPN: %!ALPN!",
-            Connection,
-            CASTED_CLOG_BYTEARRAY(Info->ClientAlpnListLength, Info->ClientAlpnList));
         QuicPerfCounterIncrement(Connection->Partition, QUIC_PERF_COUNTER_CONN_NO_ALPN);
     }
 
@@ -514,11 +465,6 @@ QuicBindingAcceptConnection(
     //
     QUIC_LISTENER* Listener = QuicBindingGetListener(Binding, Connection, Info);
     if (Listener == NULL) {
-        QuicTraceEvent(
-            ConnError,
-            "[conn][%p] ERROR, %s.",
-            Connection,
-            "No listener found for connection");
         QuicConnTransportError(
             Connection,
             QUIC_ERROR_CRYPTO_NO_APPLICATION_PROTOCOL);
@@ -537,11 +483,6 @@ QuicBindingAcceptConnection(
     } else {
         NegotiatedAlpn = CXPLAT_ALLOC_NONPAGED(NegotiatedAlpnLength, QUIC_POOL_ALPN);
         if (NegotiatedAlpn == NULL) {
-            QuicTraceEvent(
-                AllocFailure,
-                "Allocation of '%s' failed. (%llu bytes)",
-                "NegotiatedAlpn",
-                NegotiatedAlpnLength);
             QuicConnTransportError(
                 Connection,
                 QUIC_ERROR_INTERNAL_ERROR);
@@ -774,11 +715,6 @@ QuicBindingQueueStatelessOperation(
 
     QUIC_OPERATION* Oper = QuicOperationAlloc(Worker->Partition, OperType);
     if (Oper == NULL) {
-        QuicTraceEvent(
-            AllocFailure,
-            "Allocation of '%s' failed. (%llu bytes)",
-            "stateless operation",
-            sizeof(QUIC_OPERATION));
         QuicPacketLogDrop(Binding, Packet, "Alloc failure for stateless operation");
         QuicBindingReleaseStatelessOperation(Context, FALSE);
         return FALSE;
@@ -805,20 +741,10 @@ QuicBindingProcessStatelessOperation(
 
     CXPLAT_DBG_ASSERT(RecvPacket->ValidatedHeaderInv);
 
-    QuicTraceEvent(
-        BindingExecOper,
-        "[bind][%p] Execute: %u",
-        Binding,
-        OperationType);
 
     CXPLAT_SEND_CONFIG SendConfig = { RecvPacket->Route, 0, CXPLAT_ECN_NON_ECT, 0, CXPLAT_DSCP_CS0 };
     CXPLAT_SEND_DATA* SendData = CxPlatSendDataAlloc(Binding->Socket, &SendConfig);
     if (SendData == NULL) {
-        QuicTraceEvent(
-            AllocFailure,
-            "Allocation of '%s' failed. (%llu bytes)",
-            "stateless send data",
-            0);
         goto Exit;
     }
 
@@ -848,11 +774,6 @@ QuicBindingProcessStatelessOperation(
         SendDatagram =
             CxPlatSendDataAllocBuffer(SendData, PacketLength);
         if (SendDatagram == NULL) {
-            QuicTraceEvent(
-                AllocFailure,
-                "Allocation of '%s' failed. (%llu bytes)",
-                "vn datagram",
-                PacketLength);
             goto Exit;
         }
 
@@ -934,11 +855,6 @@ QuicBindingProcessStatelessOperation(
         SendDatagram =
             CxPlatSendDataAllocBuffer(SendData, PacketLength);
         if (SendDatagram == NULL) {
-            QuicTraceEvent(
-                AllocFailure,
-                "Allocation of '%s' failed. (%llu bytes)",
-                "reset datagram",
-                PacketLength);
             goto Exit;
         }
 
@@ -976,11 +892,6 @@ QuicBindingProcessStatelessOperation(
         SendDatagram =
             CxPlatSendDataAllocBuffer(SendData, PacketLength);
         if (SendDatagram == NULL) {
-            QuicTraceEvent(
-                AllocFailure,
-                "Allocation of '%s' failed. (%llu bytes)",
-                "retry datagram",
-                PacketLength);
             goto Exit;
         }
 
@@ -1663,10 +1574,6 @@ QuicBindingReceive(
         Packet->Flags = 0;
 
         CXPLAT_DBG_ASSERT(Packet->PacketId != 0);
-        QuicTraceEvent(
-            PacketReceive,
-            "[pack][%llu] Received",
-            Packet->PacketId);
 
 #if QUIC_TEST_DATAPATH_HOOKS_ENABLED
         //
