@@ -818,11 +818,6 @@ QuicStreamAddOutFlowBlockedReason(
         }
 
         Stream->OutFlowBlockedReasons |= Reason;
-        QuicTraceEvent(
-            StreamOutFlowBlocked,
-            "[strm][%p] Send Blocked Flags: %hhu",
-            Stream,
-            Stream->OutFlowBlockedReasons);
         return TRUE;
     }
     return FALSE;
@@ -862,11 +857,6 @@ QuicStreamRemoveOutFlowBlockedReason(
         }
 
         Stream->OutFlowBlockedReasons &= ~Reason;
-        QuicTraceEvent(
-            StreamOutFlowBlocked,
-            "[strm][%p] Send Blocked Flags: %hhu",
-            Stream,
-            Stream->OutFlowBlockedReasons);
         return TRUE;
     }
     return FALSE;
