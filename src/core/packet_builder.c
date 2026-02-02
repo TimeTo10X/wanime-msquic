@@ -182,11 +182,6 @@ QuicPacketBuilderPrepare(
         // but without the key, nothing can be done. Just silently kill the
         // connection.
         //
-        QuicTraceEvent(
-            ConnError,
-            "[conn][%p] ERROR, %s.",
-            Connection,
-            "NULL key in builder prepare");
         QuicConnSilentlyAbort(Connection);
         return FALSE;
     }
@@ -269,11 +264,6 @@ QuicPacketBuilderPrepare(
             Builder->SendData =
                 CxPlatSendDataAlloc(Builder->Path->Binding->Socket, &SendConfig);
             if (Builder->SendData == NULL) {
-                QuicTraceEvent(
-                    AllocFailure,
-                    "Allocation of '%s' failed. (%llu bytes)",
-                    "packet send context",
-                    0);
                 goto Error;
             }
             SendDataAllocated = TRUE;
@@ -293,11 +283,6 @@ QuicPacketBuilderPrepare(
                 Builder->SendData,
                 NewDatagramLength);
         if (Builder->Datagram == NULL) {
-            QuicTraceEvent(
-                AllocFailure,
-                "Allocation of '%s' failed. (%llu bytes)",
-                "packet datagram",
-                NewDatagramLength);
             if (SendDataAllocated) {
                 CxPlatSendDataFree(Builder->SendData);
                 Builder->SendData = NULL;
@@ -371,11 +356,6 @@ QuicPacketBuilderPrepare(
 
         Builder->Metadata->PacketId =
             PartitionShifted | InterlockedIncrement64((int64_t*)&Partition->SendPacketId);
-        QuicTraceEvent(
-            PacketCreated,
-            "[pack][%llu] Created in batch %llu",
-            Builder->Metadata->PacketId,
-            Builder->BatchId);
 
         //
         // Occassionally skip a packet number for improved security.
@@ -847,10 +827,6 @@ QuicPacketBuilderFinalize(
         // Encrypt the data.
         //
 
-        QuicTraceEvent(
-            PacketEncrypt,
-            "[pack][%llu] Encrypting",
-            Builder->Metadata->PacketId);
 
         PayloadLength += Builder->EncryptionOverhead;
         Builder->DatagramLength += Builder->EncryptionOverhead;
@@ -874,10 +850,6 @@ QuicPacketBuilderFinalize(
             goto Exit;
         }
 
-        QuicTraceEvent(
-            PacketFinalize,
-            "[pack][%llu] Finalizing",
-            Builder->Metadata->PacketId);
 
         if (Connection->State.HeaderProtectionEnabled) {
 
@@ -945,12 +917,6 @@ QuicPacketBuilderFinalize(
 
             Status = QuicCryptoGenerateNewKeys(Connection);
             if (QUIC_FAILED(Status)) {
-                QuicTraceEvent(
-                    ConnErrorStatus,
-                    "[conn][%p] ERROR, %u, %s.",
-                    Connection,
-                    Status,
-                    "Send-triggered key update");
                 QuicConnFatalError(Connection, Status, "Send-triggered key update");
                 goto Exit;
             }
@@ -968,10 +934,6 @@ QuicPacketBuilderFinalize(
 
     } else {
 
-        QuicTraceEvent(
-            PacketFinalize,
-            "[pack][%llu] Finalizing",
-            Builder->Metadata->PacketId);
     }
 
     //
@@ -983,13 +945,6 @@ QuicPacketBuilderFinalize(
     Builder->Metadata->PacketLength =
         Builder->HeaderLength + PayloadLength;
     Builder->Metadata->Flags.EcnEctSet = Builder->EcnEctSet;
-    QuicTraceEvent(
-        ConnPacketSent,
-        "[conn][%p][TX][%llu] %hhu (%hu bytes)",
-        Connection,
-        Builder->Metadata->PacketNumber,
-        QuicPacketTraceType(Builder->Metadata),
-        Builder->Metadata->PacketLength);
     QuicLossDetectionOnPacketSent(
         &Connection->LossDetection,
         Builder->Path,
@@ -1035,10 +990,6 @@ Exit:
             CXPLAT_DBG_ASSERT(Builder->TotalCountDatagrams > 0);
             QuicPacketBuilderSendBatch(Builder);
             CXPLAT_DBG_ASSERT(Builder->Metadata->FrameCount == 0);
-            QuicTraceEvent(
-                PacketBatchSent,
-                "[pack][%llu] Batch sent",
-                Builder->BatchId);
         }
 
         if ((Connection->Stats.QuicVersion != QUIC_VERSION_2 && Builder->PacketType == QUIC_RETRY_V1) ||
