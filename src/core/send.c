@@ -142,11 +142,6 @@ QuicSendQueueFlush(
         QUIC_OPERATION* Oper;
         if ((Oper = QuicConnAllocOperation(Connection, QUIC_OPER_TYPE_FLUSH_SEND)) != NULL) {
             Send->FlushOperationPending = TRUE;
-            QuicTraceEvent(
-                ConnQueueSendFlush,
-                "[conn][%p] Queueing send flush, reason=%u",
-                Connection,
-                Reason);
             QuicConnQueueOper(Connection, Oper);
         }
     }
@@ -1285,11 +1280,6 @@ QuicSendFlush(
         Builder.EcnEctSet = TRUE;
     }
 
-    QuicTraceEvent(
-        ConnFlushSend,
-        "[conn][%p] Flushing Send. Allowance=%u bytes",
-        Connection,
-        Builder.SendAllowance);
 
 #if DEBUG
     uint32_t DeadlockDetection = 0;
