@@ -105,10 +105,6 @@ QuicPacketBuilderInitialize(
     Builder->TotalDatagramsLength = 0;
 
     if (Connection->SourceCids.Next == NULL) {
-        QuicTraceLogConnWarning(
-            NoSrcCidAvailable,
-            Connection,
-            "No src CID to send with");
         return FALSE;
     }
 
@@ -363,11 +359,6 @@ QuicPacketBuilderPrepare(
         if (Connection->Send.NextSkippedPacketNumber == Connection->Send.NextPacketNumber) {
             Connection->Send.SkippedPacketNumber =
                 Connection->Send.NextPacketNumber++;
-            QuicTraceLogConnWarning(
-                SkipPacketNumber,
-                Connection,
-                "Skipped packet number %llu",
-                Connection->Send.SkippedPacketNumber);
 
             //
             // Randomly skip a packet number (from 0 to 65535).
@@ -579,11 +570,6 @@ QuicPacketBuilderGetPacketTypeAndKeyForControlFrames(
         return TRUE;
     }
 
-    QuicTraceLogConnWarning(
-        GetPacketTypeFailure,
-        Builder->Connection,
-        "Failed to get packet type for control frames, 0x%x",
-        SendFlags);
     CXPLAT_DBG_ASSERT(CxPlatIsRandomMemoryFailureEnabled()); // This shouldn't have been called then!
 
     return FALSE;
@@ -803,21 +789,6 @@ QuicPacketBuilderFinalize(
 #endif
 
     if (QuicTraceLogVerboseEnabled()) {
-        QuicPacketLogHeader(
-            Connection,
-            FALSE,
-            Builder->Path->DestCid->CID.Length,
-            Builder->Metadata->PacketNumber,
-            Builder->HeaderLength + PayloadLength,
-            Header,
-            Connection->Stats.QuicVersion);
-        QuicFrameLogAll(
-            Connection,
-            FALSE,
-            Builder->Metadata->PacketNumber,
-            Builder->HeaderLength + PayloadLength,
-            Header,
-            Builder->HeaderLength);
     }
 
     if (Builder->EncryptionOverhead != 0 &&
@@ -1027,11 +998,6 @@ QuicPacketBuilderSendBatch(
     _Inout_ QUIC_PACKET_BUILDER* Builder
     )
 {
-    QuicTraceLogConnVerbose(
-        PacketBuilderSendBatch,
-        Builder->Connection,
-        "Sending batch. %hu datagrams",
-        (uint16_t)Builder->TotalCountDatagrams);
 
     QuicBindingSend(
         Builder->Path->Binding,
