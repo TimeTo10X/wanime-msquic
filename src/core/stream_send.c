@@ -281,11 +281,6 @@ QuicStreamSendShutdown(
 
 Exit:
 
-    QuicTraceEvent(
-        StreamSendState,
-        "[strm][%p] Send State: %hhu",
-        Stream,
-        QuicStreamSendGetState(Stream));
 
     if (Silent) {
         QuicStreamTryCompleteShutdown(Stream);
@@ -1105,11 +1100,6 @@ QuicStreamSendWrite(
         Builder->Metadata->Flags.KeyType == QUIC_PACKET_KEY_0_RTT);
     CXPLAT_DBG_ASSERT(QuicStreamAllowedByPeer(Stream));
 
-    QuicTraceEvent(
-        StreamWriteFrames,
-        "[strm][%p] Writing frames to packet %llu",
-        Stream,
-        Builder->Metadata->PacketId);
 
     if (Stream->SendFlags & QUIC_STREAM_SEND_FLAG_MAX_DATA) {
 
@@ -1539,11 +1529,6 @@ QuicStreamOnAck(
             //
             if (!Stream->Flags.LocalCloseAcked) {
                 Stream->Flags.LocalCloseAcked = TRUE;
-                QuicTraceEvent(
-                    StreamSendState,
-                    "[strm][%p] Send State: %hhu",
-                    Stream,
-                    QuicStreamSendGetState(Stream));
                 QuicStreamIndicateSendShutdownComplete(Stream, TRUE);
                 QuicStreamTryCompleteShutdown(Stream);
             }
@@ -1593,11 +1578,6 @@ QuicStreamOnAck(
         Stream->Flags.LocalCloseResetReliableAcked &&
         Stream->UnAckedOffset >= Stream->ReliableOffsetSend;
     if (ReliableResetShutdown) {
-        QuicTraceEvent(
-            StreamSendState,
-            "[strm][%p] Send State: %hhu",
-            Stream,
-            QuicStreamSendGetState(Stream));
         //
         // Set the flags and clear any outstanding send path frames.
         //
@@ -1654,11 +1634,6 @@ QuicStreamOnResetAck(
 {
     if (!Stream->Flags.LocalCloseAcked) {
         Stream->Flags.LocalCloseAcked = TRUE;
-        QuicTraceEvent(
-            StreamSendState,
-            "[strm][%p] Send State: %hhu",
-            Stream,
-            QuicStreamSendGetState(Stream));
         QuicStreamIndicateSendShutdownComplete(Stream, FALSE);
         QuicStreamTryCompleteShutdown(Stream);
     }
@@ -1673,11 +1648,6 @@ QuicStreamOnResetReliableAck(
     CXPLAT_DBG_ASSERT(Stream->Flags.LocalCloseResetReliable);
     if (Stream->UnAckedOffset >= Stream->ReliableOffsetSend && !Stream->Flags.LocalCloseAcked) {
         Stream->Flags.LocalCloseResetReliableAcked = TRUE;
-        QuicTraceEvent(
-            StreamSendState,
-            "[strm][%p] Send State: %hhu",
-            Stream,
-            QuicStreamSendGetState(Stream));
         //
         // Set the flags and clear any outstanding send path frames.
         //
@@ -1690,11 +1660,6 @@ QuicStreamOnResetReliableAck(
         QuicStreamIndicateSendShutdownComplete(Stream, FALSE);
         QuicStreamTryCompleteShutdown(Stream);
     } else {
-        QuicTraceEvent(
-            StreamSendState,
-            "[strm][%p] Send State: %hhu",
-            Stream,
-            QuicStreamSendGetState(Stream));
         Stream->Flags.LocalCloseResetReliableAcked = TRUE;
     }
 }
