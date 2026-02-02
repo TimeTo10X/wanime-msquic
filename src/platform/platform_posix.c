@@ -20,7 +20,6 @@ Environment:
 
 #include "platform_internal.h"
 #include "quic_platform.h"
-#include "quic_trace.h"
 #include <dlfcn.h>
 #include <fcntl.h>
 #include <limits.h>
@@ -39,7 +38,6 @@ cpu_set_t *CxPlatNumaNodeMasks;
 
 CX_PLATFORM CxPlatform = {NULL};
 int RandomFd = -1; // Used for reading random numbers.
-QUIC_TRACE_RUNDOWN_CALLBACK *QuicTraceRundownCallback;
 
 #define STR_HELPER(x) #x
 #define STR(x) STR_HELPER(x)
@@ -199,14 +197,12 @@ void CxPlatSystemLoad(void) {
 
 Exit:
 
-  QuicTraceLogInfo(PosixLoaded, "[ dso] Loaded");
 }
 
 void CxPlatSystemUnload(void) {
 #ifdef CXPLAT_NUMA_AWARE
   CXPLAT_FREE(CxPlatNumaNodeMasks, QUIC_POOL_PLATFORM_PROC);
 #endif
-  QuicTraceLogInfo(PosixUnloaded, "[ dso] Unloaded");
 }
 
 uint64_t CGroupGetMemoryLimit();
@@ -230,9 +226,6 @@ CxPlatInitialize(void) {
 
   CxPlatTotalMemory = CGroupGetMemoryLimit();
 
-  QuicTraceLogInfo(PosixInitialized,
-                   "[ dso] Initialized (AvailMem = %llu bytes)",
-                   CxPlatTotalMemory);
 
   return QUIC_STATUS_SUCCESS;
 }
@@ -240,7 +233,6 @@ CxPlatInitialize(void) {
 void CxPlatUninitialize(void) {
   CxPlatCryptUninitialize();
   close(RandomFd);
-  QuicTraceLogInfo(PosixUninitialized, "[ dso] Uninitialized");
 }
 
 void *CxPlatAlloc(_In_ size_t ByteCount, _In_ uint32_t Tag) {
@@ -551,9 +543,6 @@ CxPlatThreadCreate(_In_ CXPLAT_THREAD_CONFIG *Config,
   // attribute because the CPU might be offline.
   //
   if (pthread_create(Thread, &Attr, Config->Callback, Config->Context)) {
-    QuicTraceLogWarning(
-        PlatformThreadCreateFailed,
-        "[ lib] pthread_create failed, retrying without affinitization");
     if (pthread_create(Thread, NULL, Config->Callback, Config->Context)) {
       Status = errno;
     }
