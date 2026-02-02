@@ -970,15 +970,6 @@ QuicStreamFrameSkip(
 //
 _IRQL_requires_max_(DISPATCH_LEVEL)
 void
-QuicFrameLogAll(
-    _In_opt_ QUIC_CONNECTION* Connection,
-    _In_ BOOLEAN Rx,
-    _In_ uint64_t PacketNumber,
-    _In_ uint16_t PacketLength,
-    _In_reads_bytes_(PacketLength)
-        const uint8_t * const Packet,
-    _In_ uint16_t Offset
-    );
 
 #if defined(__cplusplus)
 }
