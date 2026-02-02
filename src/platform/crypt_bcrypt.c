@@ -69,11 +69,6 @@ CxPlatCryptInitialize(
             MS_PRIMITIVE_PROVIDER,
             Flags);
     if (!NT_SUCCESS(Status)) {
-        QuicTraceEvent(
-            LibraryErrorStatus,
-            "[ lib] ERROR, %u, %s.",
-            Status,
-            "Open HMAC_SHA256 algorithm");
         goto Error;
     }
 
@@ -84,11 +79,6 @@ CxPlatCryptInitialize(
             MS_PRIMITIVE_PROVIDER,
             Flags);
     if (!NT_SUCCESS(Status)) {
-        QuicTraceEvent(
-            LibraryErrorStatus,
-            "[ lib] ERROR, %u, %s.",
-            Status,
-            "Open HMAC_SHA384 algorithm");
         goto Error;
     }
 
@@ -99,11 +89,6 @@ CxPlatCryptInitialize(
             MS_PRIMITIVE_PROVIDER,
             Flags);
     if (!NT_SUCCESS(Status)) {
-        QuicTraceEvent(
-            LibraryErrorStatus,
-            "[ lib] ERROR, %u, %s.",
-            Status,
-            "Open HMAC_SHA512 algorithm");
         goto Error;
     }
 
@@ -114,11 +99,6 @@ CxPlatCryptInitialize(
             MS_PRIMITIVE_PROVIDER,
             BCRYPT_PROV_DISPATCH);
     if (!NT_SUCCESS(Status)) {
-        QuicTraceEvent(
-            LibraryErrorStatus,
-            "[ lib] ERROR, %u, %s.",
-            Status,
-            "Open AES algorithm");
         goto Error;
     }
 
@@ -130,11 +110,6 @@ CxPlatCryptInitialize(
             sizeof(BCRYPT_CHAIN_MODE_ECB),
             0);
     if (!NT_SUCCESS(Status)) {
-        QuicTraceEvent(
-            LibraryErrorStatus,
-            "[ lib] ERROR, %u, %s.",
-            Status,
-            "Set ECB chaining mode");
         goto Error;
     }
 
@@ -145,11 +120,6 @@ CxPlatCryptInitialize(
             MS_PRIMITIVE_PROVIDER,
             BCRYPT_PROV_DISPATCH);
     if (!NT_SUCCESS(Status)) {
-        QuicTraceEvent(
-            LibraryErrorStatus,
-            "[ lib] ERROR, %u, %s.",
-            Status,
-            "Open AES algorithm");
         goto Error;
     }
 
@@ -161,11 +131,6 @@ CxPlatCryptInitialize(
             sizeof(BCRYPT_CHAIN_MODE_GCM),
             0);
     if (!NT_SUCCESS(Status)) {
-        QuicTraceEvent(
-            LibraryErrorStatus,
-            "[ lib] ERROR, %u, %s.",
-            Status,
-            "Set GCM chaining mode");
         goto Error;
     }
 
@@ -176,11 +141,6 @@ CxPlatCryptInitialize(
             MS_PRIMITIVE_PROVIDER,
             BCRYPT_PROV_DISPATCH);
     if (!NT_SUCCESS(Status)) {
-        QuicTraceEvent(
-            LibraryErrorStatus,
-            "[ lib] ERROR, %u, %s.",
-            Status,
-            "Open ChaCha20-Poly1305 algorithm");
         //
         // ChaCha20-Poly1305 may not be supported on older OSes, so don't treat
         // this failure as fatal.
@@ -195,11 +155,6 @@ CxPlatCryptInitialize(
                 sizeof(BCRYPT_CHAIN_MODE_NA),
                 0);
         if (!NT_SUCCESS(Status)) {
-            QuicTraceEvent(
-                LibraryErrorStatus,
-                "[ lib] ERROR, %u, %s.",
-                Status,
-                "Set ChaCha20-Poly1305 chaining mode");
             goto Error;
         }
     }
@@ -211,11 +166,6 @@ CxPlatCryptInitialize(
             MS_PRIMITIVE_PROVIDER,
             BCRYPT_PROV_DISPATCH);
     if (!NT_SUCCESS(Status)) {
-        QuicTraceEvent(
-            LibraryErrorStatus,
-            "[ lib] ERROR, %u, %s.",
-            Status,
-            "Open SP800-108 CTR HMAC KDF algorithm");
         goto Error;
     }
 
@@ -261,11 +211,6 @@ Error:
             MS_PRIMITIVE_PROVIDER,
             0);
     if (!NT_SUCCESS(Status)) {
-        QuicTraceEvent(
-            LibraryErrorStatus,
-            "[ lib] ERROR, %u, %s.",
-            Status,
-            "Open ChaCha20-Poly1305 algorithm");
         //
         // ChaCha20-Poly1305 may not be supported on older OSes, so don't treat
         // this failure as fatal.
@@ -280,11 +225,6 @@ Error:
                 sizeof(BCRYPT_CHAIN_MODE_NA),
                 0);
         if (!NT_SUCCESS(Status)) {
-            QuicTraceEvent(
-                LibraryErrorStatus,
-                "[ lib] ERROR, %u, %s.",
-                Status,
-                "Set ChaCha20-Poly1305 chaining mode");
             goto Error;
         }
     }
@@ -383,11 +323,6 @@ CxPlatKeyCreate(
             KeyLength,
             0);
     if (!NT_SUCCESS(Status)) {
-        QuicTraceEvent(
-            LibraryErrorStatus,
-            "[ lib] ERROR, %u, %s.",
-            Status,
-            "BCryptGenerateSymmetricKey");
         goto Error;
     }
 
@@ -554,11 +489,6 @@ CxPlatHpKeyCreate(
 
     Key = CXPLAT_ALLOC_NONPAGED(AllocLength, QUIC_POOL_TLS_HP_KEY);
     if (Key == NULL) {
-        QuicTraceEvent(
-            AllocFailure,
-            "Allocation of '%s' failed. (%llu bytes)",
-            "CXPLAT_HP_KEY",
-            AllocLength);
         return QUIC_STATUS_OUT_OF_MEMORY;
     }
 
@@ -574,13 +504,6 @@ CxPlatHpKeyCreate(
             KeyLength,
             0);
     if (!NT_SUCCESS(Status)) {
-        QuicTraceEvent(
-            LibraryErrorStatus,
-            "[ lib] ERROR, %u, %s.",
-            Status,
-            (AeadType == CXPLAT_AEAD_CHACHA20_POLY1305) ?
-                "BCryptGenerateSymmetricKey (ChaCha)" :
-                "BCryptGenerateSymmetricKey (ECB)");
         goto Error;
     }
 
@@ -713,11 +636,6 @@ CxPlatHashCreate(
             (ULONG)SaltLength,
             BCRYPT_HASH_REUSABLE_FLAG);
     if (!NT_SUCCESS(Status)) {
-        QuicTraceEvent(
-            LibraryErrorStatus,
-            "[ lib] ERROR, %u, %s.",
-            Status,
-            "BCryptCreateHash");
         goto Error;
     }
 
@@ -758,11 +676,6 @@ CxPlatHashCompute(
             InputLength,
             0);
     if (!NT_SUCCESS(Status)) {
-        QuicTraceEvent(
-            LibraryErrorStatus,
-            "[ lib] ERROR, %u, %s.",
-            Status,
-            "BCryptHashData");
         goto Error;
     }
 
@@ -773,11 +686,6 @@ CxPlatHashCompute(
             OutputLength,
             0);
     if (!NT_SUCCESS(Status)) {
-        QuicTraceEvent(
-            LibraryErrorStatus,
-            "[ lib] ERROR, %u, %s.",
-            Status,
-            "BCryptFinishHash");
         goto Error;
     }
 
@@ -809,11 +717,6 @@ CxPlatKbKdfDerive(
             SecretLength,
             0);
     if (!NT_SUCCESS(Status)) {
-        QuicTraceEvent(
-            LibraryErrorStatus,
-            "[ lib] ERROR, %u, %s.",
-            Status,
-            "BCryptGenerateSymmetricKey for KDF");
         goto Error;
     }
 
@@ -848,11 +751,6 @@ CxPlatKbKdfDerive(
             &DerivedKeyLength,
             0);
     if (!NT_SUCCESS(Status)) {
-        QuicTraceEvent(
-            LibraryErrorStatus,
-            "[ lib] ERROR, %u, %s.",
-            Status,
-            "BCryptKeyDerivation SP800-108 CTR");
         goto Error;
     }
 
