@@ -218,12 +218,6 @@ CxPlatSocketConfigureRss(
             sizeof(BpfConfig));
     if (Result == SOCKET_ERROR) {
         Status = errno;
-        QuicTraceEvent(
-            DatapathErrorStatus,
-            "[data][%p] ERROR, %u, %s.",
-            SocketContext->Binding,
-            Status,
-            "setsockopt(SO_ATTACH_REUSEPORT_CBPF) failed");
     }
 
     return Status;
@@ -242,12 +236,6 @@ CxPlatSocketHandleError(
 {
     CXPLAT_DBG_ASSERT(ErrNum != 0);
 
-    QuicTraceEvent(
-        DatapathErrorStatus,
-        "[data][%p] ERROR, %u, %s.",
-        SocketContext->Binding,
-        ErrNum,
-        "Socket error event");
 
     if (SocketContext->Binding->Type == CXPLAT_SOCKET_UDP) {
         //
