@@ -196,7 +196,7 @@ void CxPlatSystemLoad(void) {
   CXPLAT_FREE(ProviderFullPath, QUIC_POOL_PLATFORM_TMP_ALLOC);
 
 Exit:
-
+    (void)0;
 }
 
 void CxPlatSystemUnload(void) {
