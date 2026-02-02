@@ -668,16 +668,6 @@ Exit:
         Event.NETWORK_STATISTICS.CongestionWindow = Cubic->CongestionWindow;
         Event.NETWORK_STATISTICS.Bandwidth = Cubic->CongestionWindow / Path->SmoothedRtt;
 
-        QuicTraceLogConnVerbose(
-           IndicateDataAcked,
-           Connection,
-           "Indicating QUIC_CONNECTION_EVENT_NETWORK_STATISTICS [BytesInFlight=%u,PostedBytes=%llu,IdealBytes=%llu,SmoothedRTT=%llu,CongestionWindow=%u,Bandwidth=%llu]",
-           Event.NETWORK_STATISTICS.BytesInFlight,
-           Event.NETWORK_STATISTICS.PostedBytes,
-           Event.NETWORK_STATISTICS.IdealBytes,
-           Event.NETWORK_STATISTICS.SmoothedRTT,
-           Event.NETWORK_STATISTICS.CongestionWindow,
-           Event.NETWORK_STATISTICS.Bandwidth);
        QuicConnIndicateEvent(Connection, &Event);
     }
 
