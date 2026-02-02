@@ -5,8 +5,7 @@
 
 --*/
 
-
-
+#include "reason.h"
 typedef struct QUIC_CONNECTION QUIC_CONNECTION;
 
 //
