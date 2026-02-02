@@ -99,10 +99,6 @@ QuicStreamIndicateSendShutdownComplete(
         QUIC_STREAM_EVENT Event;
         Event.Type = QUIC_STREAM_EVENT_SEND_SHUTDOWN_COMPLETE;
         Event.SEND_SHUTDOWN_COMPLETE.Graceful = GracefulShutdown;
-        QuicTraceLogStreamVerbose(
-            IndicateSendShutdownComplete,
-            Stream,
-            "Indicating QUIC_STREAM_EVENT_SEND_SHUTDOWN_COMPLETE");
         (void)QuicStreamIndicateEvent(Stream, &Event);
     }
 }
@@ -433,17 +429,7 @@ QuicStreamCompleteSendRequest(
         Event.SEND_COMPLETE.ClientContext = SendRequest->ClientContext;
 
         if (Canceled) {
-            QuicTraceLogStreamVerbose(
-                IndicateSendCanceled,
-                Stream,
-                "Indicating QUIC_STREAM_EVENT_SEND_COMPLETE [%p] (Canceled)",
-                SendRequest);
         } else {
-            QuicTraceLogStreamVerbose(
-                IndicateSendComplete,
-                Stream,
-                "Indicating QUIC_STREAM_EVENT_SEND_COMPLETE [%p]",
-                SendRequest);
         }
 
         (void)QuicStreamIndicateEvent(Stream, &Event);
@@ -515,11 +501,6 @@ QuicStreamSendBufferRequest(
     Event.Type = QUIC_STREAM_EVENT_SEND_COMPLETE;
     Event.SEND_COMPLETE.Canceled = FALSE;
     Event.SEND_COMPLETE.ClientContext = Req->ClientContext;
-    QuicTraceLogStreamVerbose(
-        IndicateSendComplete,
-        Stream,
-        "Indicating QUIC_STREAM_EVENT_SEND_COMPLETE [%p]",
-        Req);
     (void)QuicStreamIndicateEvent(Stream, &Event);
 
     Req->ClientContext = NULL;
@@ -574,14 +555,6 @@ QuicStreamEnqueueSendRequest(
     *Stream->SendRequestsTail = SendRequest;
     Stream->SendRequestsTail = &SendRequest->Next;
 
-    QuicTraceLogStreamVerbose(
-        SendQueued,
-        Stream,
-        "Send Request [%p] queued with %llu bytes at offset %llu (flags 0x%x)",
-        SendRequest,
-        SendRequest->TotalLength,
-        SendRequest->StreamOffset,
-        SendRequest->Flags);
 }
 
 _IRQL_requires_max_(PASSIVE_LEVEL)
@@ -787,10 +760,6 @@ QuicStreamWriteOneFrame(
     //
     HeaderLength = QuicStreamFrameHeaderSize(&Frame);
     if (*FrameBytes < HeaderLength) {
-        QuicTraceLogStreamVerbose(
-            NoMoreRoom,
-            Stream,
-            "Can't squeeze in a frame (no room for header)");
         *FramePayloadBytes = 0;
         *FrameBytes = 0;
         return;
@@ -826,22 +795,11 @@ QuicStreamWriteOneFrame(
         //
         // No bytes, no immediate open and no FIN, so no frame.
         //
-        QuicTraceLogStreamVerbose(
-            NoMoreFrames,
-            Stream,
-            "No more frames");
         *FramePayloadBytes = 0;
         *FrameBytes = 0;
         return;
     }
 
-    QuicTraceLogStreamVerbose(
-        AddFrame,
-        Stream,
-        "Built stream frame, offset=%llu len=%hu fin=%hhu",
-        Frame.Offset,
-        (uint16_t)Frame.Length,
-        Frame.Fin);
 
     uint16_t BufferLength = *FrameBytes;
 
@@ -1262,19 +1220,11 @@ QuicStreamOnLoss(
     if ((FrameMetadata->Flags & QUIC_SENT_FRAME_FLAG_STREAM_OPEN) &&
         !Stream->Flags.SendOpenAcked) {
         AddSendFlags |= QUIC_STREAM_SEND_FLAG_OPEN;
-        QuicTraceLogStreamVerbose(
-            RecoverOpen,
-            Stream,
-            "Recovering open STREAM frame");
     }
 
     if ((FrameMetadata->Flags & QUIC_SENT_FRAME_FLAG_STREAM_FIN) &&
         !Stream->Flags.FinAcked) {
         AddSendFlags |= QUIC_STREAM_SEND_FLAG_FIN;
-        QuicTraceLogStreamVerbose(
-            RecoverFin,
-            Stream,
-            "Recovering fin STREAM frame");
     }
 
     //
@@ -1352,12 +1302,6 @@ QuicStreamOnLoss(
 
     if (UpdatedRecoveryWindow) {
 
-        QuicTraceLogStreamVerbose(
-            RecoverRange,
-            Stream,
-            "Recovering offset %llu up to %llu",
-            Start,
-            End);
         AddSendFlags |= QUIC_STREAM_SEND_FLAG_DATA;
     }
 
@@ -1426,22 +1370,10 @@ QuicStreamOnAck(
 
     CXPLAT_DBG_ASSERT(FollowingOffset <= Stream->QueuedSendOffset);
 
-    QuicTraceLogStreamVerbose(
-        AckRangeMsg,
-        Stream,
-        "Received ack for %d bytes, offset=%llu, FF=0x%hx",
-        (int32_t)Length,
-        Offset,
-        FrameMetadata->Flags);
 
     if (PacketFlags.KeyType == QUIC_PACKET_KEY_0_RTT &&
         Stream->Sent0Rtt < FollowingOffset) {
         Stream->Sent0Rtt = FollowingOffset;
-        QuicTraceLogStreamVerbose(
-            Send0RttUpdated,
-            Stream,
-            "Updated sent 0RTT length to %llu",
-            FollowingOffset);
     }
 
     if (!Stream->Flags.SendOpenAcked) {
@@ -1517,10 +1449,6 @@ QuicStreamOnAck(
         if (Stream->UnAckedOffset == Stream->QueuedSendOffset && Stream->Flags.FinAcked) {
             CXPLAT_DBG_ASSERT(Stream->SendRequests == NULL);
 
-            QuicTraceLogStreamVerbose(
-                SendQueueDrained,
-                Stream,
-                "Send queue completely drained");
 
             //
             // We have completely sent all that needs to be sent. Update the Stream
@@ -1672,39 +1600,14 @@ QuicStreamSendDumpState(
 {
     if (QuicTraceLogStreamVerboseEnabled()) {
 
-        QuicTraceLogStreamVerbose(
-            SendDump,
-            Stream,
-            "SF:%hX FC:%llu QS:%llu MAX:%llu UNA:%llu NXT:%llu RECOV:%llu-%llu REL: %llu",
-            Stream->SendFlags,
-            Stream->MaxAllowedSendOffset,
-            Stream->QueuedSendOffset,
-            Stream->MaxSentLength,
-            Stream->UnAckedOffset,
-            Stream->NextSendOffset,
-            Stream->Flags.InRecovery ? Stream->RecoveryNextOffset : 0,
-            Stream->Flags.InRecovery ? Stream->RecoveryEndOffset : 0,
-            Stream->ReliableOffsetSend);
 
         uint64_t UnAcked = Stream->UnAckedOffset;
         uint32_t i = 0;
         QUIC_SUBRANGE* Sack;
         while ((Sack = QuicRangeGetSafe(&Stream->SparseAckRanges, i++)) != NULL) {
-            QuicTraceLogStreamVerbose(
-                SendDumpAck,
-                Stream,
-                "  unACKed: [%llu, %llu]",
-                UnAcked,
-                Sack->Low);
             UnAcked = Sack->Low + Sack->Count;
         }
         if (UnAcked < Stream->MaxSentLength) {
-            QuicTraceLogStreamVerbose(
-                SendDumpAck,
-                Stream,
-                "  unACKed: [%llu, %llu]",
-                UnAcked,
-                Stream->MaxSentLength);
         }
 
         CXPLAT_DBG_ASSERT(Stream->NextSendOffset <= Stream->MaxAllowedSendOffset);
