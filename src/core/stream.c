@@ -403,6 +403,7 @@ QuicStreamTraceRundown(
     _In_ QUIC_STREAM* Stream
     )
 {
+    (void)Stream;
     // TODO - More state dump.
 }
 
