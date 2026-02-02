@@ -366,13 +366,6 @@ QuicLossDetectionUpdateTimer(
         QuicLossDetectionProcessTimerOperation(LossDetection);
 
     } else {
-        QuicTraceEvent(
-            ConnLossDetectionTimerSet,
-            "[conn][%p] Setting loss detection %hhu timer for %u us. (ProbeCount=%hu)",
-            Connection,
-            TimeoutType,
-            (uint32_t)Delay,
-            LossDetection->ProbeCount);
         UNREFERENCED_PARAMETER(TimeoutType);
         QuicConnTimerSetEx(Connection, QUIC_CONN_TIMER_LOSS_DETECTION, Delay, TimeNow);
     }
@@ -401,11 +394,6 @@ QuicLossDetectionOnPacketSent(
         // We can't allocate the memory to permanently track this packet so just
         // go ahead and immediately clean up and mark the data in it as lost.
         //
-        QuicTraceEvent(
-            AllocFailure,
-            "Allocation of '%s' failed. (%llu bytes)",
-            "Sent packet metadata",
-            SIZEOF_QUIC_SENT_PACKET_METADATA(TempSentPacket->FrameCount));
         QuicLossDetectionRetransmitFrames(LossDetection, TempSentPacket, FALSE);
         QuicSentPacketMetadataReleaseFrames(TempSentPacket, Connection);
         return;
@@ -994,13 +982,6 @@ QuicLossDetectionDetectAndHandleLostPackets(
                         PtkConnPre(Connection),
                         Packet->PacketNumber,
                         LossDetection->LargestAck - Packet->PacketNumber);
-                    QuicTraceEvent(
-                        ConnPacketLost,
-                        "[conn][%p][TX][%llu] %hhu Lost: %hhu",
-                        Connection,
-                        Packet->PacketNumber,
-                        QuicPacketTraceType(Packet),
-                        QUIC_TRACE_PACKET_LOSS_FACK);
                 }
             } else if (Packet->PacketNumber < LossDetection->LargestAck &&
                         CxPlatTimeAtOrBefore64(Packet->SentTime + TimeReorderThreshold, TimeNow)) {
@@ -1011,13 +992,6 @@ QuicLossDetectionDetectAndHandleLostPackets(
                         PtkConnPre(Connection),
                         Packet->PacketNumber,
                         CxPlatTimeDiff64(Packet->SentTime, TimeNow));
-                    QuicTraceEvent(
-                        ConnPacketLost,
-                        "[conn][%p][TX][%llu] %hhu Lost: %hhu",
-                        Connection,
-                        Packet->PacketNumber,
-                        QuicPacketTraceType(Packet),
-                        QUIC_TRACE_PACKET_LOSS_RACK);
                 }
             } else {
                 break;
@@ -1126,12 +1100,6 @@ QuicLossDetectionDiscardPackets(
                 "[%c][TX][%llu] ACKed (implicit)",
                 PtkConnPre(Connection),
                 Packet->PacketNumber);
-            QuicTraceEvent(
-                ConnPacketACKed,
-                "[conn][%p][TX][%llu] %hhu ACKed",
-                Connection,
-                Packet->PacketNumber,
-                QuicPacketTraceType(Packet));
 
             QuicLossDetectionOnPacketAcknowledged(LossDetection, EncryptLevel, Packet, TRUE, TimeNow, 0);
 
@@ -1170,12 +1138,6 @@ QuicLossDetectionDiscardPackets(
                 "[%c][TX][%llu] ACKed (implicit)",
                 PtkConnPre(Connection),
                 Packet->PacketNumber);
-            QuicTraceEvent(
-                ConnPacketACKed,
-                "[conn][%p][TX][%llu] %hhu ACKed",
-                Connection,
-                Packet->PacketNumber,
-                QuicPacketTraceType(Packet));
 
             if (Packet->Flags.IsAckEliciting) {
                 LossDetection->PacketsInFlight--;
@@ -1475,11 +1437,6 @@ CheckSentPackets:
             //
             // The packet was not acknowledged with the same encryption level.
             //
-            QuicTraceEvent(
-                ConnError,
-                "[conn][%p] ERROR, %s.",
-                Connection,
-                "Incorrect ACK encryption level");
             *InvalidAckBlock = TRUE;
             return;
         }
@@ -1492,12 +1449,6 @@ CheckSentPackets:
             PacketMeta->PacketNumber,
             (uint32_t)(PacketRtt / 1000),
             (uint32_t)(PacketRtt % 1000));
-        QuicTraceEvent(
-            ConnPacketACKed,
-            "[conn][%p][TX][%llu] %hhu ACKed",
-            Connection,
-            PacketMeta->PacketNumber,
-            QuicPacketTraceType(PacketMeta));
 
         MinRtt = CXPLAT_MIN(MinRtt, PacketRtt);
 
@@ -1562,11 +1513,6 @@ CheckSentPackets:
                     Packets->EcnEctCounter = Ecn->ECT_0_Count;
                     if (Path->EcnValidationState <= ECN_VALIDATION_UNKNOWN) {
                         Path->EcnValidationState = ECN_VALIDATION_CAPABLE;
-                        QuicTraceEvent(
-                            ConnEcnCapable,
-                            "[conn][%p] Ecn: IsCapable=%hu",
-                            Connection,
-                            TRUE);
                     }
 
                     if (Path->EcnValidationState == ECN_VALIDATION_CAPABLE &&
@@ -1590,15 +1536,6 @@ CheckSentPackets:
             }
 
             if (!EcnValidated) {
-                QuicTraceEvent(
-                    ConnEcnFailed,
-                    "[conn][%p][%d] ECN failed: EctCnt %llu CeCnt %llu TxEct %llu DeltaSum %lld State %hu",
-                    Connection,
-                    EncryptLevel,
-                    Packets->EcnEctCounter, Packets->EcnCeCounter,
-                    Connection->Send.NumPacketsSentWithEct,
-                    EctCeDeltaSum,
-                    Path->EcnValidationState);
                 Path->EcnValidationState = ECN_VALIDATION_FAILED;
             }
         }
@@ -1790,13 +1727,6 @@ QuicLossDetectionScheduleProbe(
                 "[%c][TX][%llu] Probe Retransmit",
                 PtkConnPre(Connection),
                 Packet->PacketNumber);
-            QuicTraceEvent(
-                ConnPacketLost,
-                "[conn][%p][TX][%llu] %hhu Lost: %hhu",
-                Connection,
-                Packet->PacketNumber,
-                QuicPacketTraceType(Packet),
-                QUIC_TRACE_PACKET_LOSS_PROBE);
             if (QuicLossDetectionRetransmitFrames(LossDetection, Packet, FALSE) &&
                 --NumPackets == 0) {
                 return;
