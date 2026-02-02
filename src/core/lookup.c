@@ -379,18 +379,7 @@ QuicLookupFindConnectionByLocalCidInternal(
 
 #if QUIC_DEBUG_HASHTABLE_LOOKUP
     if (Connection != NULL) {
-        QuicTraceLogVerbose(
-            LookupCidFound,
-            "[look][%p] Lookup Hash=%u found %p",
-            Lookup,
-            Hash,
-            Connection);
     } else {
-        QuicTraceLogVerbose(
-            LookupCidNotFound,
-            "[look][%p] Lookup Hash=%u not found",
-            Lookup,
-            Hash);
     }
 #endif
 
@@ -423,12 +412,6 @@ QuicLookupFindConnectionByRemoteHashInternal(
             RemoteCidLength == Entry->RemoteCidLength &&
             memcmp(RemoteCid, Entry->RemoteCid, RemoteCidLength) == 0) {
 #if QUIC_DEBUG_HASHTABLE_LOOKUP
-            QuicTraceLogVerbose(
-                LookupRemoteHashFound,
-                "[look][%p] Lookup RemoteHash=%u found %p",
-                Lookup,
-                Hash,
-                Entry->Connection);
 #endif
             return Entry->Connection;
         }
@@ -437,11 +420,6 @@ QuicLookupFindConnectionByRemoteHashInternal(
     }
 
 #if QUIC_DEBUG_HASHTABLE_LOOKUP
-    QuicTraceLogVerbose(
-        LookupRemoteHashNotFound,
-        "[look][%p] Lookup RemoteHash=%u not found",
-        Lookup,
-        Hash);
 #endif
 
     return NULL;
@@ -500,12 +478,6 @@ QuicLookupInsertLocalCid(
     }
 
 #if QUIC_DEBUG_HASHTABLE_LOOKUP
-    QuicTraceLogVerbose(
-        LookupCidInsert,
-        "[look][%p] Insert Conn=%p Hash=%u",
-        Lookup,
-        SourceCid->Connection,
-        Hash);
 #endif
 
     SourceCid->CID.IsInLookupTable = TRUE;
@@ -560,12 +532,6 @@ QuicLookupInsertRemoteHash(
     }
 
 #if QUIC_DEBUG_HASHTABLE_LOOKUP
-    QuicTraceLogVerbose(
-        LookupRemoteHashInsert,
-        "[look][%p] Insert Conn=%p RemoteHash=%u",
-        Lookup,
-        Connection,
-        Hash);
 #endif
 
     return TRUE;
@@ -587,11 +553,6 @@ QuicLookupRemoveLocalCidInt(
     Lookup->CidCount--;
 
 #if QUIC_DEBUG_HASHTABLE_LOOKUP
-    QuicTraceLogVerbose(
-        LookupCidRemoved,
-        "[look][%p] Remove Conn=%p",
-        Lookup,
-        SourceCid->Connection);
 #endif
 
     if (Lookup->PartitionCount == 0) {
