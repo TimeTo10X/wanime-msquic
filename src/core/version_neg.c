@@ -235,11 +235,6 @@ QuicVersionNegotiationExtParseVersionInfo(
         VersionInfo->ChosenVersion,
         VersionInfo->AvailableVersionsCount);
 
-    QuicTraceEvent(
-        ConnVNEOtherVersionList,
-        "[conn][%p] VerInfo Available Versions List: %!VNL!",
-        Connection,
-        CASTED_CLOG_BYTEARRAY(VersionInfo->AvailableVersionsCount * sizeof(uint32_t), VersionInfo->AvailableVersions));
 
     return QUIC_STATUS_SUCCESS;
 }
@@ -277,11 +272,6 @@ QuicVersionNegotiationExtEncodeVersionInfo(
 
         VersionInfo = CXPLAT_ALLOC_NONPAGED(VILen, QUIC_POOL_VERSION_INFO);
         if (VersionInfo == NULL) {
-            QuicTraceEvent(
-                AllocFailure,
-                "Allocation of '%s' failed. (%llu bytes)",
-                "Server Version Info",
-                VILen);
             return NULL;
         }
         VIBuf = VersionInfo;
@@ -302,11 +292,6 @@ QuicVersionNegotiationExtEncodeVersionInfo(
             Connection->Stats.QuicVersion,
             AvailableVersionsListLength);
 
-        QuicTraceEvent(
-            ConnVNEOtherVersionList,
-            "[conn][%p] VerInfo Available Versions List: %!VNL!",
-            Connection,
-            CASTED_CLOG_BYTEARRAY(AvailableVersionsListLength * sizeof(uint32_t), VIBuf));
     } else {
         //
         // Generate Client Version Info.
@@ -328,11 +313,6 @@ QuicVersionNegotiationExtEncodeVersionInfo(
 
         VersionInfo = CXPLAT_ALLOC_NONPAGED(VILen, QUIC_POOL_VERSION_INFO);
         if (VersionInfo == NULL) {
-            QuicTraceEvent(
-                AllocFailure,
-                "Allocation of '%s' failed. (%llu bytes)",
-                "Client Version Info",
-                VILen);
             return NULL;
         }
         VIBuf = VersionInfo;
@@ -367,15 +347,6 @@ QuicVersionNegotiationExtEncodeVersionInfo(
                 MsQuicLib.DefaultCompatibilityListLength :
                 (uint32_t)(CompatibilityListByteLength / sizeof(uint32_t)));
 
-        QuicTraceEvent(
-            ConnVNEOtherVersionList,
-            "[conn][%p] VerInfo Available Versions List: %!VNL!",
-            Connection,
-            CASTED_CLOG_BYTEARRAY(
-                CompatibilityListByteLength == 0 ?
-                    MsQuicLib.DefaultCompatibilityListLength * sizeof(uint32_t):
-                    CompatibilityListByteLength,
-                VIBuf));
         }
     *VerInfoLength = VILen;
     return VersionInfo;
