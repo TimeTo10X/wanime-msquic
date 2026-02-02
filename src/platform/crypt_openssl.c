@@ -56,11 +56,6 @@ CxPlatLoadCipher(
 {
     *cipher = EVP_CIPHER_fetch(NULL, cipher_name, "");
     if (*cipher == NULL) {
-        QuicTraceEvent(
-            LibraryErrorStatus,
-            "[ lib] ERROR, %u, %s.",
-            ERR_get_error(),
-            cipher_name);
         return 0;
     }
     return 1;
@@ -75,11 +70,6 @@ CxPlatLoadMAC(
 {
     *mac = EVP_MAC_fetch(NULL, name, "");
     if (*mac == NULL) {
-        QuicTraceEvent(
-            LibraryErrorStatus,
-            "[ lib] ERROR, %u, %s.",
-            ERR_get_error(),
-            "EVP_MAC_fetch failed");
         return 0;
     }
     return 1;
@@ -98,20 +88,11 @@ CxPlatLoadHMACCTX(
 
     c = EVP_MAC_CTX_new(mac);
     if (c == NULL) {
-        QuicTraceEvent(
-            AllocFailure,
-            "Allocation of '%s' failed. (%llu bytes)",
-            "EVP_MAC_CTX_new",
-            0);
         return 0;
     }
     AlgParam[0] = OSSL_PARAM_construct_utf8_string("digest", digest, 0);
     AlgParam[1] = OSSL_PARAM_construct_end();
     if (!EVP_MAC_CTX_set_params(c, AlgParam)) {
-        QuicTraceEvent(
-            LibraryError,
-            "[ lib] ERROR, %s.",
-            "EVP_MAC_CTX_set_params failed");
         EVP_MAC_CTX_free(c);
         return 0;
     }
@@ -132,10 +113,6 @@ CxPlatCryptInitialize(
     EVP_MAC *mac = NULL;
 
     if (OPENSSL_init_ssl(OPENSSL_INIT_LOAD_CONFIG, NULL) == 0) {
-        QuicTraceEvent(
-            LibraryError,
-            "[ lib] ERROR, %s.",
-            "OPENSSL_init_ssl failed");
         return QUIC_STATUS_TLS_ERROR;
     }
 
@@ -248,11 +225,6 @@ CxPlatKeyCreate(
 
     EVP_CIPHER_CTX* CipherCtx = EVP_CIPHER_CTX_new();
     if (CipherCtx == NULL) {
-        QuicTraceEvent(
-            AllocFailure,
-            "Allocation of '%s' failed. (%llu bytes)",
-            "EVP_CIPHER_CTX_new",
-            0);
         Status = QUIC_STATUS_OUT_OF_MEMORY;
         goto Exit;
     }
@@ -281,10 +253,6 @@ CxPlatKeyCreate(
     AlgParam[1] = OSSL_PARAM_construct_end();
 
     if (EVP_CipherInit_ex2(CipherCtx, Aead, RawKey, NULL, 1, AlgParam) != 1) {
-        QuicTraceEvent(
-            LibraryError,
-            "[ lib] ERROR, %s.",
-            "EVP_CipherInit_ex2 failed");
         Status = QUIC_STATUS_TLS_ERROR;
         goto Exit;
     }
@@ -333,35 +301,19 @@ CxPlatEncrypt(
     OSSL_PARAM AlgParam[2];
 
     if (EVP_EncryptInit_ex(CipherCtx, NULL, NULL, NULL, Iv) != 1) {
-        QuicTraceEvent(
-            LibraryError,
-            "[ lib] ERROR, %s.",
-            "EVP_EncryptInit_ex failed");
         return QUIC_STATUS_TLS_ERROR;
     }
 
     if (AuthData != NULL &&
         EVP_EncryptUpdate(CipherCtx, NULL, &OutLen, AuthData, (int)AuthDataLength) != 1) {
-        QuicTraceEvent(
-            LibraryError,
-            "[ lib] ERROR, %s.",
-            "EVP_EncryptUpdate (AD) failed");
         return QUIC_STATUS_TLS_ERROR;
     }
 
     if (EVP_EncryptUpdate(CipherCtx, Buffer, &OutLen, Buffer, (int)PlainTextLength) != 1) {
-        QuicTraceEvent(
-            LibraryError,
-            "[ lib] ERROR, %s.",
-            "EVP_EncryptUpdate (Cipher) failed");
         return QUIC_STATUS_TLS_ERROR;
     }
 
     if (EVP_EncryptFinal_ex(CipherCtx, Tag, &OutLen) != 1) {
-        QuicTraceEvent(
-            LibraryError,
-            "[ lib] ERROR, %s.",
-            "EVP_EncryptFinal_ex failed");
         return QUIC_STATUS_TLS_ERROR;
     }
 
@@ -369,10 +321,6 @@ CxPlatEncrypt(
     AlgParam[1] = OSSL_PARAM_construct_end();
 
     if (EVP_CIPHER_CTX_get_params(CipherCtx, AlgParam) != 1) {
-        QuicTraceEvent(
-            LibraryError,
-            "[ lib] ERROR, %s.",
-            "EVP_CIPHER_CTX_get_params (GET_TAG) failed");
         return QUIC_STATUS_TLS_ERROR;
     }
 
@@ -403,30 +351,15 @@ CxPlatDecrypt(
     OSSL_PARAM AlgParam[2];
 
     if (EVP_DecryptInit_ex(CipherCtx, NULL, NULL, NULL, Iv) != 1) {
-        QuicTraceEvent(
-            LibraryErrorStatus,
-            "[ lib] ERROR, %u, %s.",
-            ERR_get_error(),
-            "EVP_DecryptInit_ex failed");
         return QUIC_STATUS_TLS_ERROR;
     }
 
     if (AuthData != NULL &&
         EVP_DecryptUpdate(CipherCtx, NULL, &OutLen, AuthData, (int)AuthDataLength) != 1) {
-        QuicTraceEvent(
-            LibraryErrorStatus,
-            "[ lib] ERROR, %u, %s.",
-            ERR_get_error(),
-            "EVP_DecryptUpdate (AD) failed");
         return QUIC_STATUS_TLS_ERROR;
     }
 
     if (EVP_DecryptUpdate(CipherCtx, Buffer, &OutLen, Buffer, (int)CipherTextLength) != 1) {
-        QuicTraceEvent(
-            LibraryErrorStatus,
-            "[ lib] ERROR, %u, %s.",
-            ERR_get_error(),
-            "EVP_DecryptUpdate (Cipher) failed");
         return QUIC_STATUS_TLS_ERROR;
     }
 
@@ -434,19 +367,10 @@ CxPlatDecrypt(
     AlgParam[1] = OSSL_PARAM_construct_end();
 
     if (EVP_CIPHER_CTX_set_params(CipherCtx, AlgParam) != 1) {
-        QuicTraceEvent(
-            LibraryError,
-            "[ lib] ERROR, %s.",
-            "EVP_CIPHER_CTX_set_params (SET_TAG) failed");
         return QUIC_STATUS_TLS_ERROR;
     }
 
     if (EVP_DecryptFinal_ex(CipherCtx, Tag, &OutLen) != 1) {
-        QuicTraceEvent(
-            LibraryErrorStatus,
-            "[ lib] ERROR, %u, %s.",
-            ERR_get_error(),
-            "EVP_DecryptFinal_ex failed");
         return QUIC_STATUS_TLS_ERROR;
     }
 
@@ -468,11 +392,6 @@ CxPlatHpKeyCreate(
     const EVP_CIPHER *Aead;
     CXPLAT_HP_KEY* Key = CXPLAT_ALLOC_NONPAGED(sizeof(CXPLAT_HP_KEY), QUIC_POOL_TLS_HP_KEY);
     if (Key == NULL) {
-        QuicTraceEvent(
-            AllocFailure,
-            "Allocation of '%s' failed. (%llu bytes)",
-            "CXPLAT_HP_KEY",
-            sizeof(CXPLAT_HP_KEY));
         return QUIC_STATUS_OUT_OF_MEMORY;
     }
 
@@ -480,11 +399,6 @@ CxPlatHpKeyCreate(
 
     Key->CipherCtx = EVP_CIPHER_CTX_new();
     if (Key->CipherCtx == NULL) {
-        QuicTraceEvent(
-            AllocFailure,
-            "Allocation of '%s' failed. (%llu bytes)",
-            "EVP_CIPHER_CTX_new",
-            0);
         Status = QUIC_STATUS_OUT_OF_MEMORY;
         goto Exit;
     }
@@ -509,10 +423,6 @@ CxPlatHpKeyCreate(
     }
 
     if (EVP_EncryptInit_ex(Key->CipherCtx, Aead, NULL, RawKey, NULL) != 1) {
-        QuicTraceEvent(
-            LibraryError,
-            "[ lib] ERROR, %s.",
-            "EVP_EncryptInit_ex failed");
         Status = QUIC_STATUS_TLS_ERROR;
         goto Exit;
     }
@@ -555,26 +465,14 @@ CxPlatHpComputeMask(
         static const uint8_t Zero[] = { 0, 0, 0, 0, 0 };
         for (uint32_t i = 0, Offset = 0; i < BatchSize; ++i, Offset += CXPLAT_HP_SAMPLE_LENGTH) {
             if (EVP_EncryptInit_ex(Key->CipherCtx, NULL, NULL, NULL, Cipher + Offset) != 1) {
-                QuicTraceEvent(
-                    LibraryError,
-                    "[ lib] ERROR, %s.",
-                    "EVP_EncryptInit_ex (hp) failed");
                 return QUIC_STATUS_TLS_ERROR;
             }
             if (EVP_EncryptUpdate(Key->CipherCtx, Mask + Offset, &OutLen, Zero, sizeof(Zero)) != 1) {
-                QuicTraceEvent(
-                    LibraryError,
-                    "[ lib] ERROR, %s.",
-                    "EVP_EncryptUpdate (hp) failed");
                 return QUIC_STATUS_TLS_ERROR;
             }
         }
     } else {
         if (EVP_EncryptUpdate(Key->CipherCtx, Mask, &OutLen, Cipher, CXPLAT_HP_SAMPLE_LENGTH * BatchSize) != 1) {
-            QuicTraceEvent(
-                LibraryError,
-                "[ lib] ERROR, %s.",
-                "EVP_EncryptUpdate failed");
             return QUIC_STATUS_TLS_ERROR;
         }
     }
@@ -610,11 +508,6 @@ CxPlatHashCreate(
 
     Hash = CXPLAT_ALLOC_NONPAGED(sizeof(CXPLAT_HASH) + SaltLength, QUIC_POOL_TLS_HASH);
     if (Hash == NULL) {
-        QuicTraceEvent(
-            AllocFailure,
-            "Allocation of '%s' failed. (%llu bytes)",
-            "Crypt Hash Context",
-            sizeof(CXPLAT_HASH) + SaltLength);
         Status = QUIC_STATUS_OUT_OF_MEMORY;
         goto Exit;
     }
@@ -640,11 +533,6 @@ CxPlatHashCreate(
 
     Hash->Ctx = EVP_MAC_CTX_dup(hctx);
     if (Hash->Ctx == NULL) {
-        QuicTraceEvent(
-            AllocFailure,
-            "Allocation of '%s' failed. (%llu bytes)",
-            "EVP_MAC_CTX_dup",
-            0);
         Status = QUIC_STATUS_OUT_OF_MEMORY;
         goto Exit;
     }
@@ -684,27 +572,15 @@ CxPlatHashCompute(
     )
 {
     if (!EVP_MAC_init(Hash->Ctx, Hash->Salt, Hash->SaltLength, NULL)) {
-        QuicTraceEvent(
-            LibraryError,
-            "[ lib] ERROR, %s.",
-            "EVP_MAC_init failed");
         return QUIC_STATUS_INTERNAL_ERROR;
     }
 
     if (!EVP_MAC_update(Hash->Ctx, Input, InputLength)) {
-        QuicTraceEvent(
-            LibraryError,
-            "[ lib] ERROR, %s.",
-            "EVP_MAC_update failed");
         return QUIC_STATUS_INTERNAL_ERROR;
     }
 
     size_t ActualOutputSize = OutputLength;
     if (!EVP_MAC_final(Hash->Ctx, Output, &ActualOutputSize, OutputLength)) {
-        QuicTraceEvent(
-            LibraryError,
-            "[ lib] ERROR, %s.",
-            "EVP_MAC_final failed");
         return QUIC_STATUS_INTERNAL_ERROR;
     }
 
@@ -760,10 +636,6 @@ CxPlatKbKdfDerive(
     Params[5] = OSSL_PARAM_construct_end();
 
     if (EVP_KDF_derive(KdfCtx, Output, OutputLength, Params) <= 0) {
-        QuicTraceEvent(
-            LibraryError,
-            "[ lib] ERROR, %s.",
-            "EVP_KDF_derive failed");
         Status = QUIC_STATUS_INTERNAL_ERROR;
     }
 
