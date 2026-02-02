@@ -46,11 +46,6 @@ MsQuicListenerOpen(
     QUIC_REGISTRATION* Registration;
     QUIC_LISTENER* Listener = NULL;
 
-    QuicTraceEvent(
-        ApiEnter,
-        "[ api] Enter %u (%p).",
-        QUIC_TRACE_API_LISTENER_OPEN,
-        RegistrationHandle);
 
     if (RegistrationHandle == NULL ||
         RegistrationHandle->Type != QUIC_HANDLE_TYPE_REGISTRATION ||
@@ -64,11 +59,6 @@ MsQuicListenerOpen(
 
     Listener = CXPLAT_ALLOC_NONPAGED(sizeof(QUIC_LISTENER), QUIC_POOL_LISTENER);
     if (Listener == NULL) {
-        QuicTraceEvent(
-            AllocFailure,
-            "Allocation of '%s' failed. (%llu bytes)",
-            "listener",
-            sizeof(QUIC_LISTENER));
         Status = QUIC_STATUS_OUT_OF_MEMORY;
         goto Error;
     }
@@ -115,11 +105,6 @@ MsQuicListenerOpen(
         Status = QUIC_STATUS_INVALID_STATE;
         goto Error;
     }
-    QuicTraceEvent(
-        ListenerCreated,
-        "[list][%p] Created, Registration=%p",
-        Listener,
-        Listener->Registration);
     *NewListener = (HQUIC)Listener;
     Status = QUIC_STATUS_SUCCESS;
 
@@ -127,10 +112,6 @@ Error:
 
     CXPLAT_DBG_ASSERT(QUIC_SUCCEEDED(Status) || Listener == NULL);
 
-    QuicTraceEvent(
-        ApiExitStatus,
-        "[ api] Exit %u",
-        Status);
 
     return Status;
 }
@@ -143,10 +124,6 @@ QuicListenerFree(
 {
     QUIC_REGISTRATION* Registration = Listener->Registration;
 
-    QuicTraceEvent(
-        ListenerDestroyed,
-        "[list][%p] Destroyed",
-        Listener);
 
     CXPLAT_DBG_ASSERT(Listener->Stopped);
 
@@ -184,11 +161,6 @@ MsQuicListenerClose(
         return;
     }
 
-    QuicTraceEvent(
-        ApiEnter,
-        "[ api] Enter %u (%p).",
-        QUIC_TRACE_API_LISTENER_CLOSE,
-        Handle);
 
 #pragma prefast(suppress: __WARNING_25024, "Pointer cast already validated.")
     QUIC_LISTENER* Listener = (QUIC_LISTENER*)Handle;
@@ -212,9 +184,6 @@ MsQuicListenerClose(
 
     QuicListenerRelease(Listener);
 
-    QuicTraceEvent(
-        ApiExit,
-        "[ api] Exit");
 }
 
 _IRQL_requires_max_(PASSIVE_LEVEL)
@@ -235,11 +204,6 @@ MsQuicListenerStart(
     BOOLEAN PortUnspecified;
     QUIC_ADDR BindingLocalAddress = {0};
 
-    QuicTraceEvent(
-        ApiEnter,
-        "[ api] Enter %u (%p).",
-        QUIC_TRACE_API_LISTENER_START,
-        Handle);
 
     if (Handle == NULL ||
         Handle->Type != QUIC_HANDLE_TYPE_LISTENER ||
@@ -279,11 +243,6 @@ MsQuicListenerStart(
 
     AlpnList = CXPLAT_ALLOC_NONPAGED(AlpnListLength, QUIC_POOL_ALPN);
     if (AlpnList == NULL) {
-        QuicTraceEvent(
-            AllocFailure,
-            "Allocation of '%s' failed. (%llu bytes)",
-            "AlpnList" ,
-            AlpnListLength);
         Status = QUIC_STATUS_OUT_OF_MEMORY;
         goto Exit;
     }
@@ -367,12 +326,6 @@ MsQuicListenerStart(
             &UdpConfig,
             &Listener->Binding);
     if (QUIC_FAILED(Status)) {
-        QuicTraceEvent(
-            ListenerErrorStatus,
-            "[list][%p] ERROR, %u, %s.",
-            Listener,
-            Status,
-            "Get binding");
         goto Error;
     }
 
@@ -382,12 +335,6 @@ MsQuicListenerStart(
 
     Status = QuicBindingRegisterListener(Listener->Binding, Listener);
     if (QUIC_FAILED(Status)) {
-        QuicTraceEvent(
-            ListenerErrorStatus,
-            "[list][%p] ERROR, %u, %s.",
-            Listener,
-            Status,
-            "Register with binding");
         QuicListenerStartRelease(Listener, FALSE);
         goto Error;
     }
@@ -399,13 +346,6 @@ MsQuicListenerStart(
             QuicAddrGetPort(&BindingLocalAddress));
     }
 
-    QuicTraceEvent(
-        ListenerStarted,
-        "[list][%p] Started, Binding=%p, LocalAddr=%!ADDR!, ALPN=%!ALPN!",
-        Listener,
-        Listener->Binding,
-        CASTED_CLOG_BYTEARRAY(sizeof(Listener->LocalAddress), &Listener->LocalAddress),
-        CASTED_CLOG_BYTEARRAY(Listener->AlpnListLength, Listener->AlpnList));
 
 Error:
 
@@ -423,10 +363,6 @@ Error:
 
 Exit:
 
-    QuicTraceEvent(
-        ApiExitStatus,
-        "[ api] Exit %u",
-        Status);
 
     return Status;
 }
@@ -516,10 +452,6 @@ QuicListenerBeginStopComplete(
 {
     BOOLEAN EndStopComplete = TRUE;
 
-    QuicTraceEvent(
-        ListenerStopped,
-        "[list][%p] Stopped",
-        Listener);
 
     //
     // Ensure the listener is not freed while processing this function.
@@ -611,11 +543,6 @@ MsQuicListenerStop(
     _In_ _Pre_defensive_ HQUIC Handle
     )
 {
-    QuicTraceEvent(
-        ApiEnter,
-        "[ api] Enter %u (%p).",
-        QUIC_TRACE_API_LISTENER_STOP,
-        Handle);
 
     if (Handle != NULL && Handle->Type == QUIC_HANDLE_TYPE_LISTENER) {
 #pragma prefast(suppress: __WARNING_25024, "Pointer cast already validated.")
@@ -623,9 +550,6 @@ MsQuicListenerStop(
         QuicListenerStopAsync(Listener);
     }
 
-    QuicTraceEvent(
-        ApiExit,
-        "[ api] Exit");
 }
 
 _IRQL_requires_max_(DISPATCH_LEVEL)
@@ -634,19 +558,7 @@ QuicListenerTraceRundown(
     _In_ QUIC_LISTENER* Listener
     )
 {
-    QuicTraceEvent(
-        ListenerRundown,
-        "[list][%p] Rundown, Registration=%p",
-        Listener,
-        Listener->Registration);
     if (Listener->Binding != NULL) {
-        QuicTraceEvent(
-            ListenerStarted,
-            "[list][%p] Started, Binding=%p, LocalAddr=%!ADDR!, ALPN=%!ALPN!",
-            Listener,
-            Listener->Binding,
-            CASTED_CLOG_BYTEARRAY(sizeof(Listener->LocalAddress), &Listener->LocalAddress),
-            CASTED_CLOG_BYTEARRAY(Listener->AlpnListLength, Listener->AlpnList));
     }
 }
 
@@ -774,12 +686,6 @@ QuicListenerClaimConnection(
             !Connection->State.HandleClosed,
             "App MUST not close and reject connection!");
         Connection->State.ExternalOwner = FALSE;
-        QuicTraceEvent(
-            ListenerErrorStatus,
-            "[list][%p] ERROR, %u, %s.",
-            Listener,
-            Status,
-            "NEW_CONNECTION callback");
         QuicConnTransportError(
             Connection,
             QUIC_ERROR_CONNECTION_REFUSED);
@@ -812,11 +718,6 @@ QuicListenerAcceptConnection(
     if (!QuicRegistrationAcceptConnection(
             Listener->Registration,
             Connection)) {
-        QuicTraceEvent(
-            ConnError,
-            "[conn][%p] ERROR, %s.",
-            Connection,
-            "Connection rejected by registration (overloaded)");
         QuicConnTransportError(
             Connection,
             QUIC_ERROR_CONNECTION_REFUSED);
