@@ -53,8 +53,8 @@ QuicMtuDiscoveryMoveToSearchComplete(
     _In_ QUIC_CONNECTION* Connection
     )
 {
-    QUIC_PATH* Path =
-        CXPLAT_CONTAINING_RECORD(MtuDiscovery, QUIC_PATH, MtuDiscovery);
+    // QUIC_PATH* Path =
+    //     CXPLAT_CONTAINING_RECORD(MtuDiscovery, QUIC_PATH, MtuDiscovery);
     MtuDiscovery->IsSearchComplete = TRUE;
     MtuDiscovery->SearchCompleteEnterTimeUs = CxPlatTimeUs64();
 }
@@ -194,8 +194,8 @@ QuicMtuDiscoveryProbePacketDiscarded(
     _In_ uint16_t PacketMtu
     )
 {
-    QUIC_PATH* Path =
-        CXPLAT_CONTAINING_RECORD(MtuDiscovery, QUIC_PATH, MtuDiscovery);
+    // QUIC_PATH* Path =
+    //     CXPLAT_CONTAINING_RECORD(MtuDiscovery, QUIC_PATH, MtuDiscovery);
     //
     // If out of order receives are received, ignore the packet
     //
