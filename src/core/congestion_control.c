@@ -26,11 +26,6 @@ QuicCongestionControlInitialize(
 
     switch (Settings->CongestionControlAlgorithm) {
     default:
-        QuicTraceLogConnWarning(
-            InvalidCongestionControlAlgorithm,
-            QuicCongestionControlGetConnection(Cc),
-            "Unknown congestion control algorithm: %hu, fallback to Cubic",
-            Settings->CongestionControlAlgorithm);
         __fallthrough;
     case QUIC_CONGESTION_CONTROL_ALGORITHM_CUBIC:
         CubicCongestionControlInitialize(Cc, Settings);
