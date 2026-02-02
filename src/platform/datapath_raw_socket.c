@@ -83,12 +83,6 @@ CxPlatRemoveSocket(
     if (Socket->AuxSocket != INVALID_SOCKET &&
         CxPlatCloseSocket(Socket->AuxSocket) == SOCKET_ERROR) {
         int Error = CxPlatSocketError();
-        QuicTraceEvent(
-            DatapathErrorStatus,
-            "[data][%p] ERROR, %u, %s.",
-            Socket,
-            Error,
-            "closesocket");
     }
 
     CxPlatRwLockReleaseExclusive(&Pool->Lock);
@@ -155,22 +149,10 @@ CxPlatDpRawParseUdp(
     )
 {
     if (Length < sizeof(UDP_HEADER)) {
-        QuicTraceEvent(
-            DatapathErrorStatus,
-            "[data][%p] ERROR, %u, %s.",
-            Datapath,
-            Length,
-            "packet is too small for a UDP header");
         return;
     }
 
     if (Length < QuicNetByteSwapShort(Udp->Length)) {
-        QuicTraceEvent(
-            DatapathErrorStatus,
-            "[data][%p] ERROR, %u, %s.",
-            Datapath,
-            Length,
-            "UDP Length larger than IP length");
         return;
     }
 
@@ -196,23 +178,11 @@ CxPlatDpRawParseTcp(
 {
     uint16_t HeaderLength;
     if (Length < sizeof(TCP_HEADER)) {
-        QuicTraceEvent(
-            DatapathErrorStatus,
-            "[data][%p] ERROR, %u, %s.",
-            Datapath,
-            Length,
-            "packet is too small for a TCP header");
         return;
     }
 
     HeaderLength = Tcp->HeaderLength * sizeof(uint32_t);
     if (Length < HeaderLength) {
-        QuicTraceEvent(
-            DatapathErrorStatus,
-            "[data][%p] ERROR, %u, %s.",
-            Datapath,
-            Length,
-            "packet is too small for a TCP header");
         return;
     }
 
@@ -265,33 +235,15 @@ CxPlatDpRawParseIPv4(
     )
 {
     if (Length < sizeof(IPV4_HEADER)) {
-        QuicTraceEvent(
-            DatapathErrorStatus,
-            "[data][%p] ERROR, %u, %s.",
-            Datapath,
-            Length,
-            "packet is too small for an IPv4 header");
         return;
     }
 
     if (IP->VersionAndHeaderLength != IPV4_DEFAULT_VERHLEN) {
-        QuicTraceEvent(
-            DatapathErrorStatus,
-            "[data][%p] ERROR, %u, %s.",
-            Datapath,
-            IP->VersionAndHeaderLength,
-            "unexpected IPv4 header length and version");
         return;
     }
 
     uint16_t IPTotalLength = CxPlatByteSwapUint16(IP->TotalLength);
     if (Length < IPTotalLength) {
-        QuicTraceEvent(
-            DatapathErrorStatus,
-            "[data][%p] ERROR, %u, %s.",
-            Datapath,
-            Length,
-            "unexpected IPv4 packet size");
         return;
     }
 
@@ -309,12 +261,6 @@ CxPlatDpRawParseIPv4(
         Packet->Route->UseQTIP = TRUE;
         CxPlatDpRawParseTcp(Datapath, Packet, (TCP_HEADER*)IP->Data, IPTotalLength - sizeof(IPV4_HEADER));
     } else {
-        QuicTraceEvent(
-            DatapathErrorStatus,
-            "[data][%p] ERROR, %u, %s.",
-            Datapath,
-            IP->Protocol,
-            "unacceptable v4 transport");
     }
 }
 
@@ -331,23 +277,11 @@ CxPlatDpRawParseIPv6(
 {
 
     if (Length < sizeof(IPV6_HEADER)) {
-        QuicTraceEvent(
-            DatapathErrorStatus,
-            "[data][%p] ERROR, %u, %s.",
-            Datapath,
-            Length,
-            "packet is too small for an IPv6 header");
         return;
     }
 
     uint16_t IPPayloadLength = CxPlatByteSwapUint16(IP->PayloadLength);
     if (IPPayloadLength + sizeof(IPV6_HEADER) > Length) {
-        QuicTraceEvent(
-            DatapathErrorStatus,
-            "[data][%p] ERROR, %u, %s.",
-            Datapath,
-            IPPayloadLength,
-            "incorrect IP payload length");
         return;
     }
 
@@ -380,12 +314,6 @@ CxPlatDpRawParseIPv6(
         Packet->Route->UseQTIP = TRUE;
         CxPlatDpRawParseTcp(Datapath, Packet, (TCP_HEADER*)IP->Data, IPPayloadLength);
     } else {
-        QuicTraceEvent(
-            DatapathErrorStatus,
-            "[data][%p] ERROR, %u, %s.",
-            Datapath,
-            IP->NextHeader,
-            "unacceptable v6 transport");
     }
 }
 
@@ -410,12 +338,6 @@ CxPlatDpRawParseEthernet(
     )
 {
     if (Length < sizeof(ETHERNET_HEADER)) {
-        QuicTraceEvent(
-            DatapathErrorStatus,
-            "[data][%p] ERROR, %u, %s.",
-            Datapath,
-            Length,
-            "packet is too small for an ethernet header");
         return;
     }
 
@@ -424,12 +346,6 @@ CxPlatDpRawParseEthernet(
     const ETHERNET_HEADER* Ethernet = (const ETHERNET_HEADER*)Payload;
 
     if (IsEthernetBroadcast(Ethernet->Destination) || IsEthernetMulticast(Ethernet->Destination)) {
-        QuicTraceEvent(
-            DatapathErrorStatus,
-            "[data][%p] ERROR, %u, %s.",
-            Datapath,
-            0,
-            "not a unicast packet");
         return;
     }
 
@@ -442,12 +358,6 @@ CxPlatDpRawParseEthernet(
     } else if (EthernetType == ETHERNET_TYPE_IPV6) {
         CxPlatDpRawParseIPv6(Datapath, Packet, (IPV6_HEADER*)Ethernet->Data, Length);
     } else {
-        QuicTraceEvent(
-            DatapathErrorStatus,
-            "[data][%p] ERROR, %u, %s.",
-            Datapath,
-            EthernetType,
-            "unacceptable ethernet type");
     }
 }
 
@@ -549,14 +459,6 @@ CxPlatDpRawSocketAckFin(
         return;
     }
 
-    QuicTraceEvent(
-        DatapathSendTcpControl,
-        "[data][%p] Send %u bytes TCP control packet Flags=%hhu Dst=%!ADDR!, Src=%!ADDR!",
-        Socket,
-        SendData->Buffer.Length,
-        (uint8_t)(TH_FIN | TH_ACK),
-        CASTED_CLOG_BYTEARRAY(sizeof(Route->RemoteAddress), &Route->RemoteAddress),
-        CASTED_CLOG_BYTEARRAY(sizeof(Route->LocalAddress), &Route->LocalAddress));
     CXPLAT_DBG_ASSERT(Route->State == RouteResolved);
     CXPLAT_DBG_ASSERT(Route->Queue != NULL);
     TCP_HEADER* ReceivedTcpHeader = (TCP_HEADER*)(Packet->Buffer - Packet->ReservedEx);
@@ -591,14 +493,6 @@ CxPlatDpRawSocketAckSyn(
     CXPLAT_DBG_ASSERT(Route->Queue != NULL);
     TCP_HEADER* ReceivedTcpHeader = (TCP_HEADER*)(Packet->Buffer - Packet->ReservedEx);
 
-    QuicTraceEvent(
-        DatapathSendTcpControl,
-        "[data][%p] Send %u bytes TCP control packet Flags=%hhu Dst=%!ADDR!, Src=%!ADDR!",
-        Socket,
-        SendData->Buffer.Length,
-        TcpFlags,
-        CASTED_CLOG_BYTEARRAY(sizeof(Route->RemoteAddress), &Route->RemoteAddress),
-        CASTED_CLOG_BYTEARRAY(sizeof(Route->LocalAddress), &Route->LocalAddress));
 
     CxPlatFramingWriteHeaders(
         Socket, Route, SendData, &SendData->Buffer, SendData->ECN, SendData->DSCP,
@@ -612,14 +506,6 @@ CxPlatDpRawSocketAckSyn(
     SendData = InterlockedFetchAndClearPointer((void*)&Socket->PausedTcpSend);
     if (SendData) {
         CXPLAT_DBG_ASSERT(Socket->Connected);
-        QuicTraceEvent(
-            DatapathSendTcpControl,
-            "[data][%p] Send %u bytes TCP control packet Flags=%hhu Dst=%!ADDR!, Src=%!ADDR!",
-            Socket,
-            SendData->Buffer.Length,
-            TH_ACK,
-            CASTED_CLOG_BYTEARRAY(sizeof(Route->RemoteAddress), &Route->RemoteAddress),
-            CASTED_CLOG_BYTEARRAY(sizeof(Route->LocalAddress), &Route->LocalAddress));
         CxPlatFramingWriteHeaders(
             Socket, Route, SendData, &SendData->Buffer, SendData->ECN, SendData->DSCP,
             CxPlatDpRawIsL3TxXsumOffloadedOnQueue(Route->Queue),
@@ -634,15 +520,6 @@ CxPlatDpRawSocketAckSyn(
             return;
         }
 
-        QuicTraceEvent(
-            DatapathSend,
-            "[data][%p] Send %u bytes in %hhu buffers (segment=%hu) Dst=%!ADDR!, Src=%!ADDR!",
-            Socket,
-            SendData->Buffer.Length,
-            1,
-            (uint16_t)SendData->Buffer.Length,
-            CASTED_CLOG_BYTEARRAY(sizeof(Route->RemoteAddress), &Route->RemoteAddress),
-            CASTED_CLOG_BYTEARRAY(sizeof(Route->LocalAddress), &Route->LocalAddress));
         CxPlatFramingWriteHeaders(
             Socket, Route, SendData, &SendData->Buffer, SendData->ECN, SendData->DSCP,
             CxPlatDpRawIsL3TxXsumOffloadedOnQueue(Route->Queue),
@@ -668,14 +545,6 @@ CxPlatDpRawSocketSyn(
         return;
     }
 
-    QuicTraceEvent(
-        DatapathSendTcpControl,
-        "[data][%p] Send %u bytes TCP control packet Flags=%hhu Dst=%!ADDR!, Src=%!ADDR!",
-        Socket,
-        SendData->Buffer.Length,
-        TH_SYN,
-        CASTED_CLOG_BYTEARRAY(sizeof(Route->RemoteAddress), &Route->RemoteAddress),
-        CASTED_CLOG_BYTEARRAY(sizeof(Route->LocalAddress), &Route->LocalAddress));
     CXPLAT_DBG_ASSERT(Route->State == RouteResolved);
     CXPLAT_DBG_ASSERT(Route->Queue != NULL);
     CxPlatFramingWriteHeaders(
@@ -895,12 +764,6 @@ CxPlatTryAddSocket(
                 IPPROTO_TCP);
         if (Socket->AuxSocket == INVALID_SOCKET) {
             int WsaError = CxPlatSocketError();
-            QuicTraceEvent(
-                DatapathErrorStatus,
-                "[data][%p] ERROR, %u, %s.",
-                Socket,
-                WsaError,
-                "socket");
             Status = CxPlatQuicErrorFromSocketError(WsaError);
             goto Error;
         }
@@ -915,12 +778,6 @@ CxPlatTryAddSocket(
                 sizeof(Option));
         if (Result == SOCKET_ERROR) {
             int WsaError = CxPlatSocketError();
-            QuicTraceEvent(
-                DatapathErrorStatus,
-                "[data][%p] ERROR, %u, %s.",
-                Socket,
-                WsaError,
-                "Set IPV6_V6ONLY");
             Status = CxPlatQuicErrorFromSocketError(WsaError);
             goto Error;
         }
@@ -936,12 +793,6 @@ CxPlatTryAddSocket(
                     sizeof(Option));
             if (Result == SOCKET_ERROR) {
                 int WsaError = CxPlatSocketError();
-                QuicTraceEvent(
-                    DatapathErrorStatus,
-                    "[data][%p] ERROR, %u, %s.",
-                    Socket,
-                    WsaError,
-                    "Set SO_REUSEADDR");
                 Status = CxPlatQuicErrorFromSocketError(WsaError);
                 goto Error;
             }
@@ -972,12 +823,6 @@ CxPlatTryAddSocket(
                 sizeof(MappedAddress));
         if (Result == SOCKET_ERROR) {
             int WsaError = CxPlatSocketError();
-            QuicTraceEvent(
-                DatapathErrorStatus,
-                "[data][%p] ERROR, %u, %s.",
-                Socket,
-                WsaError,
-                "bind");
             CxPlatRwLockReleaseExclusive(&Pool->Lock);
             Status = CxPlatQuicErrorFromSocketError(WsaError);
             goto Error;
@@ -1007,12 +852,6 @@ CxPlatTryAddSocket(
                     &AssignedLocalAddressLength);
             if (Result == SOCKET_ERROR) {
                 int WsaError = CxPlatSocketError();
-                QuicTraceEvent(
-                    DatapathErrorStatus,
-                    "[data][%p] ERROR, %u, %s.",
-                    Socket,
-                    WsaError,
-                    "getsockname");
                 CxPlatRwLockReleaseExclusive(&Pool->Lock);
                 Status = CxPlatQuicErrorFromSocketError(WsaError);
                 goto Error;
@@ -1021,12 +860,6 @@ CxPlatTryAddSocket(
             TempUdpSocket = socket(AF_INET6, SOCK_DGRAM, IPPROTO_UDP);
             if (TempUdpSocket == INVALID_SOCKET) {
                 int WsaError = CxPlatSocketError();
-                QuicTraceEvent(
-                    DatapathErrorStatus,
-                    "[data][%p] ERROR, %u, %s.",
-                    Socket,
-                    WsaError,
-                    "temp udp socket");
                 CxPlatRwLockReleaseExclusive(&Pool->Lock);
                 Status = CxPlatQuicErrorFromSocketError(WsaError);
                 goto Error;
@@ -1042,12 +875,6 @@ CxPlatTryAddSocket(
                     sizeof(Option));
             if (Result == SOCKET_ERROR) {
                 int WsaError = CxPlatSocketError();
-                QuicTraceEvent(
-                    DatapathErrorStatus,
-                    "[data][%p] ERROR, %u, %s.",
-                    Socket,
-                    WsaError,
-                    "Set IPV6_V6ONLY (temp udp socket)");
                 CxPlatRwLockReleaseExclusive(&Pool->Lock);
                 Status = CxPlatQuicErrorFromSocketError(WsaError);
                 goto Error;
@@ -1063,12 +890,6 @@ CxPlatTryAddSocket(
                     sizeof(TempLocalAddress));
             if (Result == SOCKET_ERROR) {
                 int WsaError = CxPlatSocketError();
-                QuicTraceEvent(
-                    DatapathErrorStatus,
-                    "[data][%p] ERROR, %u, %s.",
-                    Socket,
-                    WsaError,
-                    "bind (temp udp socket)");
                 CxPlatRwLockReleaseExclusive(&Pool->Lock);
                 Status = CxPlatQuicErrorFromSocketError(WsaError);
                 goto Error;
@@ -1081,12 +902,6 @@ CxPlatTryAddSocket(
                     sizeof(MappedAddress));
             if (Result == SOCKET_ERROR) {
                 int WsaError = CxPlatSocketError();
-                QuicTraceEvent(
-                    DatapathErrorStatus,
-                    "[data][%p] ERROR, %u, %s.",
-                    Socket,
-                    WsaError,
-                    "connect failed (temp udp socket)");
                 CxPlatRwLockReleaseExclusive(&Pool->Lock);
                 Status = CxPlatQuicErrorFromSocketError(WsaError);
                 goto Error;
@@ -1100,12 +915,6 @@ CxPlatTryAddSocket(
                     &AssignedLocalAddressLength);
             if (Result == SOCKET_ERROR) {
                 int WsaError = CxPlatSocketError();
-                QuicTraceEvent(
-                    DatapathErrorStatus,
-                    "[data][%p] ERROR, %u, %s.",
-                    Socket,
-                    WsaError,
-                    "getsockname (temp udp socket)");
                 CxPlatRwLockReleaseExclusive(&Pool->Lock);
                 Status = CxPlatQuicErrorFromSocketError(WsaError);
                 goto Error;
@@ -1122,12 +931,6 @@ CxPlatTryAddSocket(
                     &AssignedLocalAddressLength);
             if (Result == SOCKET_ERROR) {
                 int WsaError = CxPlatSocketError();
-                QuicTraceEvent(
-                    DatapathErrorStatus,
-                    "[data][%p] ERROR, %u, %s.",
-                    Socket,
-                    WsaError,
-                    "getsockname");
                 CxPlatRwLockReleaseExclusive(&Pool->Lock);
                 Status = CxPlatQuicErrorFromSocketError(WsaError);
                 goto Error;
