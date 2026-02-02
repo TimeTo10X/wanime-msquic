@@ -672,21 +672,11 @@ CxPlatTlsUtf8ToUnicodeString(
             Input,
             (ULONG) InputLength);
     if (!NT_SUCCESS(Status)) {
-        QuicTraceEvent(
-            LibraryErrorStatus,
-            "[ lib] ERROR, %u, %s.",
-            Status,
-            "Get unicode string size");
         goto Error;
     }
 
     UnicodeString = CXPLAT_ALLOC_NONPAGED(RequiredSize, Tag);
     if (UnicodeString == NULL) {
-        QuicTraceEvent(
-            AllocFailure,
-            "Allocation of '%s' failed. (%llu bytes)",
-            "unicode string",
-            RequiredSize);
         Status = QUIC_STATUS_OUT_OF_MEMORY;
         goto Error;
     }
@@ -699,11 +689,6 @@ CxPlatTlsUtf8ToUnicodeString(
             Input,
             (ULONG) InputLength);
     if (!NT_SUCCESS(Status)) {
-        QuicTraceEvent(
-            LibraryErrorStatus,
-            "[ lib] ERROR, %u, %s.",
-            Status,
-            "Convert string to unicode");
         goto Error;
     }
 
@@ -765,11 +750,6 @@ CxPlatTlsSetClientCertPolicy(
             sizeof(ClientCertPolicy));
 
     if (SecStatus != SEC_E_OK) {
-        QuicTraceEvent(
-            LibraryErrorStatus,
-            "[ lib] ERROR, %u, %s.",
-            SecStatus,
-            "SetCredentialsAttributesW(SECPKG_ATTR_CLIENT_CERT_POLICY) failed");
     }
 
     if (SecStatus == SEC_E_UNSUPPORTED_FUNCTION) {
@@ -792,11 +772,6 @@ CxPlatTlsAllocateAchContext(
 {
     QUIC_ACH_CONTEXT* AchContext = CXPLAT_ALLOC_NONPAGED(sizeof(QUIC_ACH_CONTEXT), QUIC_POOL_TLS_ACHCTX);
     if (AchContext == NULL) {
-        QuicTraceEvent(
-            AllocFailure,
-            "Allocation of '%s' failed. (%llu bytes)",
-            "QUIC_ACH_CONTEXT",
-            sizeof(QUIC_ACH_CONTEXT));
     } else {
         RtlZeroMemory(AchContext, sizeof(*AchContext));
         AchContext->CredConfig = *CredConfig;
@@ -845,10 +820,6 @@ CxPlatTlsSspiNotifyCallback(
     )
 {
     if (CallbackData == NULL) {
-        QuicTraceEvent(
-            LibraryError,
-            "[ lib] ERROR, %s.",
-            "NULL CallbackData to CxPlatTlsSspiNotifyCallback");
         return;
     }
     QUIC_ACH_CONTEXT* AchContext = CallbackData;
@@ -864,11 +835,6 @@ CxPlatTlsSspiNotifyCallback(
         CxPlatTlsFreeAchContext(AchContext);
     }
     if (Status != SEC_E_OK) {
-        QuicTraceEvent(
-            LibraryErrorStatus,
-            "[ lib] ERROR, %u, %s.",
-            Status,
-            "Completion for SspiAcquireCredentialsHandleAsyncW");
         CompletionCallback(&CredConfig, CompletionContext, SecStatusToQuicStatus(Status), NULL);
         CxPlatTlsSecConfigDelete(SecConfig); // *MUST* be last call to prevent crash in platform cleanup.
     } else {
@@ -917,11 +883,6 @@ CxPlatTlsAchHelper(
             &AchContext->SecConfig->CredentialHandle,
             NULL);
     if (SecStatus != SEC_E_OK) {
-        QuicTraceEvent(
-            LibraryErrorStatus,
-            "[ lib] ERROR, %u, %s.",
-            SecStatus,
-            "SspiAcquireCredentialsHandleAsyncW");
         ThreadContext->CompletionStatus = SecStatusToQuicStatus(SecStatus);
 
     } else {
@@ -1044,11 +1005,6 @@ CxPlatTlsSecConfigCreate(
             (QUIC_ALLOWED_CIPHER_SUITE_AES_128_GCM_SHA256 |
             QUIC_ALLOWED_CIPHER_SUITE_AES_256_GCM_SHA384)) == 0 ||
         (CredConfig->AllowedCipherSuites & QUIC_ALLOWED_CIPHER_SUITE_CHACHA20_POLY1305_SHA256))) {
-        QuicTraceEvent(
-            LibraryErrorStatus,
-            "[ lib] ERROR, %u, %s.",
-            CredConfig->AllowedCipherSuites,
-            "No valid cipher suites presented");
         return QUIC_STATUS_INVALID_PARAMETER;
     }
 
@@ -1064,11 +1020,6 @@ CxPlatTlsSecConfigCreate(
 #pragma prefast(suppress: __WARNING_6014, "Memory is correctly freed (CxPlatTlsSecConfigDelete)")
     AchContext->SecConfig = CXPLAT_ALLOC_NONPAGED(sizeof(CXPLAT_SEC_CONFIG), QUIC_POOL_TLS_SECCONF);
     if (AchContext->SecConfig == NULL) {
-        QuicTraceEvent(
-            AllocFailure,
-            "Allocation of '%s' failed. (%llu bytes)",
-            "CXPLAT_SEC_CONFIG",
-            sizeof(CXPLAT_SEC_CONFIG));
         Status = QUIC_STATUS_OUT_OF_MEMORY;
         goto Error;
     }
@@ -1158,10 +1109,6 @@ CxPlatTlsSecConfigCreate(
 
         if (DisallowedCipherSuites & QUIC_ALLOWED_CIPHER_SUITE_AES_256_GCM_SHA384 &&
             DisallowedCipherSuites & QUIC_ALLOWED_CIPHER_SUITE_AES_128_GCM_SHA256) {
-            QuicTraceEvent(
-                LibraryError,
-                "[ lib] ERROR, %s.",
-                "No Allowed TLS Cipher Suites");
             Status = QUIC_STATUS_INVALID_PARAMETER;
             goto Error;
         }
@@ -1261,11 +1208,6 @@ CxPlatTlsSecConfigCreate(
                     sizeof(CertHashStore->StoreName)));
 #pragma warning(pop)
         if (!NT_SUCCESS(Status)) {
-            QuicTraceEvent(
-                LibraryErrorStatus,
-                "[ lib] ERROR, %u, %s.",
-                Status,
-                "Convert cert store name to unicode");
             goto Error;
         }
 
@@ -1281,10 +1223,6 @@ CxPlatTlsSecConfigCreate(
 
     } else {
         Status = QUIC_STATUS_INVALID_PARAMETER;
-        QuicTraceEvent(
-            LibraryError,
-            "[ lib] ERROR, %s.",
-            "Invalid flags passed in to CxPlatTlsSecConfigCreate");
         goto Error;
     }
 
@@ -1292,11 +1230,6 @@ CxPlatTlsSecConfigCreate(
 
         Status = CxPlatTlsUtf8ToUnicodeString(CredConfig->Principal, &AchContext->Principal, QUIC_POOL_TLS_PRINCIPAL);
         if (!NT_SUCCESS(Status)) {
-            QuicTraceEvent(
-                LibraryErrorStatus,
-                "[ lib] ERROR, %u, %s.",
-                Status,
-                "Convert principal to unicode");
             goto Error;
         }
 
@@ -1307,11 +1240,6 @@ CxPlatTlsSecConfigCreate(
     if (CredConfig->Type != QUIC_CREDENTIAL_TYPE_NONE) {
         Status = CxPlatCertCreate(CredConfig, &CertContext);
         if (QUIC_FAILED(Status)) {
-            QuicTraceEvent(
-                LibraryErrorStatus,
-                "[ lib] ERROR, %u, %s.",
-                Status,
-                "CxPlatCertCreate");
             goto Error;
         }
 
@@ -1333,10 +1261,6 @@ CxPlatTlsSecConfigCreate(
 
     AchContext->SspiContext = SspiCreateAsyncContext();
     if (AchContext->SspiContext == NULL) {
-        QuicTraceEvent(
-            LibraryError,
-            "[ lib] ERROR, %s.",
-            "SspiCreateAsyncContext");
         Status = QUIC_STATUS_OUT_OF_MEMORY;
         goto Error;
     }
@@ -1347,11 +1271,6 @@ CxPlatTlsSecConfigCreate(
             CxPlatTlsSspiNotifyCallback,
             AchContext);
     if (SecStatus != SEC_E_OK) {
-        QuicTraceEvent(
-            LibraryErrorStatus,
-            "[ lib] ERROR, %u, %s.",
-            SecStatus,
-            "SspiSetAsyncNotifyCallback");
         Status = SecStatusToQuicStatus(SecStatus);
         goto Error;
     }
@@ -1399,11 +1318,6 @@ CxPlatTlsSecConfigCreate(
             &AchContext->SecConfig->CredentialHandle,
             NULL);
     if (SecStatus != SEC_E_OK) {
-        QuicTraceEvent(
-            LibraryErrorStatus,
-            "[ lib] ERROR, %u, %s.",
-            SecStatus,
-            "AcquireCredentialsHandleW");
         Status = SecStatusToQuicStatus(SecStatus);
         goto Error;
     }
@@ -1509,11 +1423,6 @@ CxPlatTlsSecConfigSetTicketKeys(
             &Keys,
             sizeof(Keys));
     if (SecStatus != SEC_E_OK) {
-        QuicTraceEvent(
-            LibraryErrorStatus,
-            "[ lib] ERROR, %u, %s.",
-            SecStatus,
-            "SetCredentialsAttributesW(SESSION_TICKET_KEYS)");
         return SecStatusToQuicStatus(SecStatus);
     }
 
@@ -1542,22 +1451,12 @@ CxPlatTlsInitialize(
     CXPLAT_DBG_ASSERT(Config->HkdfLabels);
 
     if (Config->IsServer != !(Config->SecConfig->Flags & QUIC_CREDENTIAL_FLAG_CLIENT)) {
-        QuicTraceEvent(
-            TlsError,
-            "[ tls][%p] ERROR, %s.",
-            Config->Connection,
-            "Mismatched SEC_CONFIG IsServer state");
         Status = QUIC_STATUS_INVALID_PARAMETER;
         goto Error;
     }
 
     TlsContext = CXPLAT_ALLOC_NONPAGED(TlsSize, QUIC_POOL_TLS_CTX);
     if (TlsContext == NULL) {
-        QuicTraceEvent(
-            AllocFailure,
-            "Allocation of '%s' failed. (%llu bytes)",
-            "CXPLAT_TLS",
-            sizeof(CXPLAT_TLS));
         Status = QUIC_STATUS_OUT_OF_MEMORY;
         goto Error;
     }
@@ -1759,11 +1658,6 @@ CxPlatTlsIndicateCertificateReceived(
             CertificateChain,
             CertValidationResult->dwChainErrorStatus,
             (QUIC_STATUS)CertValidationResult->hrVerifyChainStatus)) {
-        QuicTraceEvent(
-            TlsError,
-            "[ tls][%p] ERROR, %s.",
-            TlsContext->Connection,
-            "Indicate certificate received failed");
         Result |= CXPLAT_TLS_RESULT_ERROR;
         State->AlertCode = CXPLAT_TLS_ALERT_CODE_BAD_CERTIFICATE;
         goto Exit;
@@ -1826,12 +1720,6 @@ CxPlatTlsWriteDataToSchannel(
             QUIC_STATUS Status = CxPlatUtf8ToWideChar(TlsContext->SNI, QUIC_POOL_TLS_SNI, &TargetServerName);
 #endif
             if (QUIC_FAILED(Status)) {
-                QuicTraceEvent(
-                    TlsErrorStatus,
-                    "[ tls][%p] ERROR, %u, %s.",
-                    TlsContext->Connection,
-                    Status,
-                    "Convert SNI to unicode");
                 return CXPLAT_TLS_RESULT_ERROR;
             }
         }
@@ -2008,12 +1896,6 @@ CxPlatTlsWriteDataToSchannel(
                     TlsContext->SecConfig->ImpersonationLevel);
         }
         if (!NT_SUCCESS(Status)) {
-            QuicTraceEvent(
-                TlsErrorStatus,
-                "[ tls][%p] ERROR, %u, %s.",
-                TlsContext->Connection,
-                Status,
-                "PsImpersonateClient failed");
         }
     }
 #endif
@@ -2136,21 +2018,11 @@ CxPlatTlsWriteDataToSchannel(
             "Increasing TLS output buffer size");
         uint16_t NewBufferLength = State->BufferAllocLength << 1;
         if (NewBufferLength < State->BufferAllocLength) { // Integer overflow.
-            QuicTraceEvent(
-                TlsError,
-                "[ tls][%p] ERROR, %s.",
-                TlsContext->Connection,
-                "TLS buffer too large");
             Result |= CXPLAT_TLS_RESULT_ERROR;
             break;
         }
         uint8_t* NewBuffer = CXPLAT_ALLOC_NONPAGED(NewBufferLength, QUIC_POOL_TLS_BUFFER);
         if (NewBuffer == NULL) {
-            QuicTraceEvent(
-                AllocFailure,
-                "Allocation of '%s' failed. (%llu bytes)",
-                "New TLS RX Buffer",
-                NewBufferLength);
             Result |= CXPLAT_TLS_RESULT_ERROR;
             break;
         }
@@ -2171,11 +2043,6 @@ CxPlatTlsWriteDataToSchannel(
         // that needs to be sent back in response (depending on client/server).
         //
         if (!TlsContext->IsServer && !TlsContext->PeerTransportParamsReceived) {
-            QuicTraceEvent(
-                TlsError,
-                "[ tls][%p] ERROR, %s.",
-                TlsContext->Connection,
-                "No QUIC TP received");
             Result |= CXPLAT_TLS_RESULT_ERROR;
             break;
         }
@@ -2198,22 +2065,10 @@ CxPlatTlsWriteDataToSchannel(
                         SECPKG_ATTR_APPLICATION_PROTOCOL,
                         &NegotiatedAlpn);
                 if (SecStatus != SEC_E_OK) {
-                    QuicTraceEvent(
-                        TlsErrorStatus,
-                        "[ tls][%p] ERROR, %u, %s.",
-                        TlsContext->Connection,
-                        SecStatus,
-                        "query negotiated ALPN");
                     Result |= CXPLAT_TLS_RESULT_ERROR;
                     break;
                 }
                 if (NegotiatedAlpn.ProtoNegoStatus != SecApplicationProtocolNegotiationStatus_Success) {
-                    QuicTraceEvent(
-                        TlsErrorStatus,
-                        "[ tls][%p] ERROR, %u, %s.",
-                        TlsContext->Connection,
-                        NegotiatedAlpn.ProtoNegoStatus,
-                        "ALPN negotiation status");
                     Result |= CXPLAT_TLS_RESULT_ERROR;
                     break;
                 }
@@ -2226,11 +2081,6 @@ CxPlatTlsWriteDataToSchannel(
                         NegotiatedAlpn.ProtocolIdSize,
                         NegotiatedAlpn.ProtocolId);
                 if (State->NegotiatedAlpn == NULL) {
-                    QuicTraceEvent(
-                        TlsError,
-                        "[ tls][%p] ERROR, %s.",
-                        TlsContext->Connection,
-                        "ALPN Mismatch");
                     Result |= CXPLAT_TLS_RESULT_ERROR;
                     break;
                 }
@@ -2244,12 +2094,6 @@ CxPlatTlsWriteDataToSchannel(
                     SECPKG_ATTR_SESSION_INFO,
                     &SessionInfo);
             if (SecStatus != SEC_E_OK) {
-                QuicTraceEvent(
-                    TlsErrorStatus,
-                    "[ tls][%p] ERROR, %u, %s.",
-                    TlsContext->Connection,
-                    SecStatus,
-                    "query session info");
                 Result |= CXPLAT_TLS_RESULT_ERROR;
                 break;
             }
@@ -2332,23 +2176,11 @@ CxPlatTlsWriteDataToSchannel(
                 if (SecStatus == SEC_E_NO_CREDENTIALS) {
                     CertValidationResult.hrVerifyChainStatus = SecStatus;
                 } else if (SecStatus != SEC_E_OK) {
-                    QuicTraceEvent(
-                        TlsErrorStatus,
-                        "[ tls][%p] ERROR, %u, %s.",
-                        TlsContext->Connection,
-                        SecStatus,
-                        "query cert validation result");
                     Result |= CXPLAT_TLS_RESULT_ERROR;
                     break;
                 }
             } else if (SecStatus != SEC_E_OK && RequirePeerCert &&
                 !(TlsContext->SecConfig->Flags & QUIC_CREDENTIAL_FLAG_NO_CERTIFICATE_VALIDATION)) {
-                QuicTraceEvent(
-                    TlsErrorStatus,
-                    "[ tls][%p] ERROR, %u, %s.",
-                    TlsContext->Connection,
-                    SecStatus,
-                    "Query peer cert");
                 Result |= CXPLAT_TLS_RESULT_ERROR;
                 State->AlertCode = CXPLAT_TLS_ALERT_CODE_INTERNAL_ERROR;
                 break;
@@ -2389,12 +2221,6 @@ CxPlatTlsWriteDataToSchannel(
                 // If the server has configured client authentication but not deferred validation,
                 // fail the handshake if the client cert doesn't pass validation
                 //
-                QuicTraceEvent(
-                    TlsErrorStatus,
-                    "[ tls][%p] ERROR, %u, %s.",
-                    TlsContext->Connection,
-                    CertValidationResult.hrVerifyChainStatus,
-                    "Certificate validation failed");
                 Result |= CXPLAT_TLS_RESULT_ERROR;
                 State->AlertCode = CXPLAT_TLS_ALERT_CODE_BAD_CERTIFICATE;
                 break;
@@ -2416,19 +2242,8 @@ CxPlatTlsWriteDataToSchannel(
 
         if (AlertBuffer != NULL) {
             if (AlertBuffer->cbBuffer < 2) {
-                QuicTraceEvent(
-                    TlsError,
-                    "[ tls][%p] ERROR, %s.",
-                    TlsContext->Connection,
-                    "TLS alert message received (invalid)");
             } else {
                 State->AlertCode = ((uint8_t*)AlertBuffer->pvBuffer)[1];
-                QuicTraceEvent(
-                    TlsErrorStatus,
-                    "[ tls][%p] ERROR, %u, %s.",
-                    TlsContext->Connection,
-                    State->AlertCode,
-                    "TLS alert message received");
             }
             Result |= CXPLAT_TLS_RESULT_ERROR;
             break;
@@ -2663,11 +2478,6 @@ CxPlatTlsWriteDataToSchannel(
     case SEC_I_GENERIC_EXTENSION_RECEIVED:
 
         if (TlsExtensionBuffer == NULL) {
-            QuicTraceEvent(
-                TlsError,
-                "[ tls][%p] ERROR, %s.",
-                TlsContext->Connection,
-                "QUIC TP wasn't present");
             Result |= CXPLAT_TLS_RESULT_ERROR;
             break;
         }
@@ -2680,11 +2490,6 @@ CxPlatTlsWriteDataToSchannel(
                 TlsContext->Connection,
                 (uint16_t)(TlsExtensionBuffer->cbBuffer - 4),
                 ((uint8_t*)TlsExtensionBuffer->pvBuffer) + 4)) {
-            QuicTraceEvent(
-                TlsError,
-                "[ tls][%p] ERROR, %s.",
-                TlsContext->Connection,
-                "Process QUIC TP");
             Result |= CXPLAT_TLS_RESULT_ERROR;
             break;
         }
@@ -2746,11 +2551,6 @@ CxPlatTlsWriteDataToSchannel(
                             OutSecBufferDesc.pBuffers[i].cbBuffer,
                             QUIC_POOL_TLS_TMP_TP);
                     if (TlsContext->PeerTransportParams == NULL) {
-                        QuicTraceEvent(
-                            AllocFailure,
-                            "Allocation of '%s' failed. (%llu bytes)",
-                            "Temporary Peer Transport Params",
-                            OutSecBufferDesc.pBuffers[i].cbBuffer);
                         Result |= CXPLAT_TLS_RESULT_ERROR;
                         break;
                     }
@@ -2775,19 +2575,8 @@ CxPlatTlsWriteDataToSchannel(
         //
         if (AlertBuffer != NULL) {
             if (AlertBuffer->cbBuffer < 2) {
-                QuicTraceEvent(
-                    TlsError,
-                    "[ tls][%p] ERROR, %s.",
-                    TlsContext->Connection,
-                    "TLS alert message received (invalid)");
             } else {
                 State->AlertCode = ((uint8_t*)AlertBuffer->pvBuffer)[1];
-                QuicTraceEvent(
-                    TlsErrorStatus,
-                    "[ tls][%p] ERROR, %u, %s.",
-                    TlsContext->Connection,
-                    State->AlertCode,
-                    "TLS alert message received");
             }
             Result |= CXPLAT_TLS_RESULT_ERROR;
         }
@@ -2799,12 +2588,6 @@ CxPlatTlsWriteDataToSchannel(
             State->AlertCode = TLS1_ALERT_CERTIFICATE_REQUIRED;
         }
         *InBufferLength = 0;
-        QuicTraceEvent(
-            TlsErrorStatus,
-            "[ tls][%p] ERROR, %u, %s.",
-            TlsContext->Connection,
-            SecStatus,
-            "Accept/InitializeSecurityContext");
         Result |= CXPLAT_TLS_RESULT_ERROR;
         break;
     }
@@ -3081,12 +2864,6 @@ CxPlatTlsParamGet(
                         SECPKG_ATTR_CONNECTION_INFO,
                         &ConnInfo));
             if (QUIC_FAILED(Status)) {
-                QuicTraceEvent(
-                    TlsErrorStatus,
-                    "[ tls][%p] ERROR, %u, %s.",
-                    TlsContext->Connection,
-                    Status,
-                    "Query Connection Info");
                 break;
             }
 
@@ -3100,12 +2877,6 @@ CxPlatTlsParamGet(
                         SECPKG_ATTR_CIPHER_INFO,
                         &CipherInfo));
             if (QUIC_FAILED(Status)) {
-                QuicTraceEvent(
-                    TlsErrorStatus,
-                    "[ tls][%p] ERROR, %u, %s.",
-                    TlsContext->Connection,
-                    Status,
-                    "Query Cipher Info");
                 break;
             }
 
@@ -3145,21 +2916,9 @@ CxPlatTlsParamGet(
                         SECPKG_ATTR_APPLICATION_PROTOCOL,
                         &NegotiatedAlpn));
             if (QUIC_FAILED(Status)) {
-                QuicTraceEvent(
-                    TlsErrorStatus,
-                    "[ tls][%p] ERROR, %u, %s.",
-                    TlsContext->Connection,
-                    Status,
-                    "Query Application Protocol");
                 break;
             }
             if (NegotiatedAlpn.ProtoNegoStatus != SecApplicationProtocolNegotiationStatus_Success) {
-                QuicTraceEvent(
-                    TlsErrorStatus,
-                    "[ tls][%p] ERROR, %u, %s.",
-                    TlsContext->Connection,
-                    NegotiatedAlpn.ProtoNegoStatus,
-                    "ALPN negotiation status");
                 Status = QUIC_STATUS_INVALID_STATE;
                 break;
             }
@@ -3193,11 +2952,6 @@ CxPlatParseTrafficSecrets(
 
     if (wcscmp(TrafficSecrets->SymmetricAlgId, BCRYPT_AES_ALGORITHM) == 0) {
         if (wcscmp(TrafficSecrets->ChainingMode, BCRYPT_CHAIN_MODE_GCM) != 0) {
-            QuicTraceEvent(
-                TlsError,
-                "[ tls][%p] ERROR, %s.",
-                TlsContext->Connection,
-                "Unsupported chaining mode");
             return FALSE;
         }
         switch (TrafficSecrets->KeySize) {
@@ -3208,20 +2962,10 @@ CxPlatParseTrafficSecrets(
             Secret->Aead = CXPLAT_AEAD_AES_256_GCM;
             break;
         default:
-            QuicTraceEvent(
-                TlsError,
-                "[ tls][%p] ERROR, %s.",
-                TlsContext->Connection,
-                "Unsupported AES key size");
             return FALSE;
         }
     } else if (wcscmp(TrafficSecrets->SymmetricAlgId, BCRYPT_CHACHA20_POLY1305_ALGORITHM) == 0) {
         if (CXPLAT_CHACHA20_POLY1305_ALG_HANDLE == NULL) {
-            QuicTraceEvent(
-                TlsError,
-                "[ tls][%p] ERROR, %s.",
-                TlsContext->Connection,
-                "Algorithm unsupported by TLS: ChaCha20-Poly1305");
             return FALSE;
         }
         switch (TrafficSecrets->KeySize) {
@@ -3229,19 +2973,9 @@ CxPlatParseTrafficSecrets(
             Secret->Aead = CXPLAT_AEAD_CHACHA20_POLY1305;
             break;
         default:
-            QuicTraceEvent(
-                TlsError,
-                "[ tls][%p] ERROR, %s.",
-                TlsContext->Connection,
-                "Unsupported ChaCha key size");
             return FALSE;
         }
     } else {
-        QuicTraceEvent(
-            TlsError,
-            "[ tls][%p] ERROR, %s.",
-            TlsContext->Connection,
-            "Unsupported symmetric algorithm");
         return FALSE;
     }
 
@@ -3252,11 +2986,6 @@ CxPlatParseTrafficSecrets(
     } else if (wcscmp(TrafficSecrets->HashAlgId, BCRYPT_SHA512_ALGORITHM) == 0) {
         Secret->Hash = CXPLAT_HASH_SHA512;
     } else {
-        QuicTraceEvent(
-            TlsError,
-            "[ tls][%p] ERROR, %s.",
-            TlsContext->Connection,
-            "Unsupported hash algorithm");
         return FALSE;
     }
 
@@ -3295,12 +3024,6 @@ QuicPacketKeyCreate(
             TRUE,
             Key);
     if (!QUIC_SUCCEEDED(Status)) {
-        QuicTraceEvent(
-            TlsErrorStatus,
-            "[ tls][%p] ERROR, %u, %s.",
-            TlsContext->Connection,
-            Status,
-            "QuicPacketKeyDerive");
         goto Error;
     }
 
@@ -3325,12 +3048,6 @@ QuicTlsPopulateOffloadKeys(
             SecretName,
             Offload);
     if (!QUIC_SUCCEEDED(Status)) {
-        QuicTraceEvent(
-            TlsErrorStatus,
-            "[ tls][%p] ERROR, %u, %s.",
-            TlsContext->Connection,
-            Status,
-            "QuicTlsPopulateOffloadKeys");
         goto Error;
     }
 
