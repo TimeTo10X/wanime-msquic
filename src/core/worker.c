@@ -67,12 +67,6 @@ QuicWorkerInitialize(
     _Inout_ QUIC_WORKER* Worker
     )
 {
-    QuicTraceEvent(
-        WorkerCreated,
-        "[wrkr][%p] Created, IdealProc=%hu Owner=%p",
-        Worker,
-        Partition->Processor,
-        Registration);
 
     Worker->Enabled = TRUE;
     Worker->Partition = Partition;
@@ -138,12 +132,6 @@ QuicWorkerInitialize(
 
         Status = CxPlatThreadCreate(&ThreadConfig, &Worker->Thread);
         if (QUIC_FAILED(Status)) {
-            QuicTraceEvent(
-                WorkerErrorStatus,
-                "[wrkr][%p] ERROR, %u, %s.",
-                Worker,
-                Status,
-                "CxPlatThreadCreate");
             goto Error;
         }
     }
@@ -164,10 +152,6 @@ QuicWorkerUninitialize(
     _In_ QUIC_WORKER* Worker
     )
 {
-    QuicTraceEvent(
-        WorkerCleanup,
-        "[wrkr][%p] Cleaning up",
-        Worker);
 
     //
     // Clean up the worker execution context.
@@ -198,10 +182,6 @@ QuicWorkerUninitialize(
     CxPlatDispatchLockUninitialize(&Worker->Lock);
     QuicTimerWheelUninitialize(&Worker->TimerWheel);
 
-    QuicTraceEvent(
-        WorkerDestroyed,
-        "[wrkr][%p] Destroyed",
-        Worker);
 }
 
 _IRQL_requires_max_(DISPATCH_LEVEL)
@@ -214,11 +194,6 @@ QuicWorkerAssignConnection(
     CXPLAT_DBG_ASSERT(Connection->Worker != Worker);
     Connection->Worker = Worker;
     Connection->Partition = Worker->Partition;
-    QuicTraceEvent(
-        ConnAssignWorker,
-        "[conn][%p] Assigned worker: %p",
-        Connection,
-        Worker);
 }
 
 _IRQL_requires_max_(DISPATCH_LEVEL)
@@ -230,11 +205,6 @@ QuicWorkerAssignListener(
 {
     CXPLAT_DBG_ASSERT(Listener->Worker != Worker);
     Listener->Worker = Worker;
-    QuicTraceEvent(
-        ConnAssignWorker,
-        "[list][%p] Assigned worker: %p",
-        Listener,
-        Worker);
 }
 
 BOOLEAN
@@ -264,11 +234,6 @@ QuicWorkerQueueConnection(
     if (!Connection->WorkerProcessing && !Connection->HasQueuedWork) {
         WakeWorkerThread = QuicWorkerIsIdle(Worker);
         Connection->Stats.Schedule.LastQueueTime = CxPlatTimeUs32();
-        QuicTraceEvent(
-            ConnScheduleState,
-            "[conn][%p] Scheduling: %u",
-            Connection,
-            QUIC_SCHEDULE_QUEUED);
         QuicConnAddRef(Connection, QUIC_CONN_REF_WORKER);
         CxPlatListInsertTail(&Worker->Connections, &Connection->WorkerLink);
         ConnectionQueued = TRUE;
@@ -303,11 +268,6 @@ QuicWorkerQueuePriorityConnection(
         if (!Connection->HasQueuedWork) { // Not already queued for normal priority work
             WakeWorkerThread = QuicWorkerIsIdle(Worker);
             Connection->Stats.Schedule.LastQueueTime = CxPlatTimeUs32();
-            QuicTraceEvent(
-                ConnScheduleState,
-                "[conn][%p] Scheduling: %u",
-                Connection,
-                QUIC_SCHEDULE_QUEUED);
             QuicConnAddRef(Connection, QUIC_CONN_REF_WORKER);
             ConnectionQueued = TRUE;
         } else { // Moving from normal priority to high priority
@@ -352,11 +312,6 @@ QuicWorkerMoveConnection(
     } else {
         CxPlatListInsertTail(&Worker->Connections, &Connection->WorkerLink);
     }
-    QuicTraceEvent(
-        ConnScheduleState,
-        "[conn][%p] Scheduling: %u",
-        Connection,
-        QUIC_SCHEDULE_QUEUED);
     QuicConnAddRef(Connection, QUIC_CONN_REF_WORKER);
 
     CxPlatDispatchLockRelease(&Worker->Lock);
@@ -381,11 +336,6 @@ QuicWorkerQueueListener(
 
     if (!Listener->WorkerProcessing && !Listener->HasQueuedWork) {
         WakeWorkerThread = QuicWorkerIsIdle(Worker);
-        QuicTraceEvent(
-            ConnScheduleState,
-            "[list][%p] Scheduling: %u",
-            Listener,
-            QUIC_SCHEDULE_QUEUED);
         QuicListenerReference(Listener);
         CxPlatListInsertTail(&Worker->Listeners, &Listener->WorkerLink);
         ListenerQueued = TRUE;
@@ -447,11 +397,6 @@ QuicWorkerUpdateQueueDelay(
     )
 {
     Worker->AverageQueueDelay = (7 * Worker->AverageQueueDelay + TimeInQueueUs) / 8;
-    QuicTraceEvent(
-        WorkerQueueDelayUpdated,
-        "[wrkr][%p] QueueDelay = %u",
-        Worker,
-        Worker->AverageQueueDelay);
 }
 
 _IRQL_requires_max_(PASSIVE_LEVEL)
@@ -461,11 +406,6 @@ QuicWorkerResetQueueDelay(
     )
 {
     Worker->AverageQueueDelay = 0;
-    QuicTraceEvent(
-        WorkerQueueDelayUpdated,
-        "[wrkr][%p] QueueDelay = %u",
-        Worker,
-        Worker->AverageQueueDelay);
 }
 
 _IRQL_requires_max_(PASSIVE_LEVEL)
@@ -593,11 +533,6 @@ QuicWorkerProcessConnection(
     _Inout_ uint64_t* TimeNow
     )
 {
-    QuicTraceEvent(
-        ConnScheduleState,
-        "[conn][%p] Scheduling: %u",
-        Connection,
-        QUIC_SCHEDULE_PROCESSING);
     QuicConfigurationAttachSilo(Connection->Configuration);
 
     if (Connection->Stats.Schedule.LastQueueTime != 0) {
@@ -674,18 +609,8 @@ QuicWorkerProcessConnection(
             } else {
                 CxPlatListInsertTail(&Worker->Connections, &Connection->WorkerLink);
             }
-            QuicTraceEvent(
-                ConnScheduleState,
-                "[conn][%p] Scheduling: %u",
-                Connection,
-                QUIC_SCHEDULE_QUEUED);
             DoneWithConnection = FALSE;
         } else {
-            QuicTraceEvent(
-                ConnScheduleState,
-                "[conn][%p] Scheduling: %u",
-                Connection,
-                QUIC_SCHEDULE_IDLE);
         }
     }
     CxPlatDispatchLockRelease(&Worker->Lock);
@@ -722,11 +647,6 @@ QuicWorkerProcessListener(
     _In_ QUIC_LISTENER* Listener
     )
 {
-    QuicTraceEvent(
-        ConnScheduleState,
-        "[list][%p] Scheduling: %u",
-        Listener,
-        QUIC_SCHEDULE_PROCESSING);
 
     //
     // Process some operations.
@@ -743,18 +663,8 @@ QuicWorkerProcessListener(
     BOOLEAN DoneWithListener = TRUE;
     if (Listener->HasQueuedWork) {
         CxPlatListInsertTail(&Worker->Listeners, &Listener->WorkerLink);
-        QuicTraceEvent(
-            ConnScheduleState,
-            "[list][%p] Scheduling: %u",
-            Listener,
-            QUIC_SCHEDULE_QUEUED);
         DoneWithListener = FALSE;
     } else {
-        QuicTraceEvent(
-            ConnScheduleState,
-            "[list][%p] Scheduling: %u",
-            Listener,
-            QUIC_SCHEDULE_IDLE);
     }
     CxPlatDispatchLockRelease(&Worker->Lock);
 
@@ -847,12 +757,6 @@ QuicWorkerLoop(
 
     if (!Worker->IsActive) {
         Worker->IsActive = TRUE;
-        QuicTraceEvent(
-            WorkerActivityStateUpdated,
-            "[wrkr][%p] IsActive = %hhu, Arg = %u",
-            Worker,
-            Worker->IsActive,
-            (uint32_t)State->TimeNow);
     }
 
     //
@@ -923,12 +827,6 @@ QuicWorkerLoop(
     //
     Worker->IsActive = FALSE;
     Worker->ExecutionContext.NextTimeUs = Worker->TimerWheel.NextExpirationTime;
-    QuicTraceEvent(
-        WorkerActivityStateUpdated,
-        "[wrkr][%p] IsActive = %hhu, Arg = %u",
-        Worker,
-        Worker->IsActive,
-        (uint32_t)Worker->TimerWheel.NextExpirationTime);
     QuicWorkerResetQueueDelay(Worker);
     return TRUE;
 }
@@ -942,10 +840,6 @@ CXPLAT_THREAD_CALLBACK(QuicWorkerThread, Context)
         0, 0, 0, UINT32_MAX, 0, CxPlatCurThreadID()
     };
 
-    QuicTraceEvent(
-        WorkerStart,
-        "[wrkr][%p] Start",
-        Worker);
 
     while (TRUE) {
 
@@ -973,10 +867,6 @@ CXPLAT_THREAD_CALLBACK(QuicWorkerThread, Context)
         }
     }
 
-    QuicTraceEvent(
-        WorkerStop,
-        "[wrkr][%p] Stop",
-        Worker);
     CXPLAT_THREAD_RETURN(QUIC_STATUS_SUCCESS);
 }
 
@@ -995,11 +885,6 @@ QuicWorkerPoolInitialize(
 
     QUIC_WORKER_POOL* WorkerPool = CXPLAT_ALLOC_NONPAGED(WorkerPoolSize, QUIC_POOL_WORKER);
     if (WorkerPool == NULL) {
-        QuicTraceEvent(
-            AllocFailure,
-            "Allocation of '%s' failed. (%llu bytes)",
-            "QUIC_WORKER_POOL",
-            WorkerPoolSize);
         return QUIC_STATUS_OUT_OF_MEMORY;
     }
 
