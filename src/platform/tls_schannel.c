@@ -866,9 +866,6 @@ CxPlatTlsAchHelper(
     BOOLEAN IsClient = !!(AchContext->CredConfig.Flags & QUIC_CREDENTIAL_FLAG_CLIENT);
     BOOLEAN IsAsync = !!(AchContext->CredConfig.Flags & QUIC_CREDENTIAL_FLAG_LOAD_ASYNCHRONOUS);
 
-    QuicTraceLogVerbose(
-        SchannelAchAsync,
-        "[ tls] Calling SspiAcquireCredentialsHandleAsyncW");
 
     SECURITY_STATUS SecStatus =
         SspiAcquireCredentialsHandleAsyncW(
@@ -1290,9 +1287,6 @@ CxPlatTlsSecConfigCreate(
         AchContext->SecConfig->IsPrimaryToken = TRUE;
     }
 
-    QuicTraceLogVerbose(
-        SchannelAchWorkerStart,
-        "[ tls] Starting ACH worker");
 
     TLS_WORKER_CONTEXT ThreadContext = { STATUS_SUCCESS, AchContext };
     CxPlatTlsAchHelper(&ThreadContext);
@@ -1302,9 +1296,6 @@ CxPlatTlsSecConfigCreate(
 
 #else // !_KERNEL_MODE
 
-    QuicTraceLogVerbose(
-        SchannelAch,
-        "[ tls] Calling AcquireCredentialsHandleW");
 
     SecStatus =
         AcquireCredentialsHandleW(
@@ -1329,10 +1320,6 @@ CxPlatTlsSecConfigCreate(
         }
     }
 
-    QuicTraceLogVerbose(
-        SchannelAchCompleteInline,
-        "[ tls] Invoking security config completion callback inline, 0x%x",
-        Status);
 
     CompletionHandler(
         CredConfig,
@@ -1473,10 +1460,6 @@ CxPlatTlsInitialize(
     TlsContext->SecConfig = Config->SecConfig;
     TlsContext->TlsSecrets = Config->TlsSecrets;
 
-    QuicTraceLogConnVerbose(
-        SchannelContextCreated,
-        TlsContext->Connection,
-        "TLS context Created");
 
     TlsContext->AppProtocolsSize = AppProtocolsSize;
     TlsContext->ApplicationProtocols = (SEC_APPLICATION_PROTOCOLS*)(TlsContext + 1);
@@ -1548,10 +1531,6 @@ CxPlatTlsUninitialize(
     )
 {
     if (TlsContext != NULL) {
-        QuicTraceLogConnVerbose(
-            SchannelContextCleaningUp,
-            TlsContext->Connection,
-            "Cleaning up");
 
         CxPlatTlsResetSchannel(TlsContext);
         if (TlsContext->TransportParams != NULL) {
@@ -1983,13 +1962,6 @@ CxPlatTlsWriteDataToSchannel(
             if (TrafficSecret->TrafficSecretType == SecTrafficSecret_None) {
                 continue;
             }
-            QuicTraceLogConnVerbose(
-                SchannelKeyReady,
-                TlsContext->Connection,
-                "Key Ready Type, %u [%hu to %hu]",
-                (uint32_t)TrafficSecret->TrafficSecretType,
-                TrafficSecret->MsgSequenceStart,
-                TrafficSecret->MsgSequenceEnd);
             if (TlsContext->IsServer) {
                 if (TrafficSecret->TrafficSecretType == SecTrafficSecret_Server) {
                     NewOwnTrafficSecrets[NewOwnTrafficSecretsCount++] = TrafficSecret;
@@ -2012,10 +1984,6 @@ CxPlatTlsWriteDataToSchannel(
         // The output buffer for the TLS response is too small. We need to grow
         // the buffer and try again.
         //
-        QuicTraceLogConnInfo(
-            SchannelOutBufferTooSmall,
-            TlsContext->Connection,
-            "Increasing TLS output buffer size");
         uint16_t NewBufferLength = State->BufferAllocLength << 1;
         if (NewBufferLength < State->BufferAllocLength) { // Integer overflow.
             Result |= CXPLAT_TLS_RESULT_ERROR;
@@ -2226,11 +2194,6 @@ CxPlatTlsWriteDataToSchannel(
                 break;
             }
 
-            QuicTraceLogConnInfo(
-                SchannelHandshakeComplete,
-                TlsContext->Connection,
-                "Handshake complete (resume=%hu)",
-                State->SessionResumed);
             State->HandshakeComplete = TRUE;
             Result |= CXPLAT_TLS_RESULT_HANDSHAKE_COMPLETE;
         }
@@ -2262,11 +2225,6 @@ CxPlatTlsWriteDataToSchannel(
             *InBufferLength -= InSecBuffers[1].cbBuffer;
         }
 
-        QuicTraceLogConnInfo(
-            SchannelConsumedBytes,
-            TlsContext->Connection,
-            "Consumed %u bytes",
-            *InBufferLength);
 
         //
         // Update our "read" key state based on any new peer keys being available.
@@ -2296,10 +2254,6 @@ CxPlatTlsWriteDataToSchannel(
                         break;
                     }
                     State->ReadKey = QUIC_PACKET_KEY_HANDSHAKE;
-                    QuicTraceLogConnInfo(
-                        SchannelReadHandshakeStart,
-                        TlsContext->Connection,
-                        "Reading Handshake data starts now");
                     if (TlsContext->TlsSecrets != NULL) {
                         TlsContext->TlsSecrets->SecretLength = (uint8_t)NewPeerTrafficSecrets[i]->TrafficSecretSize;
                         if (TlsContext->IsServer) {
@@ -2327,10 +2281,6 @@ CxPlatTlsWriteDataToSchannel(
                         break;
                     }
                     State->ReadKey = QUIC_PACKET_KEY_1_RTT;
-                    QuicTraceLogConnInfo(
-                        SchannelRead1RttStart,
-                        TlsContext->Connection,
-                        "Reading 1-RTT data starts now");
                     if (TlsContext->TlsSecrets != NULL) {
                         TlsContext->TlsSecrets->SecretLength = (uint8_t)NewPeerTrafficSecrets[i]->TrafficSecretSize;
                         if (TlsContext->IsServer) {
@@ -2383,11 +2333,6 @@ CxPlatTlsWriteDataToSchannel(
                     State->BufferOffset1Rtt = // HACK - Currently Schannel has weird output for 1-RTT start
                         State->BufferTotalLength + NewOwnTrafficSecrets[i]->MsgSequenceEnd;
                     State->WriteKey = QUIC_PACKET_KEY_HANDSHAKE;
-                    QuicTraceLogConnInfo(
-                        SchannelWriteHandshakeStart,
-                        TlsContext->Connection,
-                        "Writing Handshake data starts at %u",
-                        State->BufferOffsetHandshake);
                     if (TlsContext->TlsSecrets != NULL) {
                         TlsContext->TlsSecrets->SecretLength = (uint8_t)NewOwnTrafficSecrets[i]->TrafficSecretSize;
                         if (TlsContext->IsServer) {
@@ -2421,11 +2366,6 @@ CxPlatTlsWriteDataToSchannel(
                         //State->BufferOffset1Rtt = // Currently have to get the offset from the Handshake "end"
                         //    State->BufferTotalLength + NewOwnTrafficSecrets[i]->MsgSequenceStart;
                         State->WriteKey = QUIC_PACKET_KEY_1_RTT;
-                        QuicTraceLogConnInfo(
-                            SchannelWrite1RttStart,
-                            TlsContext->Connection,
-                            "Writing 1-RTT data starts at %u",
-                            State->BufferOffset1Rtt);
                         if (TlsContext->TlsSecrets != NULL) {
                             TlsContext->TlsSecrets->SecretLength = (uint8_t)NewOwnTrafficSecrets[i]->TrafficSecretSize;
                             if (TlsContext->IsServer) {
@@ -2466,11 +2406,6 @@ CxPlatTlsWriteDataToSchannel(
             State->BufferLength += (uint16_t)OutputTokenBuffer->cbBuffer;
             State->BufferTotalLength += OutputTokenBuffer->cbBuffer;
 
-            QuicTraceLogConnInfo(
-                SchannelProducedData,
-                TlsContext->Connection,
-                "Produced %u bytes",
-                OutputTokenBuffer->cbBuffer);
         }
 
         break;
@@ -2514,11 +2449,6 @@ CxPlatTlsWriteDataToSchannel(
         *InBufferLength = 0;
 
         if (MissingBuffer != NULL && MissingBuffer->cbBuffer != 0) {
-            QuicTraceLogConnInfo(
-                SchannelMissingData,
-                TlsContext->Connection,
-                "TLS message missing %u bytes of data",
-                MissingBuffer->cbBuffer);
         }
 
         break;
@@ -2533,14 +2463,6 @@ CxPlatTlsWriteDataToSchannel(
 
                     CXPLAT_DBG_ASSERT(OutSecBufferDesc.pBuffers[i].cbBuffer > *InBufferLength);
 
-                    QuicTraceLogConnInfo(
-                        SchannelTransParamsBufferTooSmall,
-                        TlsContext->Connection,
-                        "Peer TP too large for available buffer (%u vs. %u)",
-                        OutSecBufferDesc.pBuffers[i].cbBuffer,
-                        (TlsContext->PeerTransportParams != NULL) ?
-                            TlsContext->PeerTransportParamsLength :
-                            *InBufferLength);
 
                     if (TlsContext->PeerTransportParams != NULL) {
                         CXPLAT_FREE(TlsContext->PeerTransportParams, QUIC_POOL_TLS_TMP_TP);
@@ -2621,11 +2543,6 @@ CxPlatTlsProcessData(
     if (DataType == CXPLAT_TLS_TICKET_DATA) {
         Result = CXPLAT_TLS_RESULT_ERROR;
 
-        QuicTraceLogConnVerbose(
-            SchannelIgnoringTicket,
-            TlsContext->Connection,
-            "Ignoring %u ticket bytes",
-            *BufferLength);
         goto Error;
     }
 
@@ -2642,11 +2559,6 @@ CxPlatTlsProcessData(
             NULL);
     }
 
-    QuicTraceLogConnVerbose(
-        SchannelProcessingData,
-        TlsContext->Connection,
-        "Processing %u received bytes",
-        *BufferLength);
 
     Result =
         CxPlatTlsWriteDataToSchannel(
