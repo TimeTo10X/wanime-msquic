@@ -345,6 +345,7 @@ QuicConfigurationTraceRundown(
     _In_ QUIC_CONFIGURATION* Configuration
     )
 {
+    (void)Configuration;
 }
 
 _IRQL_requires_max_(PASSIVE_LEVEL)
