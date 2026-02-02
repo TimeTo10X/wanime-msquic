@@ -96,11 +96,6 @@ QuicDatagramIndicateSendStateChange(
     Event.DATAGRAM_SEND_STATE_CHANGED.ClientContext = *ClientContext;
     Event.DATAGRAM_SEND_STATE_CHANGED.State = State;
 
-    QuicTraceLogConnVerbose(
-        DatagramSendStateChanged,
-        Connection,
-        "Indicating DATAGRAM_SEND_STATE_CHANGED to %u",
-        (uint32_t)State);
     (void)QuicConnIndicateEvent(Connection, &Event);
 
     *ClientContext = Event.DATAGRAM_SEND_STATE_CHANGED.ClientContext;
@@ -159,10 +154,6 @@ QuicDatagramSendShutdown(
 
     QUIC_CONNECTION* Connection = QuicDatagramGetConnection(Datagram);
 
-    QuicTraceLogConnVerbose(
-        DatagramSendShutdown,
-        Connection,
-        "Datagram send shutdown");
 
     CxPlatDispatchLockAcquire(&Datagram->ApiQueueLock);
     Datagram->SendEnabled = FALSE;
@@ -295,12 +286,6 @@ QuicDatagramOnSendStateChanged(
         Event.DATAGRAM_STATE_CHANGED.SendEnabled = SendEnabled;
         Event.DATAGRAM_STATE_CHANGED.MaxSendLength = NewMaxSendLength;
 
-        QuicTraceLogConnVerbose(
-            IndicateDatagramStateChanged,
-            Connection,
-            "Indicating QUIC_CONNECTION_EVENT_DATAGRAM_STATE_CHANGED [SendEnabled=%hhu] [MaxSendLength=%hu]",
-            Event.DATAGRAM_STATE_CHANGED.SendEnabled,
-            Event.DATAGRAM_STATE_CHANGED.MaxSendLength);
         (void)QuicConnIndicateEvent(Connection, &Event);
     }
 
@@ -427,13 +412,6 @@ QuicDatagramSendFlush(
             Datagram->SendQueueTail = &SendRequest->Next;
         }
 
-        QuicTraceLogConnVerbose(
-            DatagramSendQueued,
-            Connection,
-            "Datagram [%p] queued with %llu bytes (flags 0x%x)",
-            SendRequest,
-            SendRequest->TotalLength,
-            SendRequest->Flags);
     }
 
     if (Connection->State.PeerTransportParameterValid && Datagram->SendQueue != NULL) {
@@ -563,11 +541,6 @@ QuicDatagramProcessFrame(
         Event.DATAGRAM_RECEIVED.Flags = 0;
     }
 
-    QuicTraceLogConnVerbose(
-        IndicateDatagramReceived,
-        Connection,
-        "Indicating DATAGRAM_RECEIVED [len=%hu]",
-        (uint16_t)Frame.Length);
     (void)QuicConnIndicateEvent(Connection, &Event);
 
     QuicPerfCounterAdd(
