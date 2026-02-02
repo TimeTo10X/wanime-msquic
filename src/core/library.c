@@ -189,11 +189,6 @@ QuicLibraryInitializePartitions(
     const size_t PartitionsSize = MsQuicLib.PartitionCount * sizeof(QUIC_PARTITION);
     MsQuicLib.Partitions = CXPLAT_ALLOC_NONPAGED(PartitionsSize, QUIC_POOL_PERPROC);
     if (MsQuicLib.Partitions == NULL) {
-        QuicTraceEvent(
-            AllocFailure,
-            "Allocation of '%s' failed. (%llu bytes)",
-            "Library Partitions",
-            PartitionsSize);
         return QUIC_STATUS_OUT_OF_MEMORY;
     }
 
@@ -320,10 +315,6 @@ QuicPerfCounterSnapShot(
         (uint8_t*)PerfCounterSamples,
         sizeof(PerfCounterSamples));
 
-    QuicTraceEvent(
-        PerfCountersRundown,
-        "[ lib] Perf counters Rundown, Counters=%!CID!",
-        CASTED_CLOG_BYTEARRAY16(sizeof(PerfCounterSamples), PerfCounterSamples));
 
 // Ensure a perf counter stays below a given max Hz/frequency.
 #define QUIC_COUNTER_LIMIT_HZ(TYPE, LIMIT_PER_SECOND) \
@@ -556,10 +547,6 @@ MsQuicLibraryInitialize(
     MsQuicLib.DefaultCompatibilityList =
         CXPLAT_ALLOC_NONPAGED(CompatibilityListByteLength, QUIC_POOL_DEFAULT_COMPAT_VER_LIST);
     if (MsQuicLib.DefaultCompatibilityList == NULL) {
-        QuicTraceEvent(
-            AllocFailure,
-            "Allocation of '%s' failed. (%llu bytes)", "default compatibility list",
-            CompatibilityListByteLength);
         Status = QUIC_STATUS_OUT_OF_MEMORY;
         goto Error;
     }
@@ -574,16 +561,6 @@ MsQuicLibraryInitialize(
          goto Error;
     }
 
-    QuicTraceEvent(
-        LibraryInitializedV3,
-        "[ lib] Initialized");
-    QuicTraceEvent(
-        LibraryVersion,
-        "[ lib] Version %u.%u.%u.%u",
-        MsQuicLib.Version[0],
-        MsQuicLib.Version[1],
-        MsQuicLib.Version[2],
-        MsQuicLib.Version[3]);
 
 #ifdef CxPlatVerifierEnabled
     uint32_t Flags;
@@ -724,9 +701,6 @@ MsQuicLibraryUninitialize(
     void
     )
 {
-    QuicTraceEvent(
-        LibraryUninitialized,
-        "[ lib] Uninitialized");
 
     MsQuicLibraryLazyUninitialize();
 
@@ -827,9 +801,6 @@ MsQuicAddRef(
         }
     }
 
-    QuicTraceEvent(
-        LibraryAddRef,
-        "[ lib] AddRef");
 
 Error:
 
@@ -852,9 +823,6 @@ MsQuicRelease(
     //
 
     CXPLAT_FRE_ASSERT(MsQuicLib.OpenRefCount > 0);
-    QuicTraceEvent(
-        LibraryRelease,
-        "[ lib] Release");
 
     if (--MsQuicLib.OpenRefCount == 0) {
         MsQuicLibraryUninitialize();
@@ -917,10 +885,6 @@ QuicLibraryLazyInitialize(
             &InitConfig,
             &MsQuicLib.Datapath);
     if (QUIC_SUCCEEDED(Status)) {
-        QuicTraceEvent(
-            DataPathInitialized,
-            "[data] Initialized, DatapathFeatures=%u",
-            QuicLibraryGetDatapathFeatures());
         if (MsQuicLib.ExecutionConfig &&
             MsQuicLib.ExecutionConfig->PollingIdleTimeoutUs != 0) {
             CxPlatDataPathUpdatePollingIdleTimeout(
@@ -1274,11 +1238,6 @@ QuicLibrarySetGlobalParam(
         QUIC_GLOBAL_EXECUTION_CONFIG* NewConfig =
             CXPLAT_ALLOC_NONPAGED(BufferLength, QUIC_POOL_EXECUTION_CONFIG);
         if (NewConfig == NULL) {
-            QuicTraceEvent(
-                AllocFailure,
-                "Allocation of '%s' failed. (%llu bytes)",
-                "Execution config",
-                BufferLength);
             Status = QUIC_STATUS_OUT_OF_MEMORY;
             CxPlatLockRelease(&MsQuicLib.Lock);
             break;
@@ -2072,10 +2031,6 @@ MsQuicOpenVersion(
     BOOLEAN ReleaseRefOnFailure = FALSE;
 
     if (Version != QUIC_API_VERSION_2) {
-        QuicTraceEvent(
-            LibraryError,
-            "[ lib] ERROR, %s.",
-            "Only v2 is supported in MsQuicOpenVersion");
         return QUIC_STATUS_NOT_SUPPORTED;
     }
 
@@ -2315,11 +2270,6 @@ SharedEphemeralRetry:
             // The binding does already exist, but cannot be shared with the
             // requested configuration.
             //
-            QuicTraceEvent(
-                BindingError,
-                "[bind][%p] ERROR, %s.",
-                Binding,
-                "Binding already in use");
             Status = QUIC_STATUS_ADDRESS_IN_USE;
         } else {
             //
@@ -2436,11 +2386,6 @@ NewBinding:
             // already matched one of our existing ones. We've seen this on
             // Linux occasionally. This shouldn't happen, but it does.
             //
-            QuicTraceEvent(
-                BindingError,
-                "[bind][%p] ERROR, %s.",
-                *NewBinding,
-                "Binding ephemeral port reuse encountered");
             QuicBindingUninitialize(*NewBinding);
             *NewBinding = NULL;
 
@@ -2458,11 +2403,6 @@ NewBinding:
 #endif // QUIC_SHARED_EPHEMERAL_WORKAROUND
 
         } else if (Binding->Exclusive) {
-            QuicTraceEvent(
-                BindingError,
-                "[bind][%p] ERROR, %s.",
-                Binding,
-                "Binding already in use");
             QuicBindingUninitialize(*NewBinding);
             *NewBinding = NULL;
 #ifdef QUIC_SHARED_EPHEMERAL_WORKAROUND
@@ -2550,9 +2490,6 @@ QuicLibraryOnListenerRegistered(
         //
         // Lazily initialize server specific state.
         //
-        QuicTraceEvent(
-            LibraryServerInit,
-            "[ lib] Shared server state initializing");
 
         const QUIC_REGISTRATION_CONFIG Config = {
             "Stateless",
@@ -2602,30 +2539,11 @@ QuicTraceRundown(
     CxPlatLockAcquire(&MsQuicLib.Lock);
 
     if (MsQuicLib.OpenRefCount > 0) {
-        QuicTraceEvent(
-            LibraryRundownV2,
-            "[ lib] Rundown, PartitionCount=%u",
-            MsQuicLib.PartitionCount);
 
         if (MsQuicLib.Datapath != NULL) {
-            QuicTraceEvent(
-                DataPathRundown,
-                "[data] Rundown, DatapathFeatures=%u",
-                QuicLibraryGetDatapathFeatures());
         }
 
-        QuicTraceEvent(
-            LibraryVersion,
-            "[ lib] Version %u.%u.%u.%u",
-            MsQuicLib.Version[0],
-            MsQuicLib.Version[1],
-            MsQuicLib.Version[2],
-            MsQuicLib.Version[3]);
 
-        QuicTraceEvent(
-            LibrarySendRetryStateUpdated,
-            "[ lib] New SendRetryEnabled state, %hhu",
-            MsQuicLib.SendRetryEnabled);
 
         if (MsQuicLib.StatelessRegistration) {
             QuicRegistrationTraceRundown(MsQuicLib.StatelessRegistration);
@@ -2649,10 +2567,6 @@ QuicTraceRundown(
 
         int64_t PerfCounters[QUIC_PERF_COUNTER_MAX];
         QuicLibrarySumPerfCounters((uint8_t*)PerfCounters, sizeof(PerfCounters));
-        QuicTraceEvent(
-            PerfCountersRundown,
-            "[ lib] Perf counters Rundown, Counters=%!CID!",
-            CASTED_CLOG_BYTEARRAY16(sizeof(PerfCounters), PerfCounters));
     }
 
     CxPlatLockRelease(&MsQuicLib.Lock);
@@ -2693,10 +2607,6 @@ QuicLibraryEvaluateSendRetryState(
 
     if (NewSendRetryState != MsQuicLib.SendRetryEnabled) {
         MsQuicLib.SendRetryEnabled = NewSendRetryState;
-        QuicTraceEvent(
-            LibrarySendRetryStateUpdated,
-            "[ lib] New SendRetryEnabled state, %hhu",
-            NewSendRetryState);
 
         //
         // Notify all bindings and listeners about the state change.
@@ -2759,11 +2669,6 @@ MsQuicExecutionCreate(
     _Out_writes_(Count) QUIC_EXECUTION** Executions
     )
 {
-    QuicTraceEvent(
-        ApiEnter,
-        "[ api] Enter %u (%p).",
-        QUIC_TRACE_API_EXECUTION_CREATE,
-        NULL);
 
     QUIC_STATUS Status = QUIC_STATUS_SUCCESS;
 
@@ -2791,10 +2696,6 @@ MsQuicExecutionCreate(
         MsQuicLib.CustomExecutions = TRUE;
     }
 
-    QuicTraceEvent(
-        ApiExitStatus,
-        "[ api] Exit %u",
-        Status);
 
     return Status;
 }
@@ -2807,11 +2708,6 @@ MsQuicExecutionDelete(
     _In_reads_(Count) QUIC_EXECUTION** Executions
     )
 {
-    QuicTraceEvent(
-        ApiEnter,
-        "[ api] Enter %u (%p).",
-        QUIC_TRACE_API_EXECUTION_DELETE,
-        NULL);
 
     UNREFERENCED_PARAMETER(Count);
     UNREFERENCED_PARAMETER(Executions);
@@ -2820,9 +2716,6 @@ MsQuicExecutionDelete(
     MsQuicLib.WorkerPool = NULL;
     MsQuicLib.CustomExecutions = FALSE;
 
-    QuicTraceEvent(
-        ApiExit,
-        "[ api] Exit");
 }
 
 _IRQL_requires_max_(PASSIVE_LEVEL)
@@ -2832,17 +2725,9 @@ MsQuicExecutionPoll(
     _In_ QUIC_EXECUTION* Execution
     )
 {
-    QuicTraceEvent(
-        ApiEnter,
-        "[ api] Enter %u (%p).",
-        QUIC_TRACE_API_EXECUTION_POLL,
-        NULL);
 
     uint32_t Result = CxPlatWorkerPoolWorkerPoll(Execution);
 
-    QuicTraceEvent(
-        ApiExit,
-        "[ api] Exit");
 
     return Result;
 }
