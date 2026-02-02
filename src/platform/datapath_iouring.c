@@ -1441,10 +1441,6 @@ CxPlatSocketContextRecvComplete(
     }
 
     if (BytesTransferred == 0 || DatagramHead == NULL) {
-        QuicTraceLogWarning(
-            DatapathRecvEmpty,
-            "[data][%p] Dropping datagram with empty payload.",
-            SocketContext->Binding);
         return;
     }
 
