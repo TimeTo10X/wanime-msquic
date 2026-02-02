@@ -29,12 +29,6 @@ CxPlatTlsLogSecret(
         SecretStr[i*2]     = HEX_TO_CHAR(Secret[i] >> 4);
         SecretStr[i*2 + 1] = HEX_TO_CHAR(Secret[i] & 0xf);
     }
-    QuicTraceLogVerbose(
-        TlsLogSecret,
-        "[ tls] %s[%u]: %s",
-        Prefix,
-        Length,
-        SecretStr);
 }
 #else
 #define CxPlatTlsLogSecret(Prefix, Secret, Length) UNREFERENCED_PARAMETER(Prefix);
