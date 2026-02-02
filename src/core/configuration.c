@@ -37,11 +37,6 @@ MsQuicConfigurationOpen(
     uint32_t AlpnListLength;
     QUIC_SETTINGS_INTERNAL InternalSettings;
 
-    QuicTraceEvent(
-        ApiEnter,
-        "[ api] Enter %u (%p).",
-        QUIC_TRACE_API_CONFIGURATION_OPEN,
-        Handle);
 
     if (Handle == NULL ||
         Handle->Type != QUIC_HANDLE_TYPE_REGISTRATION ||
@@ -68,11 +63,6 @@ MsQuicConfigurationOpen(
 
     Configuration = CXPLAT_ALLOC_NONPAGED(sizeof(QUIC_CONFIGURATION) + AlpnListLength, QUIC_POOL_CONFIG);
     if (Configuration == NULL) {
-        QuicTraceEvent(
-            AllocFailure,
-            "Allocation of '%s' failed. (%llu bytes)",
-            "QUIC_CONFIGURATION" ,
-            sizeof(QUIC_CONFIGURATION));
         Status = QUIC_STATUS_OUT_OF_MEMORY;
         goto Error;
     }
@@ -191,11 +181,6 @@ MsQuicConfigurationOpen(
         }
     }
 
-    QuicTraceEvent(
-        ConfigurationCreated,
-        "[cnfg][%p] Created, Registration=%p",
-        Configuration,
-        Registration);
 
     QuicConfigurationSettingsChanged(Configuration);
 
@@ -225,10 +210,6 @@ Error:
         CXPLAT_FREE(Configuration, QUIC_POOL_CONFIG);
     }
 
-    QuicTraceEvent(
-        ApiExitStatus,
-        "[ api] Exit %u",
-        Status);
 
     return Status;
 }
@@ -241,10 +222,6 @@ QuicConfigurationUninitialize(
 {
     CXPLAT_DBG_ASSERT(Configuration != NULL);
 
-    QuicTraceEvent(
-        ConfigurationCleanup,
-        "[cnfg][%p] Cleaning up",
-        Configuration);
 
     CxPlatLockAcquire(&Configuration->Registration->ConfigLock);
     CxPlatListEntryRemove(&Configuration->Link);
@@ -275,10 +252,6 @@ QuicConfigurationUninitialize(
     QuicLibraryUntrackDbgObject(QUIC_DBG_OBJECT_TYPE_CONFIGURATION, &Configuration->DbgObjectLink);
 #endif
 
-    QuicTraceEvent(
-        ConfigurationDestroyed,
-        "[cnfg][%p] Destroyed",
-        Configuration);
     CXPLAT_FREE(Configuration, QUIC_POOL_CONFIG);
 }
 
@@ -290,20 +263,12 @@ MsQuicConfigurationClose(
         HQUIC Handle
     )
 {
-    QuicTraceEvent(
-        ApiEnter,
-        "[ api] Enter %u (%p).",
-        QUIC_TRACE_API_CONFIGURATION_CLOSE,
-        Handle);
 
     if (Handle != NULL && Handle->Type == QUIC_HANDLE_TYPE_CONFIGURATION) {
 #pragma prefast(suppress: __WARNING_25024, "Pointer cast already validated.")
         QuicConfigurationRelease((QUIC_CONFIGURATION*)Handle, QUIC_CONF_REF_HANDLE);
     }
 
-    QuicTraceEvent(
-        ApiExit,
-        "[ api] Exit");
 }
 
 _IRQL_requires_max_(PASSIVE_LEVEL)
@@ -349,11 +314,6 @@ MsQuicConfigurationLoadCredential(
 {
     QUIC_STATUS Status = QUIC_STATUS_INVALID_PARAMETER;
 
-    QuicTraceEvent(
-        ApiEnter,
-        "[ api] Enter %u (%p).",
-        QUIC_TRACE_API_CONFIGURATION_LOAD_CREDENTIAL,
-        Handle);
 
     if (Handle != NULL &&
         CredConfig != NULL &&
@@ -385,10 +345,6 @@ MsQuicConfigurationLoadCredential(
         }
     }
 
-    QuicTraceEvent(
-        ApiExitStatus,
-        "[ api] Exit %u",
-        Status);
 
     return Status;
 }
@@ -399,11 +355,6 @@ QuicConfigurationTraceRundown(
     _In_ QUIC_CONFIGURATION* Configuration
     )
 {
-    QuicTraceEvent(
-        ConfigurationRundown,
-        "[cnfg][%p] Rundown, Registration=%p",
-        Configuration,
-        Configuration->Registration);
 }
 
 _IRQL_requires_max_(PASSIVE_LEVEL)
