@@ -164,11 +164,6 @@ CxPlatPcpInitialize(
     PcpContextSize = sizeof(CXPLAT_PCP) + (GatewayAddressesCount * sizeof(CXPLAT_SOCKET*));
     PcpContext = (CXPLAT_PCP*)CXPLAT_ALLOC_NONPAGED(PcpContextSize, QUIC_POOL_PCP);
     if (PcpContext == NULL) {
-        QuicTraceEvent(
-            AllocFailure,
-            "Allocation of '%s' failed. (%llu bytes)",
-            "CXPLAT_PCP",
-            PcpContextSize);
         Status = QUIC_STATUS_OUT_OF_MEMORY;
         goto Exit;
     }
@@ -242,26 +237,14 @@ CxPlatPcpProcessDatagram(
     PCP_RESPONSE* Response = (PCP_RESPONSE*)Datagram->Buffer;
 
     if (Datagram->BufferLength < PCP_MAP_RESPONSE_SIZE) {
-        QuicTraceEvent(
-            LibraryError,
-            "[ lib] ERROR, %s.",
-            "PCP: Invalid length");
         return;
     }
 
     if (Response->Version != PCP_VERSION) {
-        QuicTraceEvent(
-            LibraryError,
-            "[ lib] ERROR, %s.",
-            "PCP: Invalid version");
         return;
     }
 
     if (Response->Request != 1) {
-        QuicTraceEvent(
-            LibraryError,
-            "[ lib] ERROR, %s.",
-            "PCP: Unexpected request");
         return;
     }
 
@@ -293,10 +276,6 @@ CxPlatPcpProcessDatagram(
 
     } else if (Response->Opcode == PCP_OPCODE_PEER) {
         if (Datagram->BufferLength < PCP_PEER_RESPONSE_SIZE) {
-            QuicTraceEvent(
-                LibraryError,
-                "[ lib] ERROR, %s.",
-                "PCP: Invalid length");
             return;
         }
 
@@ -324,10 +303,6 @@ CxPlatPcpProcessDatagram(
 
     } else {
 
-        QuicTraceEvent(
-            LibraryError,
-            "[ lib] ERROR, %s.",
-            "PCP: Unexpected opcode");
         return;
     }
 
