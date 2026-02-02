@@ -121,7 +121,7 @@ _IRQL_requires_max_(PASSIVE_LEVEL) void QUIC_API
   BOOLEAN IsWorkerThread = Connection->WorkerThreadID == CxPlatCurThreadID();
 
   if (IsWorkerThread && Connection->State.HandleClosed) {
-    goto error;
+    goto Error;
   }
 
   CXPLAT_TEL_ASSERT(!Connection->State.HandleClosed);
