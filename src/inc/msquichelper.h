@@ -601,11 +601,6 @@ WriteSslKeyLogFileKernelMode(
             FileName,
             (ULONG) FileNameLength);
     if (!NT_SUCCESS(Status)) {
-        QuicTraceEvent(
-            LibraryErrorStatus,
-            "[ lib] ERROR, %u, %s.",
-            Status,
-            "Convert string to unicode");
         goto Error;
     }
 
@@ -634,11 +629,6 @@ WriteSslKeyLogFileKernelMode(
             NULL,
             0);
     if (!NT_SUCCESS(Status)) {
-        QuicTraceEvent(
-            LibraryErrorStatus,
-            "[ lib] ERROR, %u, %s.",
-            Status,
-            "Open sslkeylogfile for append");
         goto Error;
     }
 
@@ -656,11 +646,6 @@ WriteSslKeyLogFileKernelMode(
                 NULL,
                 NULL);
         if (!NT_SUCCESS(Status)) {
-            QuicTraceEvent(
-                LibraryErrorStatus,
-                "[ lib] ERROR, %u, %s.",
-                Status,
-                "Write header to sslkeylogfile");
             goto WriteError;
         }
     }
@@ -689,11 +674,6 @@ WriteSslKeyLogFileKernelMode(
                 ClientRandomBuffer,
                 TempHexBuffer);
         if (!NT_SUCCESS(Status)) {
-            QuicTraceEvent(
-                LibraryErrorStatus,
-                "[ lib] ERROR, %u, %s.",
-                Status,
-                "Format CLIENT_EARLY_TRAFFIC_SECRET");
             goto WriteError;
         }
 
@@ -709,11 +689,6 @@ WriteSslKeyLogFileKernelMode(
                 NULL,
                 NULL);
         if (!NT_SUCCESS(Status)) {
-            QuicTraceEvent(
-                LibraryErrorStatus,
-                "[ lib] ERROR, %u, %s.",
-                Status,
-                "Write CLIENT_EARLY_TRAFFIC_SECRET");
             goto WriteError;
         }
     }
@@ -735,11 +710,6 @@ WriteSslKeyLogFileKernelMode(
                 ClientRandomBuffer,
                 TempHexBuffer);
         if (!NT_SUCCESS(Status)) {
-            QuicTraceEvent(
-                LibraryErrorStatus,
-                "[ lib] ERROR, %u, %s.",
-                Status,
-                "Format CLIENT_HANDSHAKE_TRAFFIC_SECRET");
             goto WriteError;
         }
 
@@ -755,11 +725,6 @@ WriteSslKeyLogFileKernelMode(
                 NULL,
                 NULL);
         if (!NT_SUCCESS(Status)) {
-            QuicTraceEvent(
-                LibraryErrorStatus,
-                "[ lib] ERROR, %u, %s.",
-                Status,
-                "Write CLIENT_HANDSHAKE_TRAFFIC_SECRET");
             goto WriteError;
         }
     }
@@ -781,11 +746,6 @@ WriteSslKeyLogFileKernelMode(
                 ClientRandomBuffer,
                 TempHexBuffer);
         if (!NT_SUCCESS(Status)) {
-            QuicTraceEvent(
-                LibraryErrorStatus,
-                "[ lib] ERROR, %u, %s.",
-                Status,
-                "Format SERVER_HANDSHAKE_TRAFFIC_SECRET");
             goto WriteError;
         }
 
@@ -801,11 +761,6 @@ WriteSslKeyLogFileKernelMode(
                 NULL,
                 NULL);
         if (!NT_SUCCESS(Status)) {
-            QuicTraceEvent(
-                LibraryErrorStatus,
-                "[ lib] ERROR, %u, %s.",
-                Status,
-                "Write SERVER_HANDSHAKE_TRAFFIC_SECRET");
             goto WriteError;
         }
     }
@@ -827,11 +782,6 @@ WriteSslKeyLogFileKernelMode(
                 ClientRandomBuffer,
                 TempHexBuffer);
         if (!NT_SUCCESS(Status)) {
-            QuicTraceEvent(
-                LibraryErrorStatus,
-                "[ lib] ERROR, %u, %s.",
-                Status,
-                "Format CLIENT_TRAFFIC_SECRET_0");
             goto WriteError;
         }
 
@@ -847,11 +797,6 @@ WriteSslKeyLogFileKernelMode(
                 NULL,
                 NULL);
         if (!NT_SUCCESS(Status)) {
-            QuicTraceEvent(
-                LibraryErrorStatus,
-                "[ lib] ERROR, %u, %s.",
-                Status,
-                "Write CLIENT_TRAFFIC_SECRET_0");
             goto WriteError;
         }
     }
@@ -873,11 +818,6 @@ WriteSslKeyLogFileKernelMode(
                 ClientRandomBuffer,
                 TempHexBuffer);
         if (!NT_SUCCESS(Status)) {
-            QuicTraceEvent(
-                LibraryErrorStatus,
-                "[ lib] ERROR, %u, %s.",
-                Status,
-                "Format SERVER_TRAFFIC_SECRET_0");
             goto WriteError;
         }
 
@@ -893,11 +833,6 @@ WriteSslKeyLogFileKernelMode(
                 NULL,
                 NULL);
         if (!NT_SUCCESS(Status)) {
-            QuicTraceEvent(
-                LibraryErrorStatus,
-                "[ lib] ERROR, %u, %s.",
-                Status,
-                "Write SERVER_TRAFFIC_SECRET_0");
             goto WriteError;
         }
     }
