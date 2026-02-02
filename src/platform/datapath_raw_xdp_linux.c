@@ -170,10 +170,6 @@ CxPlatGetInterfaceRssQueueCount(
 
     DIR* Dir = opendir(Path);
     if (Dir == NULL) {
-        QuicTraceLogVerbose(
-            XdpFailGettingRssQueueCount,
-            "[ xdp] Failed to get RSS queue count for %s",
-            IfName);
         return QUIC_STATUS_INTERNAL_ERROR;
     }
 
@@ -203,9 +199,6 @@ CxPlatXdpReadConfig(
 void UninitializeUmem(struct XskUmemInfo* UmemInfo)
 {
     if (xsk_umem__delete(UmemInfo->Umem) != 0) {
-        QuicTraceLogVerbose(
-            XdpUmemDeleteFails,
-            "[ xdp] Failed to delete Umem");
     }
     free(UmemInfo->Buffer);
     free(UmemInfo);
@@ -218,11 +211,6 @@ void DetachXdpProgram(XDP_INTERFACE *Interface, BOOLEAN Initial)
     struct xdp_multiprog *mp = xdp_multiprog__get_from_ifindex(Interface->IfIndex);
     int err = xdp_multiprog__detach(mp);
     if (!Initial && err) {
-        QuicTraceLogVerbose(
-            XdpDetachFails,
-            "[ xdp] Failed to detach XDP program from %s. error:%s",
-            Interface->IfName,
-            strerror(-err));
     }
 	xdp_multiprog__close(mp);
 }
@@ -233,18 +221,9 @@ CxPlatDpRawInterfaceUninitialize(
     _Inout_ XDP_INTERFACE* Interface
     )
 {
-    QuicTraceLogVerbose(
-        InterfaceFree,
-        "[ xdp][%p] Freeing Interface",
-        Interface);
     for (uint32_t i = 0; Interface->Queues != NULL && i < Interface->QueueCount; i++) {
         CXPLAT_QUEUE *Queue = &Interface->Queues[i];
 
-        QuicTraceLogVerbose(
-            QueueFree,
-            "[ xdp][%p] Freeing Queue on Interface:%p",
-            Queue,
-            Interface);
 
         if(Queue->XskInfo) {
             if (Queue->XskInfo->Xsk) {
@@ -290,9 +269,6 @@ static QUIC_STATUS InitializeUmem(uint32_t FrameSize, uint32_t NumFrames, uint32
 {
     void *Buffer = NULL;
     if (posix_memalign(&Buffer, getpagesize(), (size_t)(FrameSize) * NumFrames)) {
-        QuicTraceLogVerbose(
-            XdpAllocUmem,
-            "[ xdp] Failed to allocate umem");
         return QUIC_STATUS_OUT_OF_MEMORY;
     }
 
@@ -326,9 +302,6 @@ static uint64_t XskUmemFrameAlloc(struct XskSocketInfo *Xsk)
 {
     uint64_t Frame;
     if (Xsk->UmemFrameFree == 0) {
-        QuicTraceLogVerbose(
-            XdpUmemAllocFails,
-            "[ xdp][umem] Out of UMEM frame, OOM");
         return INVALID_UMEM_FRAME;
     }
     Frame = Xsk->UmemFrameAddr[--Xsk->UmemFrameFree];
@@ -370,14 +343,8 @@ AttachXdpProgram(struct xdp_program *Prog, XDP_INTERFACE *Interface, struct xsk_
 
     if (err) {
         libxdp_strerror(err, errmsg, sizeof(errmsg));
-        QuicTraceLogVerbose(
-            XdpAttachFails,
-            "[ xdp] Failed to attach XDP program to %s. error:%s", Interface->IfName, errmsg);
         return QUIC_STATUS_INTERNAL_ERROR;
     }
-    QuicTraceLogVerbose(
-        XdpAttachSucceeds,
-        "[ xdp] Successfully attach XDP program to %s by mode:%d", Interface->IfName, Interface->AttachMode);
     return QUIC_STATUS_SUCCESS;
 }
 
@@ -424,18 +391,8 @@ OpenXdpProgram(struct xdp_program **Prog)
     }
     if (err) {
         libxdp_strerror(err, errmsg, sizeof(errmsg));
-        QuicTraceLogVerbose(
-            XdpOpenFileError,
-            "[ xdp] Failed to open xdp program %s. error:%s(%d)",
-            FilePath,
-            errmsg,
-            err);
         return QUIC_STATUS_INTERNAL_ERROR;
     }
-    QuicTraceLogVerbose(
-    XdpLoadObject,
-    "[ xdp] Successfully loaded xdp object of %s",
-    FilePath);
     return QUIC_STATUS_SUCCESS;
 }
 
@@ -490,9 +447,6 @@ CxPlatDpRawInterfaceInitialize(
 
     int XskBypassMapFd = bpf_map__fd(bpf_object__find_map_by_name(xdp_program__bpf_obj(Interface->XdpProg), "xsks_map"));
     if (XskBypassMapFd < 0) {
-        QuicTraceLogVerbose(
-            XdpNoXsksMap,
-            "[ xdp] No xsks map found");
         Status = QUIC_STATUS_INTERNAL_ERROR;
         goto Error;
     }
@@ -531,9 +485,6 @@ CxPlatDpRawInterfaceInitialize(
 
         Status = InitializeUmem(FRAME_SIZE, NUM_FRAMES, RxHeadroom, TxHeadroom, UmemInfo);
         if (QUIC_FAILED(Status)) {
-            QuicTraceLogVerbose(
-                XdpConfigureUmem,
-                "[ xdp] Failed to configure Umem");
             free(UmemInfo);
             goto Error;
         }
@@ -563,9 +514,6 @@ CxPlatDpRawInterfaceInitialize(
             }
         } while (Ret == -EBUSY && RetryCount-- > 0);
         if (Ret < 0) {
-            QuicTraceLogVerbose(
-                FailXskSocketCreate,
-                "[ xdp] Failed to create XDP socket for %s. error:%s", Interface->IfName, strerror(-Ret));
             Status = QUIC_STATUS_INTERNAL_ERROR;
             goto Error;
         }
@@ -591,9 +539,6 @@ CxPlatDpRawInterfaceInitialize(
         for (uint32_t i = 0; i < PROD_NUM_DESCS; i ++) {
             uint64_t Addr = XskUmemFrameAlloc(XskInfo);
             if (Addr == INVALID_UMEM_FRAME) {
-                QuicTraceLogVerbose(
-                    FailRxAlloc,
-                    "[ xdp][rx  ] OOM for Rx");
                 break;
             }
             *xsk_ring_prod__fill_addr(&XskInfo->UmemInfo->Fq, FqIdx++) = Addr;
@@ -672,11 +617,6 @@ CxPlatDpRawInitialize(
 
     //CxPlatXdpReadConfig(Xdp); // TODO - Make this more secure
 
-    QuicTraceLogVerbose(
-        XdpInitialize,
-        "[ xdp][%p] XDP initialized, %u procs",
-        Xdp,
-        Xdp->PartitionCount);
 
     struct ifaddrs *ifaddr, *ifa;
     int family;
@@ -795,11 +735,6 @@ CxPlatDpRawInitialize(
             Queue = Queue->Next;
         }
 
-        QuicTraceLogVerbose(
-            XdpWorkerStart,
-            "[ xdp][%p] XDP partition start, %u queues",
-            Partition,
-            QueueCount);
 
         CxPlatWorkerPoolAddExecutionContext(
             WorkerPool, &Partition->Ec, Partition->PartitionIndex);
@@ -824,15 +759,7 @@ CxPlatDpRawRelease(
     _In_ XDP_DATAPATH* Xdp
     )
 {
-    QuicTraceLogVerbose(
-        XdpRelease,
-        "[ xdp][%p] XDP release",
-        Xdp);
     if (CxPlatRefDecrement(&Xdp->RefCount)) {
-        QuicTraceLogVerbose(
-            XdpUninitializeComplete,
-            "[ xdp][%p] XDP uninitialize complete",
-            Xdp);
         while (!CxPlatListIsEmpty(&Xdp->Interfaces)) {
             XDP_INTERFACE* Interface =
                 CXPLAT_CONTAINING_RECORD(CxPlatListRemoveHead(&Xdp->Interfaces), XDP_INTERFACE, Link);
@@ -854,10 +781,6 @@ CxPlatDpRawUninitialize(
     )
 {
     XDP_DATAPATH* Xdp = (XDP_DATAPATH*)Datapath;
-    QuicTraceLogVerbose(
-        XdpUninitialize,
-        "[ xdp][%p] XDP uninitialize",
-        Xdp);
     Xdp->Running = FALSE; // call CxPlatDpRawRelease from each partition
     for (uint32_t i = 0; i < Xdp->PartitionCount; i++) {
         Xdp->Partitions[i].Ec.Ready = TRUE;
@@ -909,15 +832,9 @@ CxPlatDpRawPlumbRulesOnSocket(
             if (IsCreated) {
                 BOOLEAN exist = true;
                 if (bpf_map_update_elem(bpf_map__fd(port_map), &port, &exist, BPF_ANY)) {
-                    QuicTraceLogVerbose(
-                        XdpSetPortFails,
-                        "[ xdp] Failed to set port %d on %s", port, Interface->IfName);
                 }
             } else {
                 if (bpf_map_delete_elem(bpf_map__fd(port_map), &port)) {
-                    QuicTraceLogVerbose(
-                        XdpDeletePortFails,
-                        "[ xdp] Failed to delete port %d on %s", port, Interface->IfName);
                 }
             }
         }
@@ -930,21 +847,11 @@ CxPlatDpRawPlumbRulesOnSocket(
             if (IsCreated) {
                 memcpy(ipv_data, &Interface->Ipv4Address.s_addr, 4);
                 if (bpf_map_update_elem(bpf_map__fd(ip_map), &IPv4Key, ipv_data, BPF_ANY)) {
-                    QuicTraceLogVerbose(
-                        XdpSetIpFails,
-                        "[ xdp] Failed to set ipv4 %s on %s",
-                        inet_ntoa(Interface->Ipv4Address),
-                        Interface->IfName);
                 }
                 memcpy(ipv_data, &Interface->Ipv6Address.s6_addr, sizeof(ipv_data));
                 if (bpf_map_update_elem(bpf_map__fd(ip_map), &IPv6Key, ipv_data, BPF_ANY)) {
                     char str_ipv6[INET6_ADDRSTRLEN];
                     inet_ntop(AF_INET6, &Interface->Ipv6Address, str_ipv6, sizeof(str_ipv6));
-                    QuicTraceLogVerbose(
-                        XdpSetIpFails,
-                        "[ xdp] Failed to set ipv6 %s on %s",
-                        str_ipv6,
-                        Interface->IfName);
                 }
             } else {
                 bpf_map_update_elem(bpf_map__fd(ip_map), &IPv4Key, ipv_data, BPF_ANY);
@@ -960,9 +867,6 @@ CxPlatDpRawPlumbRulesOnSocket(
             int key = 0;
             if (IsCreated) {
                 if (bpf_map_update_elem(bpf_map__fd(ifname_map), &key, Interface->IfName, BPF_ANY)) {
-                    QuicTraceLogVerbose(
-                        XdpSetIfnameFails,
-                        "[ xdp] Failed to set ifname %s on %s", Interface->IfName, Interface->IfName);
                 }
             } // BPF_MAP_TYPE_ARRAY doesn't support delete
         }
@@ -1030,9 +934,6 @@ CxPlatDpRawTxAlloc(
     uint64_t BaseAddr = XskUmemFrameAlloc(XskInfo);
     CxPlatLockRelease(&XskInfo->UmemLock);
     if (BaseAddr == INVALID_UMEM_FRAME) {
-        QuicTraceLogVerbose(
-            FailTxAlloc,
-            "[ xdp][tx  ] OOM for Tx");
         goto Error;
     }
 
@@ -1077,9 +978,6 @@ KickTx(
             return;
         }
     }
-    QuicTraceLogVerbose(
-        DoneSendTo,
-        "[ xdp][TX  ] Done sendto.");
 
     if (SendAlreadyPending) {
         XdpSocketContextSetEvents(Queue, EPOLL_CTL_MOD, EPOLLIN);
@@ -1098,9 +996,6 @@ KickTx(
         CxPlatLockRelease(&XskInfo->UmemLock);
 
         xsk_ring_cons__release(&XskInfo->UmemInfo->Cq, Completed);
-        QuicTraceLogVerbose(
-            ReleaseCons,
-            "[ xdp][cq  ] Release %d from completion queue", Completed);
     }
     CxPlatLockRelease(&Queue->CqLock);
 }
@@ -1122,9 +1017,6 @@ CxPlatDpRawTxEnqueue(
         CxPlatLockAcquire(&XskInfo->UmemLock);
         XskUmemFrameFree(XskInfo, Packet->UmemRelativeAddr);
         CxPlatLockRelease(&XskInfo->UmemLock);
-        QuicTraceLogVerbose(
-            FailTxReserve,
-            "[ xdp][tx  ] Failed to reserve");
         return;
     }
 
@@ -1196,10 +1088,6 @@ CxPlatXdpExecute(
     const XDP_DATAPATH* Xdp = Partition->Xdp;
 
     if (!Xdp->Running) {
-        QuicTraceLogVerbose(
-            XdpPartitionShutdown,
-            "[ xdp][%p] XDP partition shutdown",
-            Partition);
         CxPlatEventQEnqueue(Partition->EventQ, &Partition->ShutdownSqe);
         return FALSE;
     }
@@ -1305,9 +1193,6 @@ CxPlatXdpRx(
         for (i = 0; i < Available; i++) {
             uint64_t addr = XskUmemFrameAlloc(XskInfo);
             if (addr == INVALID_UMEM_FRAME) {
-                QuicTraceLogVerbose(
-                    FailRxAlloc,
-                    "[ xdp][rx  ] OOM for Rx");
                 break;
             }
             *xsk_ring_prod__fill_addr(&XskInfo->UmemInfo->Fq, FqIdx++) = addr;
@@ -1335,10 +1220,6 @@ CxPlatPartitionShutdownEventComplete(
 {
     XDP_PARTITION* Partition =
         CXPLAT_CONTAINING_RECORD(CxPlatCqeGetSqe(Cqe), XDP_PARTITION, ShutdownSqe);
-    QuicTraceLogVerbose(
-        XdpPartitionShutdownComplete,
-        "[ xdp][%p] XDP partition shutdown complete",
-        Partition);
     CxPlatDpRawRelease((XDP_DATAPATH*)Partition->Xdp);
 }
 
@@ -1350,10 +1231,6 @@ CxPlatQueueRxIoEventComplete(
     // TODO: use CQE to distinguish Tx/RX
     CXPLAT_QUEUE* Queue =
         CXPLAT_CONTAINING_RECORD(CxPlatCqeGetSqe(Cqe), CXPLAT_QUEUE, RxIoSqe);
-    QuicTraceLogVerbose(
-        XdpQueueAsyncIoRxComplete,
-        "[ xdp][%p] XDP async IO complete (RX)",
-        Queue);
     if (EPOLLOUT & Cqe->events) {
         KickTx(Queue, TRUE);
     } else {
