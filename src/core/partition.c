@@ -119,11 +119,6 @@ QuicPartitionGetStatelessRetryKey(
             RawKey,
             &NewKey);
     if (QUIC_FAILED(Status)) {
-        QuicTraceEvent(
-            LibraryErrorStatus,
-            "[ lib] ERROR, %u, %s.",
-            Status,
-            "Create stateless retry key");
         CxPlatSecureZeroMemory(RawKey, sizeof(RawKey));
         return NULL;
     }
