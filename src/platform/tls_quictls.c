@@ -391,11 +391,6 @@ CxPlatTlsSetEncryptionSecretsCallback(
     QUIC_PACKET_KEY_TYPE KeyType = (QUIC_PACKET_KEY_TYPE)Level;
     QUIC_STATUS Status;
 
-    QuicTraceLogConnVerbose(
-        OpenSslNewEncryptionSecrets,
-        TlsContext->Connection,
-        "New encryption secrets (Level = %u)",
-        (uint32_t)Level);
 
     CXPLAT_SECRET Secret;
     CxPlatTlsNegotiatedCiphers(TlsContext, &Secret.Aead, &Secret.Hash);
@@ -520,12 +515,6 @@ CxPlatTlsAddHandshakeDataCallback(
     }
     CXPLAT_DBG_ASSERT(KeyType == 0 || TlsState->WriteKeys[KeyType] != NULL);
 
-    QuicTraceLogConnVerbose(
-        OpenSslAddHandshakeData,
-        TlsContext->Connection,
-        "Sending %llu handshake bytes (Level = %u)",
-        (uint64_t)Length,
-        (uint32_t)Level);
 
     if (Length + TlsState->BufferLength > 0xF000) {
         TlsContext->ResultFlags |= CXPLAT_TLS_RESULT_ERROR;
@@ -561,21 +550,11 @@ CxPlatTlsAddHandshakeDataCallback(
     case QUIC_PACKET_KEY_HANDSHAKE:
         if (TlsState->BufferOffsetHandshake == 0) {
             TlsState->BufferOffsetHandshake = TlsState->BufferTotalLength;
-            QuicTraceLogConnInfo(
-                OpenSslHandshakeDataStart,
-                TlsContext->Connection,
-                "Writing Handshake data starts at %u",
-                TlsState->BufferOffsetHandshake);
         }
         break;
     case QUIC_PACKET_KEY_1_RTT:
         if (TlsState->BufferOffset1Rtt == 0) {
             TlsState->BufferOffset1Rtt = TlsState->BufferTotalLength;
-            QuicTraceLogConnInfo(
-                OpenSsl1RttDataStart,
-                TlsContext->Connection,
-                "Writing 1-RTT data starts at %u",
-                TlsState->BufferOffset1Rtt);
         }
         break;
     default:
@@ -614,12 +593,6 @@ CxPlatTlsSendAlertCallback(
 
     CXPLAT_TLS* TlsContext = SSL_get_app_data(Ssl);
 
-    QuicTraceLogConnError(
-        OpenSslAlert,
-        TlsContext->Connection,
-        "Send alert = %u (Level = %u)",
-        Alert,
-        (uint32_t)Level);
 
     TlsContext->State->AlertCode = Alert;
     TlsContext->ResultFlags |= CXPLAT_TLS_RESULT_ERROR;
@@ -669,11 +642,6 @@ CxPlatTlsOnClientSessionTicketReceived(
             uint8_t* Data = NULL;
             long Length = BIO_get_mem_data(Bio, &Data);
             if (Length < UINT16_MAX) {
-                QuicTraceLogConnInfo(
-                    OpenSslOnRecvTicket,
-                    TlsContext->Connection,
-                    "Received session ticket, %u bytes",
-                    (uint32_t)Length);
                 TlsContext->SecConfig->Callbacks.ReceiveTicket(
                     TlsContext->Connection,
                     (uint32_t)Length,
@@ -786,11 +754,6 @@ CxPlatTlsOnServerSessionTicketDecrypted(
     UNREFERENCED_PARAMETER(keyname_length);
     UNREFERENCED_PARAMETER(arg);
 
-    QuicTraceLogConnVerbose(
-        OpenSslTickedDecrypted,
-        TlsContext->Connection,
-        "Session ticket decrypted, status %u",
-        (uint32_t)status);
 
     SSL_TICKET_RETURN Result;
     if (status == SSL_TICKET_SUCCESS) {
@@ -806,11 +769,6 @@ CxPlatTlsOnServerSessionTicketDecrypted(
     if (Session != NULL &&
         SSL_SESSION_get0_ticket_appdata(Session, (void**)&Buffer, &Length)) {
 
-        QuicTraceLogConnVerbose(
-            OpenSslRecvTicketData,
-            TlsContext->Connection,
-            "Received ticket data, %u bytes",
-            (uint32_t)Length);
 
         if (!TlsContext->SecConfig->Callbacks.ReceiveTicket(
                 TlsContext->Connection,
@@ -1480,10 +1438,6 @@ CxPlatTlsInitialize(
     TlsContext->AlpnBuffer = Config->AlpnBuffer;
     TlsContext->TlsSecrets = Config->TlsSecrets;
 
-    QuicTraceLogConnVerbose(
-        OpenSslContextCreated,
-        TlsContext->Connection,
-        "TLS context Created");
 
     if (!Config->IsServer) {
 
@@ -1530,11 +1484,6 @@ CxPlatTlsInitialize(
         if (Config->ResumptionTicketLength != 0) {
             CXPLAT_DBG_ASSERT(Config->ResumptionTicketBuffer != NULL);
 
-            QuicTraceLogConnInfo(
-                OpenSslOnSetTicket,
-                TlsContext->Connection,
-                "Setting session ticket, %u bytes",
-                Config->ResumptionTicketLength);
             BIO* Bio =
                 BIO_new_mem_buf(
                     Config->ResumptionTicketBuffer,
@@ -1593,10 +1542,6 @@ CxPlatTlsUninitialize(
     )
 {
     if (TlsContext != NULL) {
-        QuicTraceLogConnVerbose(
-            OpenSslContextCleaningUp,
-            TlsContext->Connection,
-            "Cleaning up");
 
         if (TlsContext->SNI != NULL) {
             CXPLAT_FREE(TlsContext->SNI, QUIC_POOL_TLS_SNI);
@@ -1639,11 +1584,6 @@ CxPlatTlsProcessData(
     TlsContext->ResultFlags = 0;
 
     if (DataType == CXPLAT_TLS_TICKET_DATA) {
-        QuicTraceLogConnVerbose(
-            OpenSslSendTicketData,
-            TlsContext->Connection,
-            "Sending ticket data, %u bytes",
-            *BufferLength);
 
         SSL_SESSION* Session = SSL_get_session(TlsContext->Ssl);
         if (Session == NULL) {
@@ -1670,11 +1610,6 @@ CxPlatTlsProcessData(
     }
 
     if (*BufferLength != 0) {
-        QuicTraceLogConnVerbose(
-            OpenSslProcessData,
-            TlsContext->Connection,
-            "Processing %u received bytes",
-            *BufferLength);
 
         if (SSL_provide_quic_data(
                 TlsContext->Ssl,
@@ -1682,11 +1617,6 @@ CxPlatTlsProcessData(
                 Buffer,
                 *BufferLength) != 1) {
             char buf[256];
-            QuicTraceLogConnError(
-                OpenSslQuicDataErrorStr,
-                TlsContext->Connection,
-                "SSL_provide_quic_data failed: %s",
-                ERR_error_string(ERR_get_error(), buf));
             TlsContext->ResultFlags |= CXPLAT_TLS_RESULT_ERROR;
             goto Exit;
         }
@@ -1725,23 +1655,11 @@ CxPlatTlsProcessData(
                 const char* file;
                 int line;
                 ERR_error_string_n(ERR_get_error_all(&file, &line, NULL, NULL, NULL), buf, sizeof(buf));
-                QuicTraceLogConnError(
-                    OpenSslHandshakeErrorStr,
-                    TlsContext->Connection,
-                    "TLS handshake error: %s, file:%s:%d",
-                    buf,
-                    (strlen(file) > OpenSslFilePrefixLength ? file + OpenSslFilePrefixLength : file),
-                    line);
                 TlsContext->ResultFlags |= CXPLAT_TLS_RESULT_ERROR;
                 goto Exit;
             }
 
             default:
-                QuicTraceLogConnError(
-                    OpenSslHandshakeError,
-                    TlsContext->Connection,
-                    "TLS handshake error: %d",
-                    Err);
                 TlsContext->ResultFlags |= CXPLAT_TLS_RESULT_ERROR;
                 goto Exit;
             }
@@ -1752,18 +1670,10 @@ CxPlatTlsProcessData(
             uint32_t NegotiatedAlpnLength;
             SSL_get0_alpn_selected(TlsContext->Ssl, &NegotiatedAlpn, &NegotiatedAlpnLength);
             if (NegotiatedAlpnLength == 0) {
-                QuicTraceLogConnError(
-                    OpenSslAlpnNegotiationFailure,
-                    TlsContext->Connection,
-                    "Failed to negotiate ALPN");
                 TlsContext->ResultFlags |= CXPLAT_TLS_RESULT_ERROR;
                 goto Exit;
             }
             if (NegotiatedAlpnLength > UINT8_MAX) {
-                QuicTraceLogConnError(
-                    OpenSslInvalidAlpnLength,
-                    TlsContext->Connection,
-                    "Invalid negotiated ALPN length");
                 TlsContext->ResultFlags |= CXPLAT_TLS_RESULT_ERROR;
                 goto Exit;
             }
@@ -1774,10 +1684,6 @@ CxPlatTlsProcessData(
                     (uint8_t)NegotiatedAlpnLength,
                     NegotiatedAlpn);
             if (TlsContext->State->NegotiatedAlpn == NULL) {
-                QuicTraceLogConnError(
-                    OpenSslNoMatchingAlpn,
-                    TlsContext->Connection,
-                    "Failed to find a matching ALPN");
                 TlsContext->ResultFlags |= CXPLAT_TLS_RESULT_ERROR;
                 goto Exit;
             }
@@ -1802,16 +1708,8 @@ CxPlatTlsProcessData(
             }
         }
 
-        QuicTraceLogConnInfo(
-            OpenSslHandshakeComplete,
-            TlsContext->Connection,
-            "TLS Handshake complete");
         State->HandshakeComplete = TRUE;
         if (SSL_session_reused(TlsContext->Ssl)) {
-            QuicTraceLogConnInfo(
-                OpenSslHandshakeResumed,
-                TlsContext->Connection,
-                "TLS Handshake resumed");
             State->SessionResumed = TRUE;
         }
         if (!TlsContext->IsServer) {
@@ -1839,10 +1737,6 @@ CxPlatTlsProcessData(
             SSL_get_peer_quic_transport_params(
                     TlsContext->Ssl, &TransportParams, &TransportParamLen);
             if (TransportParams == NULL || TransportParamLen == 0) {
-                QuicTraceLogConnError(
-                    OpenSslMissingTransportParameters,
-                    TlsContext->Connection,
-                    "No transport parameters received");
                 TlsContext->ResultFlags |= CXPLAT_TLS_RESULT_ERROR;
                 goto Exit;
             }
@@ -1869,20 +1763,10 @@ Exit:
         if (State->WriteKeys[QUIC_PACKET_KEY_HANDSHAKE] != NULL &&
             State->BufferOffsetHandshake == 0) {
             State->BufferOffsetHandshake = State->BufferTotalLength;
-            QuicTraceLogConnInfo(
-                OpenSslHandshakeDataStart,
-                TlsContext->Connection,
-                "Writing Handshake data starts at %u",
-                State->BufferOffsetHandshake);
         }
         if (State->WriteKeys[QUIC_PACKET_KEY_1_RTT] != NULL &&
             State->BufferOffset1Rtt == 0) {
             State->BufferOffset1Rtt = State->BufferTotalLength;
-            QuicTraceLogConnInfo(
-                OpenSsl1RttDataStart,
-                TlsContext->Connection,
-                "Writing 1-RTT data starts at %u",
-                State->BufferOffset1Rtt);
         }
     }
 
