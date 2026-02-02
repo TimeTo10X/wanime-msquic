@@ -191,10 +191,6 @@ CxPlatAddChainToStore(
             &PolicyStatus)) {
     }
 
-    QuicTraceLogVerbose(
-        TlsExportCapiCertChainVerifyResult,
-        "Exported chain verification result: %u",
-        PolicyStatus.dwError);
 
     Status = S_OK;
 
