@@ -67,7 +67,7 @@ QuicWorkerInitialize(
     _Inout_ QUIC_WORKER* Worker
     )
 {
-
+    (void)Registration;
     Worker->Enabled = TRUE;
     Worker->Partition = Partition;
     CxPlatDispatchLockInitialize(&Worker->Lock);
@@ -868,7 +868,6 @@ QuicWorkerPoolInitialize(
     _Out_ QUIC_WORKER_POOL** NewWorkerPool
     )
 {
-    (void)Registration;
     const uint16_t WorkerCount =
         ExecProfile == QUIC_EXECUTION_PROFILE_TYPE_SCAVENGER ? 1 : MsQuicLib.PartitionCount;
     const size_t WorkerPoolSize =
