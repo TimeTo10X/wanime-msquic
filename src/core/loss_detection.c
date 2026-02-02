@@ -134,7 +134,7 @@ QuicLossDetectionUninitialize(
     _In_ QUIC_LOSS_DETECTION* LossDetection
     )
 {
-    QUIC_CONNECTION* Connection = QuicLossDetectionGetConnection(LossDetection);
+    // QUIC_CONNECTION* Connection = QuicLossDetectionGetConnection(LossDetection);
 
     while (LossDetection->SentPackets != NULL) {
         QUIC_SENT_PACKET_METADATA* Packet = LossDetection->SentPackets;
