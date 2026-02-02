@@ -858,18 +858,7 @@ QuicConnLogOutFlowStats(
     _In_ const QUIC_CONNECTION* const Connection
     )
 {
-    if (!QuicTraceEventEnabled(ConnOutFlowStats)) {
-        return;
-    }
-
-    QuicCongestionControlLogOutFlowStatus(&Connection->CongestionControl);
-
-    uint64_t FcAvailable, SendWindow;
-    QuicStreamSetGetFlowControlSummary(
-        &Connection->Streams,
-        &FcAvailable,
-        &SendWindow);
-
+    UNREFERENCED_PARAMETER(Connection);
 }
 
 QUIC_INLINE
@@ -887,10 +876,7 @@ QuicConnLogStatistics(
     _In_ const QUIC_CONNECTION* const Connection
     )
 {
-    const QUIC_PATH* Path = &Connection->Paths[0];
-    UNREFERENCED_PARAMETER(Path);
-
-
+    UNREFERENCED_PARAMETER(Connection);
 }
 
 QUIC_INLINE
