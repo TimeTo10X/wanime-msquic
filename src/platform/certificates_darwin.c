@@ -66,39 +66,23 @@ CxPlatCertVerifyRawCertificate(
             X509CertLength,
             kCFAllocatorNull);
     if (CfData == NULL) {
-        QuicTraceEvent(
-            LibraryError,
-            "[ lib] ERROR, %s.",
-            "CFDataCreateWithBytesNoCopy failed");
         goto Exit;
     }
 
     Certificate = SecCertificateCreateWithData(NULL, CfData);
     if (Certificate == NULL) {
-        QuicTraceEvent(
-            LibraryError,
-            "[ lib] ERROR, %s.",
-            "SecCertificateCreateWithData failed");
         goto Exit;
     }
 
     if (SNI != NULL) {
         SNIString = CFStringCreateWithCStringNoCopy(NULL, SNI, kCFStringEncodingUTF8, kCFAllocatorNull);
         if (SNIString == NULL) {
-            QuicTraceEvent(
-                LibraryError,
-                "[ lib] ERROR, %s.",
-                "CFStringCreateWithCStringNoCopy failed");
             goto Exit;
         }
     }
 
     PolicyArray = CFArrayCreateMutable(NULL, 3, NULL);
     if (PolicyArray == NULL) {
-        QuicTraceEvent(
-            LibraryError,
-            "[ lib] ERROR, %s.",
-            "CFArrayCreateMutable failed");
         goto Exit;
     }
 
@@ -107,10 +91,6 @@ CxPlatCertVerifyRawCertificate(
             (CredFlags & QUIC_CREDENTIAL_FLAG_CLIENT) ? TRUE : FALSE,
             SNIString);
     if (SSLPolicy == NULL) {
-        QuicTraceEvent(
-            LibraryError,
-            "[ lib] ERROR, %s.",
-            "SecPolicyCreateSSL failed");
         goto Exit;
     }
 
@@ -122,10 +102,6 @@ CxPlatCertVerifyRawCertificate(
                 kSecRevocationUseAnyAvailableMethod |
                 kSecRevocationRequirePositiveResponse);
         if (RevocationPolicy == NULL) {
-            QuicTraceEvent(
-                LibraryError,
-                "[ lib] ERROR, %s.",
-                "SecPolicyCreateRevocation failed");
             goto Exit;
         }
 
@@ -139,11 +115,6 @@ CxPlatCertVerifyRawCertificate(
             &TrustRef);
 
     if (Status != noErr) {
-        QuicTraceEvent(
-            LibraryErrorStatus,
-            "[ lib] ERROR, %u, %s.",
-            Status,
-            "SecTrustCreateWithCertificates failed");
         goto Exit;
     }
 
