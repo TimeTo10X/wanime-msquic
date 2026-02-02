@@ -538,7 +538,7 @@ CxPlatSocketContextSqeInitialize(
     )
 {
     QUIC_STATUS Status = QUIC_STATUS_SUCCESS;
-    CXPLAT_SOCKET* Binding = SocketContext->Binding;
+    // CXPLAT_SOCKET* Binding = SocketContext->Binding;
     BOOLEAN ShutdownSqeInitialized = FALSE;
 
     if (!CxPlatSqeInitialize(
@@ -914,7 +914,7 @@ CxPlatSocketContextInitialize(
                 SocketContext->SocketFd,
                 100);
         if (Result == SOCKET_ERROR) {
-            int error = errno;
+            // int error = errno;
             goto Exit;
         }
     }
