@@ -136,6 +136,7 @@ QuicSendQueueFlush(
     _In_ QUIC_SEND_FLUSH_REASON Reason
     )
 {
+    (void)Reason;
     QUIC_CONNECTION* Connection = QuicSendGetConnection(Send);
 
     if (!Send->FlushOperationPending && QuicSendCanSendFlagsNow(Send)) {
