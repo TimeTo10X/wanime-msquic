@@ -10,6 +10,8 @@
 //
 #define QUIC_MAX_FRAMES_PER_PACKET 12
 
+#include "reason.h"
+
 typedef struct QUIC_STREAM QUIC_STREAM;
 
 #define QUIC_SENT_FRAME_FLAG_STREAM_OPEN    0x01    // STREAM frame opened stream
