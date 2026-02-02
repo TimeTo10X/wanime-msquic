@@ -243,24 +243,12 @@ RawResolveRoute(
 
     Route->State = RouteResolving;
 
-    QuicTraceEvent(
-        DatapathGetRouteStart,
-        "[data][%p] Querying route, local=%!ADDR!, remote=%!ADDR!",
-        Socket,
-        CASTED_CLOG_BYTEARRAY(sizeof(Route->LocalAddress), &Route->LocalAddress),
-        CASTED_CLOG_BYTEARRAY(sizeof(Route->RemoteAddress), &Route->RemoteAddress));
 
     QUIC_ADDR NextHop = {0};
     int oif = -1;
     // get best next hop
     Status = ResolveBestL3Route(&Route->RemoteAddress, &Route->LocalAddress, &NextHop, &oif);
     if (QUIC_FAILED(Status)) {
-        QuicTraceEvent(
-            DatapathErrorStatus,
-            "[data][%p] ERROR, %u, %s.",
-            Socket,
-            Status,
-            "ResolveBestL3Route");
         return Status;
     }
 
@@ -279,22 +267,8 @@ RawResolveRoute(
     // get remote mac
     Status = ResolveRemotePhysicalAddress(&NextHop, Route->NextHopLinkLayerAddress);
     if (QUIC_FAILED(Status)) {
-        QuicTraceEvent(
-            DatapathErrorStatus,
-            "[data][%p] ERROR, %u, %s.",
-            Socket,
-            Status,
-            "ResolveRemotePhysicalAddress");
         return Status;
     }
-    QuicTraceEvent(
-        DatapathResoveShow,
-        "[data][%p] Route resolution completed, local=%!ADDR!, remote=%!ADDR!, nexthop=%!ADDR!, iface=%d",
-        Socket,
-        CASTED_CLOG_BYTEARRAY(sizeof(Route->LocalAddress), &Route->LocalAddress),
-        CASTED_CLOG_BYTEARRAY(sizeof(Route->RemoteAddress), &Route->RemoteAddress),
-        CASTED_CLOG_BYTEARRAY(sizeof(NextHop), &NextHop),
-        oif);
 
     CxPlatResolveRouteComplete(Context, Route, Route->NextHopLinkLayerAddress, PathId);
 
