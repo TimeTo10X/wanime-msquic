@@ -50,10 +50,6 @@ QuicStreamInitialize(
     Stream->Flags.Opened0Rtt = !!(Flags & QUIC_STREAM_OPEN_FLAG_0_RTT);
     Stream->Flags.DelayIdFcUpdate = !!(Flags & QUIC_STREAM_OPEN_FLAG_DELAY_ID_FC_UPDATES);
     if (Stream->Flags.DelayIdFcUpdate) {
-        QuicTraceLogStreamVerbose(
-            ConfiguredForDelayedIDFC,
-            Stream,
-            "Configured for delayed ID FC updates");
     }
     Stream->Flags.Allocated = TRUE;
     Stream->Flags.SendEnabled = TRUE;
@@ -366,10 +362,6 @@ QuicStreamClose(
     if (!Stream->Flags.ShutdownComplete) {
 
         if (Stream->Flags.Started && !Stream->Flags.HandleShutdown) {
-            QuicTraceLogStreamWarning(
-                CloseWithoutShutdown,
-                Stream,
-                "Closing handle without fully shutting down");
         }
 
         //
@@ -444,10 +436,6 @@ QuicStreamIndicateEvent(
                 Event);
     } else {
         Status = QUIC_STATUS_INVALID_STATE;
-        QuicTraceLogStreamWarning(
-            EventSilentDiscard,
-            Stream,
-            "Event silently discarded");
     }
     return Status;
 }
@@ -471,13 +459,6 @@ QuicStreamIndicateStartComplete(
     Event.START_COMPLETE.PeerAccepted =
         QUIC_SUCCEEDED(Status) &&
         !(Stream->OutFlowBlockedReasons & QUIC_FLOW_BLOCKED_STREAM_ID_FLOW_CONTROL);
-    QuicTraceLogStreamVerbose(
-        IndicateStartComplete,
-        Stream,
-        "Indicating QUIC_STREAM_EVENT_START_COMPLETE [Status=0x%x ID=%llu Accepted=%hhu]",
-        Status,
-        Stream->ID,
-        Event.START_COMPLETE.PeerAccepted);
     (void)QuicStreamIndicateEvent(Stream, &Event);
 }
 
@@ -505,15 +486,6 @@ QuicStreamIndicateShutdownComplete(
             Stream->Connection->CloseErrorCode;
         Event.SHUTDOWN_COMPLETE.ConnectionCloseStatus =
             Stream->Connection->CloseStatus;
-        QuicTraceLogStreamVerbose(
-            IndicateStreamShutdownComplete,
-            Stream,
-            "Indicating QUIC_STREAM_EVENT_SHUTDOWN_COMPLETE [Shutdown=%hhu, ShutdownByApp=%hhu, ClosedRemotely=%hhu, ErrorCode=0x%llx, CloseStatus=0x%x]",
-            Event.SHUTDOWN_COMPLETE.ConnectionShutdown,
-            Event.SHUTDOWN_COMPLETE.ConnectionShutdownByApp,
-            Event.SHUTDOWN_COMPLETE.ConnectionClosedRemotely,
-            Event.SHUTDOWN_COMPLETE.ConnectionErrorCode,
-            Event.SHUTDOWN_COMPLETE.ConnectionCloseStatus);
         (void)QuicStreamIndicateEvent(Stream, &Event);
 
         Stream->ClientCallbackHandler = NULL;
@@ -563,10 +535,6 @@ QuicStreamShutdown(
         // delivered.
         //
         if (Stream->Flags.RemoteCloseResetReliable || Stream->Flags.LocalCloseResetReliable) {
-             QuicTraceLogStreamWarning(
-                ShutdownImmediatePendingReliableReset,
-                Stream,
-                "Invalid immediate shutdown request (pending reliable reset).");
             return;
         }
         QuicStreamIndicateSendShutdownComplete(Stream, FALSE);
@@ -636,11 +604,6 @@ QuicStreamParamSet(
         if (Stream->SendPriority != *(uint16_t*)Buffer) {
             Stream->SendPriority = *(uint16_t*)Buffer;
 
-            QuicTraceLogStreamInfo(
-                UpdatePriority,
-                Stream,
-                "New send priority = %hu",
-                Stream->SendPriority);
 
             if (Stream->Flags.Started && Stream->SendFlags != 0) {
                 //
@@ -686,10 +649,6 @@ QuicStreamParamSet(
             // but we have already sent the peer a stale frame, we must retransmit
             // this new frame, and update the metadata.
             //
-            QuicTraceLogStreamInfo(
-                MultipleReliableResetSendNotSupported,
-                Stream,
-                "Multiple RELIABLE_RESET frames sending not supported.");
             Status = QUIC_STATUS_INVALID_STATE;
             break;
         } else {
@@ -697,11 +656,6 @@ QuicStreamParamSet(
             break;
         }
 
-        QuicTraceLogStreamInfo(
-            ReliableSendOffsetSet,
-            Stream,
-            "Reliable send offset set to %llu",
-            *(uint64_t*)Buffer);
 
         Status = QUIC_STATUS_SUCCESS;
         break;
@@ -1004,11 +958,6 @@ QuicStreamNotifyReceiveBufferNeeded(
     Event.Type = QUIC_STREAM_EVENT_RECEIVE_BUFFER_NEEDED;
     Event.RECEIVE_BUFFER_NEEDED.BufferLengthNeeded = BufferLengthNeeded;
 
-    QuicTraceLogStreamVerbose(
-        StreamNotifyInsufficientRecvBuffer,
-        Stream,
-        "Indicating QUIC_STREAM_EVENT_RECEIVE_BUFFER_NEEDED [BufferLengthNeeded=%llu]",
-        Event.RECEIVE_BUFFER_NEEDED.BufferLengthNeeded);
 
     (void)QuicStreamIndicateEvent(Stream, &Event);
 }
