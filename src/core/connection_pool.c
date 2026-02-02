@@ -69,11 +69,6 @@ QuicConnPoolAllocUniqueRssProcInfo(
             QUIC_POOL_TMP_ALLOC);
     if (RssProcessors == NULL) {
         Status = QUIC_STATUS_OUT_OF_MEMORY;
-        QuicTraceEvent(
-            AllocFailure,
-            "Allocation of '%s' failed. (%llu bytes)",
-            "RSS Processor List",
-            RssConfig->RssIndirectionTableCount * sizeof(QUIC_CONN_POOL_RSS_PROC_INFO));
         return Status;
     }
 
@@ -154,11 +149,6 @@ QuicConnPoolAllocServerNameCopy(
 {
     char* ServerNameCopy = CXPLAT_ALLOC_NONPAGED(ServerNameLength + 1, QUIC_POOL_SERVERNAME);
     if (ServerNameCopy == NULL) {
-        QuicTraceEvent(
-            AllocFailure,
-            "Allocation of '%s' failed. (%llu bytes)",
-            "Server name",
-            ServerNameLength + 1);
     } else {
         CxPlatCopyMemory(ServerNameCopy, ServerName, ServerNameLength);
         ServerNameCopy[ServerNameLength] = 0;
@@ -221,11 +211,6 @@ QuicConnPoolGetInterfaceIndexForLocalAddress(
 
         if (*InterfaceIndex == 0) {
             Status = QUIC_STATUS_NOT_FOUND;
-            QuicTraceEvent(
-                LibraryErrorStatus,
-                "[ lib] ERROR, %u, %s.",
-                Status,
-                "Connection Pool Local Address Interface");
         }
 
         CXPLAT_FREE(Addresses, QUIC_POOL_DATAPATH_ADDRESSES);
@@ -316,11 +301,6 @@ QuicConnPoolTryCreateConnection(
             RemoteAddress);
     CXPLAT_DBG_ASSERT(QUIC_SUCCEEDED(Status));
     if (QUIC_FAILED(Status)) {
-        QuicTraceEvent(
-            LibraryErrorStatus,
-            "[ lib] ERROR, %u, %s.",
-            Status,
-            "Connection Pool set Remote Address");
         goto Error;
     }
 
@@ -332,11 +312,6 @@ QuicConnPoolTryCreateConnection(
             LocalAddress);
     CXPLAT_DBG_ASSERT(QUIC_SUCCEEDED(Status));
     if (QUIC_FAILED(Status)) {
-        QuicTraceEvent(
-            LibraryErrorStatus,
-            "[ lib] ERROR, %u, %s.",
-            Status,
-            "Connection Pool set Local Address");
         goto Error;
     }
 
@@ -361,11 +336,6 @@ QuicConnPoolTryCreateConnection(
                 CibirId);
         CXPLAT_DBG_ASSERT(QUIC_SUCCEEDED(Status));
         if (QUIC_FAILED(Status)) {
-            QuicTraceEvent(
-                LibraryErrorStatus,
-                "[ lib] ERROR, %u, %s.",
-                Status,
-                "Connection Pool set CIBIR ID");
             goto Error;
         }
     }
@@ -421,19 +391,9 @@ MsQuicConnectionPoolCreate(
     QUIC_STATUS Status = QUIC_STATUS_SUCCESS;
     uint32_t CreatedConnections = 0;
 
-    QuicTraceEvent(
-        ApiEnter,
-        "[ api] Enter %u (%p).",
-        QUIC_TRACE_API_CONNECTION_POOL_CREATE,
-        NULL);
 
     if (Config == NULL || ConnectionPool == NULL) {
         Status = QUIC_STATUS_INVALID_PARAMETER;
-        QuicTraceEvent(
-            LibraryErrorStatus,
-            "[ lib] ERROR, %u, %s.",
-            Status,
-            "Connection Pool Parameter");
         goto Error;
     }
 
@@ -444,43 +404,23 @@ MsQuicConnectionPoolCreate(
             Config->Family != QUIC_ADDRESS_FAMILY_INET &&
             Config->Family != QUIC_ADDRESS_FAMILY_INET6)) {
         Status = QUIC_STATUS_INVALID_PARAMETER;
-        QuicTraceEvent(
-            LibraryErrorStatus,
-            "[ lib] ERROR, %u, %s.",
-            Status,
-            "Connection Pool Config");
         goto Error;
     }
 
     if (((QUIC_CONFIGURATION*)Config->Configuration)->SecurityConfig == NULL) {
         Status = QUIC_STATUS_INVALID_PARAMETER;
-        QuicTraceEvent(
-            LibraryErrorStatus,
-            "[ lib] ERROR, %u, %s.",
-            Status,
-            "Connection Pool SecurityConfig");
         goto Error;
     }
 
     if ((Config->CibirIds != NULL && Config->CibirIdLength == 0) ||
         (Config->CibirIds == NULL && Config->CibirIdLength != 0)) {
         Status = QUIC_STATUS_INVALID_PARAMETER;
-        QuicTraceEvent(
-            LibraryErrorStatus,
-            "[ lib] ERROR, %u, %s.",
-            Status,
-            "Connection Pool CIBIR config");
         goto Error;
     }
 
     const size_t ServerNameLength = strnlen(Config->ServerName, QUIC_MAX_SNI_LENGTH + 1);
     if (ServerNameLength == QUIC_MAX_SNI_LENGTH + 1) {
         Status = QUIC_STATUS_INVALID_PARAMETER;
-        QuicTraceEvent(
-            LibraryErrorStatus,
-            "[ lib] ERROR, %u, %s.",
-            (uint32_t)ServerNameLength,
-            "Connection Pool ServerName too long");
         goto Error;
     }
 
@@ -561,29 +501,14 @@ MsQuicConnectionPoolCreate(
         // No RSS cores configured.
         //
         Status = QUIC_STATUS_INTERNAL_ERROR;
-        QuicTraceEvent(
-            LibraryErrorStatus,
-            "[ lib] ERROR, %u, %s.",
-            RssConfig->RssIndirectionTableCount,
-            "Connection Pool RssIndirectionTable too small");
         goto Error;
     }
 
     if (RssConfig->RssSecretKeyLength > CXPLAT_TOEPLITZ_KEY_SIZE_MAX) {
         Status = QUIC_STATUS_INTERNAL_ERROR;
-        QuicTraceEvent(
-            LibraryErrorStatus,
-            "[ lib] ERROR, %u, %s.",
-            RssConfig->RssSecretKeyLength,
-            "Connection pool RSS secret key too long");
         goto Error;
     } else if (RssConfig->RssSecretKeyLength < CXPLAT_TOEPLITZ_KEY_SIZE_MIN) {
         Status = QUIC_STATUS_INTERNAL_ERROR;
-        QuicTraceEvent(
-            LibraryErrorStatus,
-            "[ lib] ERROR, %u, %s.",
-            RssConfig->RssSecretKeyLength,
-            "Connection Pool RSS secret key too short");
         goto Error;
     }
 
@@ -696,11 +621,6 @@ MsQuicConnectionPoolCreate(
 
         if (RetryCount == MaxCreationRetries) {
             Status = QUIC_STATUS_ADDRESS_IN_USE;
-            QuicTraceEvent(
-                LibraryErrorStatus,
-                "[ lib] ERROR, %u, %s.",
-                RetryCount,
-                "Connection Pool out of retries");
             goto CleanUpConnections;
         }
     }
@@ -733,10 +653,6 @@ Error:
         CxPlatDataPathRssConfigFree(RssConfig);
     }
 
-    QuicTraceEvent(
-        ApiExitStatus,
-        "[ api] Exit %u",
-        Status);
 
     return Status;
 }
