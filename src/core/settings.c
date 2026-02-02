@@ -366,11 +366,6 @@ QuicSettingsCopyVersionSettings(
             AllocSize,
             QUIC_POOL_VERSION_SETTINGS);
     if (Destination == NULL) {
-        QuicTraceEvent(
-            AllocFailure,
-            "Allocation of '%s' failed. (%llu bytes)",
-            "VersionSettings",
-            AllocSize);
         return Destination;
     }
     Destination->AcceptableVersions = (uint32_t*)(Destination + 1);
@@ -1125,11 +1120,6 @@ QuicSettingsLoad(
                     AllocSize,
                     QUIC_POOL_VERSION_SETTINGS);
             if (VersionSettings == NULL) {
-                QuicTraceEvent(
-                    AllocFailure,
-                    "Allocation of '%s' failed. (%llu bytes)",
-                    "VersionSettings",
-                    AllocSize);
                 goto VersionSettingsFail;
             }
             VersionSettings->AcceptableVersions = (uint32_t*)(VersionSettings + 1);
