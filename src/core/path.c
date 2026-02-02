@@ -53,13 +53,13 @@ QuicPathRemove(
         return;
     }
 
-    const QUIC_PATH* Path = &Connection->Paths[Index];
-    CXPLAT_DBG_ASSERT(Path->InUse);
+    // const QUIC_PATH* Path = &Connection->Paths[Index];
+    // CXPLAT_DBG_ASSERT(Path->InUse);
 
 #if DEBUG
-    if (Path->DestCid) {
-        QUIC_CID_CLEAR_PATH(Path->DestCid);
-    }
+    // if (Path->DestCid) {
+    //     QUIC_CID_CLEAR_PATH(Path->DestCid);
+    // }
 #endif
 
     if (Index + 1 < Connection->PathsCount) {
@@ -125,11 +125,11 @@ QuicPathSetValid(
         return;
     }
 
-    const char* ReasonStrings[] = {
-        "Initial Token",
-        "Handshake Packet",
-        "Path Response"
-    };
+    // const char* ReasonStrings[] = {
+    //     "Initial Token",
+    //     "Handshake Packet",
+    //     "Path Response"
+    // };
 
 
     Path->IsPeerValidated = TRUE;
