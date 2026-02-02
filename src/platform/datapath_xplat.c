@@ -39,9 +39,6 @@ CxPlatDataPathInitialize(
             InitConfig,
             NewDataPath);
     if (QUIC_FAILED(Status)) {
-        QuicTraceLogVerbose(
-            DatapathInitFail,
-            "[  dp] Failed to initialize datapath, status:%d", Status);
         goto Error;
     }
 
@@ -139,9 +136,6 @@ CxPlatSocketCreateUdp(
                 Config,
                 NewSocket);
         if (QUIC_FAILED(Status)) {
-            QuicTraceLogVerbose(
-                SockCreateFail,
-                "[sock] Failed to create socket, status:%d", Status);
             goto Error;
         }
 
@@ -154,9 +148,6 @@ CxPlatSocketCreateUdp(
                     CxPlatSocketToRaw(*NewSocket));
             (*NewSocket)->RawSocketAvailable = QUIC_SUCCEEDED(Status);
             if (QUIC_FAILED(Status)) {
-                QuicTraceLogVerbose(
-                    RawSockCreateFail,
-                    "[sock] Failed to create raw socket, status:%d", Status);
                 BOOLEAN IsWildcardAddr = Config->LocalAddress == NULL || QuicAddrIsWildCard(Config->LocalAddress);
                 if (IsWildcardAddr && (Config->Flags & CXPLAT_SOCKET_FLAG_QTIP)) {
                     CxPlatSocketDelete(*NewSocket);
