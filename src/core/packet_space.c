@@ -24,11 +24,6 @@ QuicPacketSpaceInitialize(
     QUIC_PACKET_SPACE* Packets =
         CxPlatPoolAlloc(&Connection->Partition->PacketSpacePool);
     if (Packets == NULL) {
-        QuicTraceEvent(
-            AllocFailure,
-            "Allocation of '%s' failed. (%llu bytes)",
-            "packet space",
-            sizeof(QUIC_PACKET_SPACE));
         return QUIC_STATUS_OUT_OF_MEMORY;
     }
 
