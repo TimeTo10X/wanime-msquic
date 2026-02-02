@@ -280,21 +280,7 @@ QuicConnLogBbr(
     _In_ QUIC_CONNECTION* const Connection
     )
 {
-    QUIC_CONGESTION_CONTROL* Cc = &Connection->CongestionControl;
-    QUIC_CONGESTION_CONTROL_BBR* Bbr = &Cc->Bbr;
 
-    QuicTraceEvent(
-        ConnBbr,
-        "[conn][%p] BBR: State=%u RState=%u CongestionWindow=%u BytesInFlight=%u BytesInFlightMax=%u MinRttEst=%lu EstBw=%lu AppLimited=%u",
-        Connection,
-        Bbr->BbrState,
-        Bbr->RecoveryState,
-        BbrCongestionControlGetCongestionWindow(Cc),
-        Bbr->BytesInFlight,
-        Bbr->BytesInFlightMax,
-        Bbr->MinRtt,
-        BbrCongestionControlGetBandwidth(Cc) / BW_UNIT,
-        BbrCongestionControlIsAppLimited(Cc));
 }
 
 _IRQL_requires_max_(DISPATCH_LEVEL)
@@ -356,22 +342,7 @@ BbrCongestionControlLogOutFlowStatus(
     _In_ const QUIC_CONGESTION_CONTROL* Cc
     )
 {
-    const QUIC_CONNECTION* Connection = QuicCongestionControlGetConnection(Cc);
-    const QUIC_PATH* Path = &Connection->Paths[0];
-    const QUIC_CONGESTION_CONTROL_BBR* Bbr = &Cc->Bbr;
 
-    QuicTraceEvent(
-        ConnOutFlowStatsV2,
-        "[conn][%p] OUT: BytesSent=%llu InFlight=%u CWnd=%u ConnFC=%llu ISB=%llu PostedBytes=%llu SRtt=%llu 1Way=%llu",
-        Connection,
-        Connection->Stats.Send.TotalBytes,
-        Bbr->BytesInFlight,
-        Bbr->CongestionWindow,
-        Connection->Send.PeerMaxData - Connection->Send.OrderedStreamBytesSent,
-        Connection->SendBuffer.IdealBytes,
-        Connection->SendBuffer.PostedBytes,
-        Path->GotFirstRttSample ? Path->SmoothedRtt : 0,
-        Path->OneWayDelay);
 }
 
 //
@@ -823,10 +794,6 @@ BbrCongestionControlOnDataAcknowledged(
         }
         if (!AckEvent->HasLoss && Bbr->EndOfRecovery < AckEvent->LargestAck) {
             Bbr->RecoveryState = RECOVERY_STATE_NOT_RECOVERY;
-            QuicTraceEvent(
-                ConnRecoveryExit,
-                "[conn][%p] Recovery complete",
-                Connection);
         } else {
             BbrCongestionControlUpdateRecoveryWindow(Cc, AckEvent->NumRetransmittableBytes);
         }
@@ -913,11 +880,6 @@ BbrCongestionControlOnDataLost(
     const uint16_t DatagramPayloadLength =
         QuicPathGetDatagramPayloadSize(&Connection->Paths[0]);
 
-    QuicTraceEvent(
-        ConnCongestionV2,
-        "[conn][%p] Congestion event: IsEcn=%hu",
-        Connection,
-        FALSE);
     Connection->Stats.Send.CongestionCount++;
 
     BOOLEAN PreviousCanSendState = BbrCongestionControlCanSend(Cc);
@@ -946,10 +908,6 @@ BbrCongestionControlOnDataLost(
     if (LossEvent->PersistentCongestion) {
         Bbr->RecoveryWindow = MinCongestionWindow;
 
-        QuicTraceEvent(
-            ConnPersistentCongestion,
-            "[conn][%p] Persistent congestion event",
-            Connection);
         Connection->Stats.Send.PersistentCongestionCount++;
     } else {
         Bbr->RecoveryWindow =
