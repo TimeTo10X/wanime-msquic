@@ -330,19 +330,9 @@ QuicDatagramQueueSend(
 
     CxPlatDispatchLockAcquire(&Datagram->ApiQueueLock);
     if (!Datagram->SendEnabled) {
-        QuicTraceEvent(
-            ConnError,
-            "[conn][%p] ERROR, %s.",
-            Connection,
-            "Datagram send while disabled");
         Status = QUIC_STATUS_INVALID_STATE;
     } else {
         if (SendRequest->TotalLength > (uint64_t)Datagram->MaxSendLength) {
-            QuicTraceEvent(
-                ConnError,
-                "[conn][%p] ERROR, %s.",
-                Connection,
-                "Datagram send request is longer than allowed");
             Status = QUIC_STATUS_INVALID_PARAMETER;
         } else {
             QUIC_SEND_REQUEST** ApiQueueTail = &Datagram->ApiQueue;
@@ -371,11 +361,6 @@ QuicDatagramQueueSend(
         QUIC_OPERATION* Oper =
             QuicConnAllocOperation(Connection, QUIC_OPER_TYPE_API_CALL);
         if (Oper == NULL) {
-            QuicTraceEvent(
-                AllocFailure,
-                "Allocation of '%s' failed. (%llu bytes)",
-                "DATAGRAM_SEND operation",
-                0);
             goto Exit;
         }
 
