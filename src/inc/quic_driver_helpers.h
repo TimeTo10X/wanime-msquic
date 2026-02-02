@@ -36,11 +36,6 @@ public:
         ScmHandle = OpenSCManager(nullptr, nullptr, SC_MANAGER_ALL_ACCESS);
         if (ScmHandle == nullptr) {
             Error = GetLastError();
-            QuicTraceEvent(
-                LibraryErrorStatus,
-                "[ lib] ERROR, %u, %s.",
-                Error,
-                "GetFullPathName failed");
             return false;
         }
     QueryService:
@@ -50,19 +45,10 @@ public:
                 DriverName,
                 SERVICE_ALL_ACCESS);
         if (ServiceHandle == nullptr) {
-            QuicTraceEvent(
-                LibraryErrorStatus,
-                "[ lib] ERROR, %u, %s.",
-                 GetLastError(),
-                "OpenService failed");
             char DriverFilePath[MAX_PATH] = {0};
             GetModuleFileNameA(NULL, DriverFilePath, MAX_PATH);
             char* PathEnd = strrchr(DriverFilePath, '\\');
             if (!PathEnd) {
-                QuicTraceEvent(
-                    LibraryError,
-                    "[ lib] ERROR, %s.",
-                    "Failed to get currently executing module path");
                 return false;
             }
             PathEnd++;
@@ -74,17 +60,9 @@ public:
                     "%s.sys",
                     DriverName);
             if (PathResult <= 0 || (size_t)PathResult > RemainingLength) {
-                QuicTraceEvent(
-                    LibraryError,
-                    "[ lib] ERROR, %s.",
-                    "Failed to create driver on disk file path");
                 return false;
             }
             if (GetFileAttributesA(DriverFilePath) == INVALID_FILE_ATTRIBUTES) {
-                QuicTraceEvent(
-                    LibraryError,
-                    "[ lib] ERROR, %s.",
-                    "Failed to find driver on disk");
                 return false;
             }
             ServiceHandle =
@@ -107,11 +85,6 @@ public:
                 if (Error == ERROR_SERVICE_EXISTS) {
                     goto QueryService;
                 }
-                QuicTraceEvent(
-                    LibraryErrorStatus,
-                    "[ lib] ERROR, %u, %s.",
-                    Error,
-                    "CreateService failed");
                 return false;
             }
         }
@@ -129,11 +102,6 @@ public:
         if (!StartServiceA(ServiceHandle, 0, nullptr)) {
             uint32_t Error = GetLastError();
             if (Error != ERROR_SERVICE_ALREADY_RUNNING) {
-                QuicTraceEvent(
-                    LibraryErrorStatus,
-                    "[ lib] ERROR, %u, %s.",
-                    Error,
-                    "StartService failed");
                 return false;
             }
         }
@@ -159,10 +127,6 @@ public:
                 "\\\\.\\\\%s",
                 DriverName);
         if (PathResult < 0 || PathResult >= sizeof(IoctlPath)) {
-            QuicTraceEvent(
-                LibraryError,
-                "[ lib] ERROR, %s.",
-                "Creating Driver File Path failed");
             return false;
         }
         DeviceHandle =
@@ -176,20 +140,11 @@ public:
                 nullptr);
         if (DeviceHandle == INVALID_HANDLE_VALUE) {
             Error = GetLastError();
-            QuicTraceEvent(
-                LibraryErrorStatus,
-                "[ lib] ERROR, %u, %s.",
-                Error,
-                "CreateFile failed");
             return false;
         }
         if (!Run(IOCTL_QUIC_SET_CERT_PARAMS, CertParams, sizeof(*CertParams), 30000)) {
             CxPlatCloseHandle(DeviceHandle);
             DeviceHandle = INVALID_HANDLE_VALUE;
-            QuicTraceEvent(
-                LibraryError,
-                "[ lib] ERROR, %s.",
-                "Run(IOCTL_QUIC_SET_CERT_PARAMS) failed");
             return false;
         }
         return true;
@@ -212,11 +167,6 @@ public:
         Overlapped.hEvent = CreateEvent(nullptr, FALSE, FALSE, nullptr);
         if (Overlapped.hEvent == nullptr) {
             Error = GetLastError();
-            QuicTraceEvent(
-                LibraryErrorStatus,
-                "[ lib] ERROR, %u, %s.",
-                Error,
-                "CreateEvent failed");
             return false;
         }
         QuicTraceLogVerbose(
@@ -234,11 +184,6 @@ public:
             Error = GetLastError();
             if (Error != ERROR_IO_PENDING) {
                 CxPlatCloseHandle(Overlapped.hEvent);
-                QuicTraceEvent(
-                    LibraryErrorStatus,
-                    "[ lib] ERROR, %u, %s.",
-                    Error,
-                    "DeviceIoControl Write failed");
                 return false;
             }
         }
@@ -254,11 +199,6 @@ public:
                 Error = ERROR_TIMEOUT;
                 CancelIoEx(DeviceHandle, &Overlapped);
             }
-            QuicTraceEvent(
-                LibraryErrorStatus,
-                "[ lib] ERROR, %u, %s.",
-                Error,
-                "GetOverlappedResultEx Write failed");
         } else {
             Error = ERROR_SUCCESS;
         }
@@ -292,11 +232,6 @@ public:
         Overlapped.hEvent = CreateEvent(nullptr, FALSE, FALSE, nullptr);
         if (!Overlapped.hEvent) {
             Error = GetLastError();
-            QuicTraceEvent(
-                LibraryErrorStatus,
-                "[ lib] ERROR, %u, %s.",
-                Error,
-                "CreateEvent failed");
             return false;
         }
         QuicTraceLogVerbose(
@@ -313,11 +248,6 @@ public:
             Error = GetLastError();
             if (Error != ERROR_IO_PENDING) {
                 CxPlatCloseHandle(Overlapped.hEvent);
-                QuicTraceEvent(
-                    LibraryErrorStatus,
-                    "[ lib] ERROR, %u, %s.",
-                    Error,
-                    "DeviceIoControl Write failed");
                 return false;
             }
         }
@@ -335,11 +265,6 @@ public:
                     GetOverlappedResult(DeviceHandle, &Overlapped, &dwBytesReturned, true);
                 }
             } else {
-                QuicTraceEvent(
-                    LibraryErrorStatus,
-                    "[ lib] ERROR, %u, %s.",
-                    Error,
-                    "GetOverlappedResultEx Read failed");
             }
         } else {
             Error = ERROR_SUCCESS;
