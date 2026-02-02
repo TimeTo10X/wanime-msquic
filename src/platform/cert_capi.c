@@ -302,19 +302,9 @@ CxPlatCertMatchHash(
             CERT_HASH_PROP_ID,
             CertHash,
             &CertHashLength)) {
-        QuicTraceEvent(
-            LibraryErrorStatus,
-            "[ lib] ERROR, %u, %s.",
-            GetLastError(),
-            "Get CERT_HASH_PROP_ID failed");
         return FALSE;
     }
     if (CertHashLength != sizeof(CertHash)) {
-        QuicTraceEvent(
-            LibraryErrorStatus,
-            "[ lib] ERROR, %u, %s.",
-            CertHashLength,
-            "CERT_HASH_PROP_ID incorrect size");
         return FALSE;
     }
     return memcmp(InputCertHash, CertHash, CertHashLength) == 0;
@@ -495,11 +485,6 @@ CxPlatCertLookupHashStore(
             CertHashStore->StoreName);
     if (CertStore == NULL) {
         Status = HRESULT_FROM_WIN32(GetLastError());
-        QuicTraceEvent(
-            LibraryErrorStatus,
-            "[ lib] ERROR, %u, %s.",
-            Status,
-            "CertOpenStore failed");
         goto Exit;
     }
 
@@ -633,11 +618,6 @@ CxPlatCertParseChain(
             CERT_STORE_DEFER_CLOSE_UNTIL_LAST_FREE_FLAG,
             0);
     if (TempStore == NULL) {
-        QuicTraceEvent(
-            LibraryErrorStatus,
-            "[ lib] ERROR, %u, %s.",
-            GetLastError(),
-            "CertOpenStore failed");
         goto Error;
     }
 
@@ -659,11 +639,6 @@ CxPlatCertParseChain(
                 CertLength,
                 CERT_STORE_ADD_USE_EXISTING,
                 &CertCtx)) {
-            QuicTraceEvent(
-            LibraryErrorStatus,
-            "[ lib] ERROR, %u, %s.",
-            GetLastError(),
-            "CertAddEncodedCertificateToStore failed");
             goto Error;
         }
 
@@ -678,10 +653,6 @@ CxPlatCertParseChain(
     }
 
     if (ChainBufferLength != 0) {
-        QuicTraceEvent(
-            LibraryError,
-            "[ lib] ERROR, %s.",
-            "Not all cert bytes were processed");
         goto Error;
     }
 
@@ -738,11 +709,6 @@ CxPlatGetPortableCertificateFromSerialized(
             LastError == ERROR_NOT_ENOUGH_MEMORY) {
             return QUIC_STATUS_OUT_OF_MEMORY;
         } else {
-            QuicTraceEvent(
-                LibraryErrorStatus,
-                "[ lib] ERROR, %u, %s.",
-                LastError,
-                "CertOpenStore failed");
             return QUIC_STATUS_INTERNAL_ERROR;
         }
     }
@@ -757,11 +723,6 @@ CxPlatGetPortableCertificateFromSerialized(
     if (NULL == TempCertStore) {
         LastError = GetLastError();
         Status = HRESULT_FROM_WIN32(LastError);
-        QuicTraceEvent(
-            LibraryErrorStatus,
-            "[ lib] ERROR, %u, %s.",
-            LastError,
-            "CertOpenStore failed");
         goto Exit;
     }
 
@@ -781,11 +742,6 @@ CxPlatGetPortableCertificateFromSerialized(
                 if (LeafCertContext == NULL) {
                     LastError = GetLastError();
                     Status = HRESULT_FROM_WIN32(LastError);
-                    QuicTraceEvent(
-                        LibraryErrorStatus,
-                        "[ lib] ERROR, %u, %s.",
-                        LastError,
-                        "CertDuplicateCertificateContext failed");
                     goto Exit;
                 }
             } else {
@@ -796,22 +752,12 @@ CxPlatGetPortableCertificateFromSerialized(
                         NULL)) {
                     LastError = GetLastError();
                     Status = HRESULT_FROM_WIN32(LastError);
-                    QuicTraceEvent(
-                        LibraryErrorStatus,
-                        "[ lib] ERROR, %u, %s.",
-                        LastError,
-                        "CertAddCertificateLinkToStore failed");
                     goto Exit;
                 }
             }
         } else {
             // Either the property does not exist or it is not the expected size.
             // This can happen if the serialized buffer did not come from schannel.
-            QuicTraceEvent(
-                LibraryErrorStatus,
-                "[ lib] ERROR, %u, %s.",
-                GetLastError(),
-                "CertGetCertificateContextProperty failed");
             Status = QUIC_STATUS_INVALID_PARAMETER;
             goto Exit;
         }
@@ -819,11 +765,6 @@ CxPlatGetPortableCertificateFromSerialized(
 
     if (LeafCertContext == NULL) {
         // Schannel did not mark a leaf. This is bad.
-        QuicTraceEvent(
-            LibraryErrorStatus,
-            "[ lib] ERROR, %u, %s.",
-            QUIC_STATUS_NOT_FOUND,
-            "No leaf certificate found");
         Status = QUIC_STATUS_NOT_FOUND;
         goto Exit;
     }
@@ -837,21 +778,11 @@ CxPlatGetPortableCertificateFromSerialized(
             0)) {
         LastError = GetLastError();
         Status = HRESULT_FROM_WIN32(LastError);
-        QuicTraceEvent(
-            LibraryErrorStatus,
-            "[ lib] ERROR, %u, %s.",
-            LastError,
-            "CertSaveStore failed");
         goto Exit;
     }
 
     Blob.pbData = CXPLAT_ALLOC_NONPAGED(Blob.cbData, QUIC_POOL_TLS_PFX);
     if (Blob.pbData == NULL) {
-        QuicTraceEvent(
-            AllocFailure,
-            "Allocation of '%s' failed. (%llu bytes)",
-            "PKCS7 data",
-            Blob.cbData);
         Status = QUIC_STATUS_OUT_OF_MEMORY;
         goto Exit;
     }
@@ -865,11 +796,6 @@ CxPlatGetPortableCertificateFromSerialized(
             0)) {
         LastError = GetLastError();
         Status = HRESULT_FROM_WIN32(LastError);
-        QuicTraceEvent(
-            LibraryErrorStatus,
-            "[ lib] ERROR, %u, %s.",
-            LastError,
-            "CertSaveStore failed");
         goto Exit;
     }
 
@@ -948,11 +874,6 @@ CxPlatGetPortableCertificate(
             &ChainContext)) {
         LastError = GetLastError();
         Status = HRESULT_FROM_WIN32(LastError);
-        QuicTraceEvent(
-            LibraryErrorStatus,
-            "[ lib] ERROR, %u, %s.",
-            LastError,
-            "CertGetCertificateChain failed");
         goto Exit;
     }
 
@@ -966,11 +887,6 @@ CxPlatGetPortableCertificate(
     if (NULL == TempCertStore) {
         LastError = GetLastError();
         Status = HRESULT_FROM_WIN32(LastError);
-        QuicTraceEvent(
-            LibraryErrorStatus,
-            "[ lib] ERROR, %u, %s.",
-            LastError,
-            "CertOpenStore failed");
         goto Exit;
     }
 
@@ -986,11 +902,6 @@ CxPlatGetPortableCertificate(
                     NULL)) {
                 LastError = GetLastError();
                 Status = HRESULT_FROM_WIN32(LastError);
-                QuicTraceEvent(
-                    LibraryErrorStatus,
-                    "[ lib] ERROR, %u, %s.",
-                    LastError,
-                    "CertAddCertificateLinkToStore failed");
                 goto Exit;
             }
         }
@@ -1005,21 +916,11 @@ CxPlatGetPortableCertificate(
             0)) {
         LastError = GetLastError();
         Status = HRESULT_FROM_WIN32(LastError);
-        QuicTraceEvent(
-            LibraryErrorStatus,
-            "[ lib] ERROR, %u, %s.",
-            LastError,
-            "CertSaveStore failed");
         goto Exit;
     }
 
     Blob.pbData = CXPLAT_ALLOC_NONPAGED(Blob.cbData, QUIC_POOL_TLS_PFX);
     if (Blob.pbData == NULL) {
-        QuicTraceEvent(
-            AllocFailure,
-            "Allocation of '%s' failed. (%llu bytes)",
-            "PKCS7 data",
-            Blob.cbData);
         Status = QUIC_STATUS_OUT_OF_MEMORY;
         goto Exit;
     }
@@ -1033,11 +934,6 @@ CxPlatGetPortableCertificate(
             0)) {
         LastError = GetLastError();
         Status = HRESULT_FROM_WIN32(LastError);
-        QuicTraceEvent(
-            LibraryErrorStatus,
-            "[ lib] ERROR, %u, %s.",
-            LastError,
-            "CertSaveStore failed");
         goto Exit;
     }
 
@@ -1045,11 +941,6 @@ CxPlatGetPortableCertificate(
     if (DuplicateCtx == NULL) {
         LastError = GetLastError();
         Status = HRESULT_FROM_WIN32(LastError);
-        QuicTraceEvent(
-            LibraryErrorStatus,
-            "[ lib] ERROR, %u, %s.",
-            LastError,
-            "CertDuplicateCertificateContext failed");
         goto Exit;
     }
 
@@ -1119,10 +1010,6 @@ CxPlatCertFormat(
 
     if (CertCtx == NULL) {
         if (BufferLength < SIZEOF_CERT_CHAIN_LIST_LENGTH) {
-            QuicTraceEvent(
-                LibraryError,
-                "[ lib] ERROR, %s.",
-                "Insufficient buffer to store the empty formatted chain");
             return 0;
         }
         //
@@ -1149,11 +1036,6 @@ CxPlatCertFormat(
             0,
             NULL,
             &ChainContext)) {
-        QuicTraceEvent(
-            LibraryErrorStatus,
-            "[ lib] ERROR, %u, %s.",
-            GetLastError(),
-            "CertGetCertificateChain failed");
         return 0;
     }
 
@@ -1163,10 +1045,6 @@ CxPlatCertFormat(
             PCERT_CHAIN_ELEMENT Element = SimpleChain->rgpElement[j];
             PCCERT_CONTEXT EncodedCert = Element->pCertContext;
             if (EncodedCert->cbCertEncoded + SIZEOF_CERT_CHAIN_LIST_LENGTH > BufferLength) {
-                QuicTraceEvent(
-                    LibraryError,
-                    "[ lib] ERROR, %s.",
-                    "Insufficient buffer to store the formatted chain");
                 CertFreeCertificateChain(ChainContext);
                 return 0;
             }
@@ -1227,11 +1105,6 @@ CxPlatCertVerifyCertChainPolicy(
             &PolicyPara,
             &PolicyStatus)) {
         Status = GetLastError();
-        QuicTraceEvent(
-            LibraryErrorStatus,
-            "[ lib] ERROR, %u, %s.",
-            Status,
-            "CertVerifyCertificateChainPolicy failed");
         goto Exit;
 
     } else if (PolicyStatus.dwError == CRYPT_E_NO_REVOCATION_CHECK &&
@@ -1243,11 +1116,6 @@ CxPlatCertVerifyCertChainPolicy(
     } else if (PolicyStatus.dwError != NO_ERROR) {
 
         Status = PolicyStatus.dwError;
-        QuicTraceEvent(
-            LibraryErrorStatus,
-            "[ lib] ERROR, %u, %s.",
-            Status,
-            "CertVerifyCertificateChainPolicy indicated a cert error");
         goto Exit;
     }
 
@@ -1314,11 +1182,6 @@ CxPlatCertValidateChain(
             NULL,
             &ChainContext)) {
         Error = GetLastError();
-        QuicTraceEvent(
-            LibraryErrorStatus,
-            "[ lib] ERROR, %u, %s.",
-            Error,
-            "CertGetCertificateChain failed");
         goto Exit;
     }
 
@@ -1329,11 +1192,6 @@ CxPlatCertValidateChain(
                 QUIC_POOL_PLATFORM_TMP_ALLOC,
                 &ServerName);
         if (QUIC_FAILED(Status)) {
-            QuicTraceEvent(
-                LibraryErrorStatus,
-                "[ lib] ERROR, %u, %s.",
-                Status,
-                "Convert Host to unicode");
             goto Exit;
         }
     }
@@ -1379,22 +1237,12 @@ CxPlatCertGetPrivateKey(
             &KeyProv,
             &KeySpec,
             &FreeKey)) {
-        QuicTraceEvent(
-            LibraryErrorStatus,
-            "[ lib] ERROR, %u, %s.",
-            GetLastError(),
-            "CryptAcquireCertificatePrivateKey failed");
         goto Exit;
     }
 
     CXPLAT_DBG_ASSERT(FreeKey);
 
     if (KeySpec != CERT_NCRYPT_KEY_SPEC) {
-        QuicTraceEvent(
-            LibraryErrorStatus,
-            "[ lib] ERROR, %u, %s.",
-            KeySpec,
-            "Cert KeySpec doesn't have CERT_NCRYPT_KEY_SPEC");
         NCryptFreeObject(KeyProv);
         KeyProv = (ULONG_PTR)NULL;
         goto Exit;
@@ -1435,50 +1283,26 @@ CxPlatCertVerify(
         SignatureAlgorithm);
 
     if (CertListToVerifyLength > MAXUINT32 || SignatureLength > MAXUINT32) {
-        QuicTraceEvent(
-            LibraryError,
-            "[ lib] ERROR, %s.",
-            "CertListToVerify or Signature too large");
         return FALSE;
     }
 
     _Null_terminated_ const wchar_t * HashAlg = HashAlgFromTLS(SignatureAlgorithm);
     if (HashAlg == NULL) {
-        QuicTraceEvent(
-            LibraryErrorStatus,
-            "[ lib] ERROR, %u, %s.",
-            SignatureAlgorithm,
-            "Unsupported hash algorithm (HashAlg)");
         return FALSE;
     }
 
     DWORD PaddingScheme = PaddingTypeFromTLS(SignatureAlgorithm);
     if (PaddingScheme == ~0u) {
-        QuicTraceEvent(
-            LibraryErrorStatus,
-            "[ lib] ERROR, %u, %s.",
-            SignatureAlgorithm,
-            "Unsupported padding scheme");
         return FALSE;
     }
 
     BCRYPT_ALG_HANDLE HashProv = HashHandleFromTLS(SignatureAlgorithm);
     if (HashProv == NULL) {
-        QuicTraceEvent(
-            LibraryErrorStatus,
-            "[ lib] ERROR, %u, %s.",
-            SignatureAlgorithm,
-            "Unsupported hash algorithm");
         return FALSE;
     }
 
     DWORD HashSize = HashSizeFromTLS(SignatureAlgorithm);
     if (HashSize == 0 || HashSize > CXPLAT_CERTIFICATE_MAX_HASH_SIZE) {
-        QuicTraceEvent(
-            LibraryErrorStatus,
-            "[ lib] ERROR, %u, %s.",
-            SignatureAlgorithm,
-            "Unsupported hash size");
         return FALSE;
     }
 
@@ -1497,11 +1321,6 @@ CxPlatCertVerify(
             HashBuf,
             HashSize);
     if (!NT_SUCCESS(Status)) {
-        QuicTraceEvent(
-            LibraryErrorStatus,
-            "[ lib] ERROR, %u, %s.",
-            Status,
-            "BCryptHash failed");
         goto Exit;
     }
 
@@ -1511,11 +1330,6 @@ CxPlatCertVerify(
             0,
             NULL,
             &PublicKey)) {
-        QuicTraceEvent(
-            LibraryErrorStatus,
-            "[ lib] ERROR, %u, %s.",
-            Status,
-            "CryptImportPublicKeyInfoEx2 failed");
         goto Exit;
     }
 
@@ -1542,11 +1356,6 @@ CxPlatCertVerify(
             (ULONG)SignatureLength,
             SignFlags);
     if (!NT_SUCCESS(Status)) {
-        QuicTraceEvent(
-            LibraryErrorStatus,
-            "[ lib] ERROR, %u, %s.",
-            Status,
-            "BCryptVerifySignature failed");
         goto Exit;
     }
 
