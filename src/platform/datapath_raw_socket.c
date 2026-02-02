@@ -99,17 +99,6 @@ RawResolveRouteComplete(
     QUIC_CONNECTION* Connection = (QUIC_CONNECTION*)Context;
     CxPlatCopyMemory(&Route->NextHopLinkLayerAddress, PhysicalAddress, sizeof(Route->NextHopLinkLayerAddress));
     Route->State = RouteResolved;
-    QuicTraceLogConnInfo(
-        RouteResolutionEnd,
-        Connection,
-        "Route resolution completed on Path[%hhu] with L2 address %hhx:%hhx:%hhx:%hhx:%hhx:%hhx",
-        PathId,
-        Route->NextHopLinkLayerAddress[0],
-        Route->NextHopLinkLayerAddress[1],
-        Route->NextHopLinkLayerAddress[2],
-        Route->NextHopLinkLayerAddress[3],
-        Route->NextHopLinkLayerAddress[4],
-        Route->NextHopLinkLayerAddress[5]);
 }
 
 _IRQL_requires_max_(PASSIVE_LEVEL)
@@ -811,11 +800,6 @@ CxPlatTryAddSocket(
     if (Socket->ReserveAuxTcpSock) {
         QUIC_ADDR_STR LocalAddressString = {0};
         QuicAddrToString(&MappedAddress, &LocalAddressString);
-        QuicTraceLogVerbose(
-            DatapathTcpAuxBinding,
-            "[data][%p] Binding TCP socket to %s",
-            Socket,
-            LocalAddressString.Address);
         Result =
             bind(
                 Socket->AuxSocket,
