@@ -121,12 +121,7 @@ _IRQL_requires_max_(PASSIVE_LEVEL) void QUIC_API
   BOOLEAN IsWorkerThread = Connection->WorkerThreadID == CxPlatCurThreadID();
 
   if (IsWorkerThread && Connection->State.HandleClosed) {
-    //
-    // Close being called from worker thread after being closed by app
-    // thread. This is an app programming bug, and they should be checking
-    // the AppCloseInProgress flag, but as the handle is stil valid here
-    // we can just make this a no-op.
-    //
+    goto error;
   }
 
   CXPLAT_TEL_ASSERT(!Connection->State.HandleClosed);
@@ -187,8 +182,8 @@ _IRQL_requires_max_(PASSIVE_LEVEL) void QUIC_API
     QuicConnRelease(Connection, QUIC_CONN_REF_HANDLE_OWNER);
   }
 
-  Error:
-    (void)0;
+Error:
+  (void)0;
 }
 #pragma warning(pop)
 
@@ -245,7 +240,7 @@ _IRQL_requires_max_(DISPATCH_LEVEL) void QUIC_API
   QuicConnQueueHighestPriorityOper(Connection, Oper);
 
 Error:
-    (void)0;
+  (void)0;
 }
 
 _IRQL_requires_max_(DISPATCH_LEVEL) QUIC_STATUS QUIC_API
@@ -656,8 +651,8 @@ _IRQL_requires_max_(PASSIVE_LEVEL) void QUIC_API
     CxPlatEventUninitialize(CompletionEvent);
   }
 
-  Error:
-    (void)0;
+Error:
+  (void)0;
 }
 #pragma warning(pop)
 
