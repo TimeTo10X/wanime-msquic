@@ -169,11 +169,6 @@ public:
             Error = GetLastError();
             return false;
         }
-        QuicTraceLogVerbose(
-            TestSendIoctl,
-            "[test] Sending Write IOCTL %u with %u bytes.",
-            IoGetFunctionCodeFromCtlCode(IoControlCode),
-            InBufferSize);
         if (!DeviceIoControl(
                 DeviceHandle,
                 IoControlCode,
@@ -234,10 +229,6 @@ public:
             Error = GetLastError();
             return false;
         }
-        QuicTraceLogVerbose(
-            TestReadIoctl,
-            "[test] Sending Read IOCTL %u.",
-            IoGetFunctionCodeFromCtlCode(IoControlCode));
         if (!DeviceIoControl(
                 DeviceHandle,
                 IoControlCode,
