@@ -1338,11 +1338,6 @@ QuicFrameLog(
 {
     QUIC_VAR_INT FrameType INIT_NO_SAL(0);
     if (!QuicVarIntDecode(PacketLength, Packet, Offset, &FrameType)) {
-        QuicTraceEvent(
-            ConnError,
-            "[conn][%p] ERROR, %s.",
-            Connection,
-            "Frame type decode failure");
         QuicConnTransportError(Connection, QUIC_ERROR_FRAME_ENCODING_ERROR);
         return FALSE;
     }
