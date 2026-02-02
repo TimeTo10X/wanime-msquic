@@ -65,16 +65,6 @@ QuicConnLogCubic(
     _In_ const QUIC_CONNECTION* const Connection
     )
 {
-    const QUIC_CONGESTION_CONTROL_CUBIC* Cubic = &Connection->CongestionControl.Cubic;
-
-    QuicTraceEvent(
-        ConnCubic,
-        "[conn][%p] CUBIC: SlowStartThreshold=%u K=%u WindowMax=%u WindowLastMax=%u",
-        Connection,
-        Cubic->SlowStartThreshold,
-        Cubic->KCubic,
-        Cubic->WindowMax,
-        Cubic->WindowLastMax);
 }
 
 void
@@ -100,13 +90,6 @@ CubicCongestionHyStartChangeState(
     }
 
     if (Cubic->HyStartState != NewHyStartState) {
-        QuicTraceEvent(
-            ConnHyStartStateChange,
-            "[conn][%p] HyStart: State=%u CongestionWindow=%u SlowStartThreshold=%u",
-            Connection,
-            NewHyStartState,
-            Cubic->CongestionWindow,
-            Cubic->SlowStartThreshold);
 
         Cubic->HyStartState = NewHyStartState;
     }
@@ -278,11 +261,6 @@ CubicCongestionControlOnCongestionEvent(
     QUIC_CONNECTION* Connection = QuicCongestionControlGetConnection(Cc);
     const uint16_t DatagramPayloadLength =
         QuicPathGetDatagramPayloadSize(&Connection->Paths[0]);
-    QuicTraceEvent(
-        ConnCongestionV2,
-        "[conn][%p] Congestion event: IsEcn=%hu",
-        Connection,
-        Ecn);
     Connection->Stats.Send.CongestionCount++;
 
     Cubic->IsInRecovery = TRUE;
@@ -305,10 +283,6 @@ CubicCongestionControlOnCongestionEvent(
     if (IsPersistentCongestion && !Cubic->IsInPersistentCongestion) {
 
         CXPLAT_DBG_ASSERT(!Cubic->IsInPersistentCongestion);
-        QuicTraceEvent(
-            ConnPersistentCongestion,
-            "[conn][%p] Persistent congestion event",
-            Connection);
         Connection->Stats.Send.PersistentCongestionCount++;
 
         Connection->Paths[0].Route.State = RouteSuspected; // used only for RAW datapath
@@ -455,10 +429,6 @@ CubicCongestionControlOnDataAcknowledged(
             // bit differently here than in TCP: we simply require an ACK for a
             // packet sent after recovery started.
             //
-            QuicTraceEvent(
-                ConnRecoveryExit,
-                "[conn][%p] Recovery complete",
-                Connection);
             Cubic->IsInRecovery = FALSE;
             Cubic->IsInPersistentCongestion = FALSE;
             Cubic->TimeOfCongAvoidStart = TimeNowUs;
@@ -796,10 +766,6 @@ CubicCongestionControlOnSpuriousCongestionEvent(
     QUIC_CONNECTION* Connection = QuicCongestionControlGetConnection(Cc);
     BOOLEAN PreviousCanSendState = QuicCongestionControlCanSend(Cc);
 
-    QuicTraceEvent(
-        ConnSpuriousCongestion,
-        "[conn][%p] Spurious congestion event",
-        Connection);
 
     //
     // Revert to previous state.
@@ -825,22 +791,6 @@ CubicCongestionControlLogOutFlowStatus(
     _In_ const QUIC_CONGESTION_CONTROL* Cc
     )
 {
-    const QUIC_CONNECTION* Connection = QuicCongestionControlGetConnection(Cc);
-    const QUIC_PATH* Path = &Connection->Paths[0];
-    const QUIC_CONGESTION_CONTROL_CUBIC* Cubic = &Cc->Cubic;
-
-    QuicTraceEvent(
-        ConnOutFlowStatsV2,
-        "[conn][%p] OUT: BytesSent=%llu InFlight=%u CWnd=%u ConnFC=%llu ISB=%llu PostedBytes=%llu SRtt=%llu 1Way=%llu",
-        Connection,
-        Connection->Stats.Send.TotalBytes,
-        Cubic->BytesInFlight,
-        Cubic->CongestionWindow,
-        Connection->Send.PeerMaxData - Connection->Send.OrderedStreamBytesSent,
-        Connection->SendBuffer.IdealBytes,
-        Connection->SendBuffer.PostedBytes,
-        Path->GotFirstRttSample ? Path->SmoothedRtt : 0,
-        Path->OneWayDelay);
 }
 
 uint32_t
