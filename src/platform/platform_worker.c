@@ -177,38 +177,22 @@ CxPlatWorkerPoolInitWorker(
         Worker->EventQ = *EventQ;
     } else {
         if (!CxPlatEventQInitialize(&Worker->EventQ)) {
-            QuicTraceEvent(
-                LibraryError,
-                "[ lib] ERROR, %s.",
-                "CxPlatEventQInitialize");
             return FALSE;
         }
         Worker->InitializedEventQ = TRUE;
     }
 
     if (!CxPlatSqeInitialize(&Worker->EventQ, ShutdownCompletion, &Worker->ShutdownSqe)) {
-        QuicTraceEvent(
-            LibraryError,
-            "[ lib] ERROR, %s.",
-            "CxPlatSqeInitialize(shutdown)");
         return FALSE;
     }
     Worker->InitializedShutdownSqe = TRUE;
 
     if (!CxPlatSqeInitialize(&Worker->EventQ, WakeCompletion, &Worker->WakeSqe)) {
-        QuicTraceEvent(
-            LibraryError,
-            "[ lib] ERROR, %s.",
-            "CxPlatSqeInitialize(wake)");
         return FALSE;
     }
     Worker->InitializedWakeSqe = TRUE;
 
     if (!CxPlatSqeInitialize(&Worker->EventQ, UpdatePollCompletion, &Worker->UpdatePollSqe)) {
-        QuicTraceEvent(
-            LibraryError,
-            "[ lib] ERROR, %s.",
-            "CxPlatSqeInitialize(updatepoll)");
         return FALSE;
     }
     Worker->InitializedUpdatePollSqe = TRUE;
@@ -291,11 +275,6 @@ CxPlatWorkerPoolCreate(
     CXPLAT_WORKER_POOL* WorkerPool =
         CXPLAT_ALLOC_PAGED(WorkerPoolSize, QUIC_POOL_PLATFORM_WORKER);
     if (WorkerPool == NULL) {
-        QuicTraceEvent(
-            AllocFailure,
-            "Allocation of '%s' failed. (%llu bytes)",
-            "CXPLAT_WORKER_POOL",
-            WorkerPoolSize);
         return NULL;
     }
     CxPlatZeroMemory(WorkerPool, WorkerPoolSize);
@@ -384,11 +363,6 @@ CxPlatWorkerPoolCreateExternal(
     CXPLAT_WORKER_POOL* WorkerPool =
         CXPLAT_ALLOC_PAGED(WorkerPoolSize, QUIC_POOL_PLATFORM_WORKER);
     if (WorkerPool == NULL) {
-        QuicTraceEvent(
-            AllocFailure,
-            "Allocation of '%s' failed. (%llu bytes)",
-            "CXPLAT_WORKER_POOL",
-            WorkerPoolSize);
         return NULL;
     }
     CxPlatZeroMemory(WorkerPool, WorkerPoolSize);
