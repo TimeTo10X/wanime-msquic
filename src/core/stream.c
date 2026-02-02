@@ -33,11 +33,6 @@ QuicStreamInitialize(
         goto Exit;
     }
 
-    QuicTraceEvent(
-        StreamAlloc,
-        "[strm][%p] Allocated, Conn=%p",
-        Stream,
-        Connection);
     CxPlatZeroMemory(Stream, sizeof(QUIC_STREAM));
 
 #if DEBUG
@@ -232,10 +227,6 @@ QuicStreamFree(
     if (WasStarted) {
 #pragma warning(push)
 #pragma warning(disable:6001) // SAL doesn't understand we're logging just the address
-        QuicTraceEvent(
-            StreamDestroyed,
-            "[strm][%p] Destroyed",
-            Stream);
 #pragma warning(pop)
     }
 
@@ -314,23 +305,6 @@ QuicStreamStart(
         (Stream->Connection->BlockedTimings.FlowControl.LastStartTimeUs != 0 ?
             CxPlatTimeDiff64(Stream->Connection->BlockedTimings.FlowControl.LastStartTimeUs, Now) : 0);
 
-    QuicTraceEvent(
-        StreamCreated,
-        "[strm][%p] Created, Conn=%p ID=%llu IsLocal=%hhu",
-        Stream,
-        Stream->Connection,
-        Stream->ID,
-        !IsRemoteStream);
-    QuicTraceEvent(
-        StreamSendState,
-        "[strm][%p] Send State: %hhu",
-        Stream,
-        QuicStreamSendGetState(Stream));
-    QuicTraceEvent(
-        StreamRecvState,
-        "[strm][%p] Recv State: %hhu",
-        Stream,
-        QuicStreamRecvGetState(Stream));
 
     if (Stream->Flags.SendEnabled) {
         QuicStreamAddOutFlowBlockedReason(Stream, QUIC_FLOW_BLOCKED_APP);
@@ -437,18 +411,6 @@ QuicStreamTraceRundown(
     _In_ QUIC_STREAM* Stream
     )
 {
-    QuicTraceEvent(
-        StreamRundown,
-        "[strm][%p] Rundown, Conn=%p ID=%llu IsLocal=%hhu",
-        Stream,
-        Stream->Connection,
-        Stream->ID,
-        ((QuicConnIsClient(Stream->Connection)) ^ (Stream->ID & STREAM_ID_FLAG_IS_SERVER)));
-    QuicTraceEvent(
-        StreamOutFlowBlocked,
-        "[strm][%p] Send Blocked Flags: %hhu",
-        Stream,
-        Stream->OutFlowBlockedReasons);
     // TODO - More state dump.
 }
 
