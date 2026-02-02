@@ -14,7 +14,6 @@ Abstract:
 
 QUIC_LIBRARY MsQuicLib = { 0 };
 
-QUIC_TRACE_RUNDOWN_CALLBACK QuicTraceRundown;
 
 _IRQL_requires_max_(PASSIVE_LEVEL)
 void
@@ -64,7 +63,6 @@ MsQuicLibraryLoad(
 #endif
         CxPlatListInitializeHead(&MsQuicLib.Registrations);
         CxPlatListInitializeHead(&MsQuicLib.Bindings);
-        QuicTraceRundownCallback = QuicTraceRundown;
         MsQuicLib.Loaded = TRUE;
         MsQuicLib.Version[0] = VER_MAJOR;
         MsQuicLib.Version[1] = VER_MINOR;
@@ -463,10 +461,6 @@ MsQuicLibraryReadSettings(
         QuicLibraryLoadRetryConfig(MsQuicLib.Storage);
     }
 
-    QuicTraceLogInfo(
-        LibrarySettingsUpdated,
-        "[ lib] Settings %p Updated",
-        &MsQuicLib.Settings);
     QuicSettingsDump(&MsQuicLib.Settings);
 
     MsQuicLibraryOnSettingsChanged(Context != NULL);
@@ -515,10 +509,6 @@ MsQuicLibraryInitialize(
             CXPLAT_STORAGE_OPEN_FLAG_READ,
             &MsQuicLib.Storage);
     if (QUIC_FAILED(Status)) {
-        QuicTraceLogWarning(
-            LibraryStorageOpenFailed,
-            "[ lib] Failed to open global settings, 0x%x",
-            Status);
         // Non-fatal, as the process may not have access
     }
 
@@ -567,13 +557,7 @@ MsQuicLibraryInitialize(
     MsQuicLib.IsVerifying = CxPlatVerifierEnabled(Flags);
     if (MsQuicLib.IsVerifying) {
 #ifdef CxPlatVerifierEnabledByAddr
-        QuicTraceLogInfo(
-            LibraryVerifierEnabledPerRegistration,
-            "[ lib] Verifing enabled, per-registration!");
 #else
-        QuicTraceLogInfo(
-            LibraryVerifierEnabled,
-            "[ lib] Verifing enabled for all!");
 #endif
     }
 #endif
@@ -1007,10 +991,6 @@ QuicLibApplyLoadBalancingSetting(
     CXPLAT_FRE_ASSERT(MsQuicLib.CidTotalLength >= QUIC_MIN_INITIAL_CONNECTION_ID_LENGTH);
     CXPLAT_FRE_ASSERT(MsQuicLib.CidTotalLength <= QUIC_CID_MAX_LENGTH);
 
-    QuicTraceLogInfo(
-        LibraryCidLengthSet,
-        "[ lib] CID Length = %hhu",
-        MsQuicLib.CidTotalLength);
 }
 
 _IRQL_requires_max_(PASSIVE_LEVEL)
@@ -1038,10 +1018,6 @@ QuicLibrarySetGlobalParam(
         MsQuicLib.Settings.RetryMemoryLimit = *(uint16_t*)Buffer;
         MsQuicLib.Settings.IsSet.RetryMemoryLimit = TRUE;
 
-        QuicTraceLogInfo(
-            LibraryRetryMemoryLimitSet,
-            "[ lib] Updated retry memory limit = %hu",
-            MsQuicLib.Settings.RetryMemoryLimit);
 
         MsQuicLib.HandshakeMemoryLimit =
             (MsQuicLib.Settings.RetryMemoryLimit * CxPlatTotalMemory) / UINT16_MAX;
@@ -1064,9 +1040,6 @@ QuicLibrarySetGlobalParam(
 
         if (MsQuicLib.InUse &&
             MsQuicLib.Settings.LoadBalancingMode != *(uint16_t*)Buffer) {
-            QuicTraceLogError(
-                LibraryLoadBalancingModeSetAfterInUse,
-                "[ lib] Tried to change load balancing mode after library in use!");
             Status = QUIC_STATUS_INVALID_STATE;
             break;
         }
@@ -1076,10 +1049,6 @@ QuicLibrarySetGlobalParam(
 
         QuicLibApplyLoadBalancingSetting();
 
-        QuicTraceLogInfo(
-            LibraryLoadBalancingModeSet,
-            "[ lib] Updated load balancing mode = %hu",
-            MsQuicLib.Settings.LoadBalancingMode);
 
         Status = QUIC_STATUS_SUCCESS;
         break;
@@ -1092,9 +1061,6 @@ QuicLibrarySetGlobalParam(
             break;
         }
 
-        QuicTraceLogInfo(
-            LibrarySetSettings,
-            "[ lib] Setting new settings");
 
         Status =
             QuicSettingsSettingsToInternal(
@@ -1127,9 +1093,6 @@ QuicLibrarySetGlobalParam(
             break;
         }
 
-        QuicTraceLogInfo(
-            LibrarySetSettings,
-            "[ lib] Setting new settings");
 
         Status =
             QuicSettingsGlobalSettingsToInternal(
@@ -1162,9 +1125,6 @@ QuicLibrarySetGlobalParam(
             break;
         }
 
-        QuicTraceLogInfo(
-            LibrarySetSettings,
-            "[ lib] Setting new settings");
 
         Status =
             QuicSettingsVersionSettingsToInternal(
@@ -1251,9 +1211,6 @@ QuicLibrarySetGlobalParam(
         MsQuicLib.ExecutionConfig = NewConfig;
         CxPlatLockRelease(&MsQuicLib.Lock);
 
-        QuicTraceLogInfo(
-            LibraryExecutionConfigSet,
-            "[ lib] Setting execution config");
 
         Status = QUIC_STATUS_SUCCESS;
         break;
@@ -1267,9 +1224,6 @@ QuicLibrarySetGlobalParam(
         }
 
         MsQuicLib.TestDatapathHooks = *(QUIC_TEST_DATAPATH_HOOKS**)Buffer;
-        QuicTraceLogWarning(
-            LibraryTestDatapathHooksSet,
-            "[ lib] Updated test datapath hooks");
 
         Status = QUIC_STATUS_SUCCESS;
         break;
@@ -1331,9 +1285,6 @@ QuicLibrarySetGlobalParam(
 
         MsQuicLib.EnableDscpOnRecv = *(BOOLEAN*)Buffer;
 
-        QuicTraceLogInfo(
-            LibraryDscpRecvEnabledSet,
-            "[ lib] Setting Dscp on recv = %u", MsQuicLib.EnableDscpOnRecv);
 
         Status = QUIC_STATUS_SUCCESS;
         break;
@@ -2037,16 +1988,10 @@ MsQuicOpenVersion(
     MsQuicLibraryLoad();
 
     if (QuicApi == NULL) {
-        QuicTraceLogVerbose(
-            LibraryMsQuicOpenVersionNull,
-            "[ api] MsQuicOpenVersion, NULL");
         Status = QUIC_STATUS_INVALID_PARAMETER;
         goto Exit;
     }
 
-    QuicTraceLogVerbose(
-        LibraryMsQuicOpenVersionEntry,
-        "[ api] MsQuicOpenVersion");
 
     Status = MsQuicAddRef();
     if (QUIC_FAILED(Status)) {
@@ -2115,10 +2060,6 @@ MsQuicOpenVersion(
 
 Exit:
 
-    QuicTraceLogVerbose(
-        LibraryMsQuicOpenVersionExit,
-        "[ api] MsQuicOpenVersion, status=0x%x",
-        Status);
 
     if (QUIC_FAILED(Status)) {
         if (ReleaseRefOnFailure) {
@@ -2139,9 +2080,6 @@ MsQuicClose(
     )
 {
     if (QuicApi != NULL) {
-        QuicTraceLogVerbose(
-            LibraryMsQuicClose,
-            "[ api] MsQuicClose");
         CXPLAT_FREE(QuicApi, QUIC_POOL_API);
         MsQuicRelease();
         MsQuicLibraryUnload();
@@ -2368,9 +2306,6 @@ NewBinding:
         // No other thread beat us, insert this binding into the list.
         //
         if (CxPlatListIsEmpty(&MsQuicLib.Bindings)) {
-            QuicTraceLogInfo(
-                LibraryInUse,
-                "[ lib] Now in use.");
             MsQuicLib.InUse = TRUE;
         }
         (*NewBinding)->RefCount++;
@@ -2461,9 +2396,6 @@ QuicLibraryReleaseBinding(
         Uninitialize = TRUE;
 
         if (CxPlatListIsEmpty(&MsQuicLib.Bindings)) {
-            QuicTraceLogInfo(
-                LibraryNotInUse,
-                "[ lib] No longer in use.");
             MsQuicLib.InUse = FALSE;
         }
     }
@@ -2523,53 +2455,6 @@ QuicLibraryGetWorker(
     return
         &MsQuicLib.StatelessRegistration->WorkerPool->Workers[
             Packet->PartitionIndex % MsQuicLib.StatelessRegistration->WorkerPool->WorkerCount];
-}
-
-_IRQL_requires_max_(PASSIVE_LEVEL)
-_Function_class_(QUIC_TRACE_RUNDOWN_CALLBACK)
-void
-QuicTraceRundown(
-    void
-    )
-{
-    if (!MsQuicLib.Loaded) {
-        return;
-    }
-
-    CxPlatLockAcquire(&MsQuicLib.Lock);
-
-    if (MsQuicLib.OpenRefCount > 0) {
-
-        if (MsQuicLib.Datapath != NULL) {
-        }
-
-
-
-        if (MsQuicLib.StatelessRegistration) {
-            QuicRegistrationTraceRundown(MsQuicLib.StatelessRegistration);
-        }
-
-        for (CXPLAT_LIST_ENTRY* Link = MsQuicLib.Registrations.Flink;
-            Link != &MsQuicLib.Registrations;
-            Link = Link->Flink) {
-            QuicRegistrationTraceRundown(
-                CXPLAT_CONTAINING_RECORD(Link, QUIC_REGISTRATION, Link));
-        }
-
-        CxPlatDispatchLockAcquire(&MsQuicLib.DatapathLock);
-        for (CXPLAT_LIST_ENTRY* Link = MsQuicLib.Bindings.Flink;
-            Link != &MsQuicLib.Bindings;
-            Link = Link->Flink) {
-            QuicBindingTraceRundown(
-                CXPLAT_CONTAINING_RECORD(Link, QUIC_BINDING, Link));
-        }
-        CxPlatDispatchLockRelease(&MsQuicLib.DatapathLock);
-
-        int64_t PerfCounters[QUIC_PERF_COUNTER_MAX];
-        QuicLibrarySumPerfCounters((uint8_t*)PerfCounters, sizeof(PerfCounters));
-    }
-
-    CxPlatLockRelease(&MsQuicLib.Lock);
 }
 
 _IRQL_requires_max_(DISPATCH_LEVEL)
@@ -2741,33 +2626,17 @@ QuicLibrarySetRetryKeyConfig(
     )
 {
     if (Config->Secret == NULL) {
-        QuicTraceLogError(
-            LibrarySetRetryKeySecretNull,
-            "[ lib] Invalid retry key secret: NULL.");
         return QUIC_STATUS_INVALID_PARAMETER;
     }
     if (Config->Algorithm > QUIC_AEAD_ALGORITHM_AES_256_GCM ||
         Config->Algorithm < QUIC_AEAD_ALGORITHM_AES_128_GCM) {
-        QuicTraceLogError(
-            LibrarySetRetryKeyAlgorithmInvalid,
-            "[ lib] Invalid retry key algorithm: %d.",
-            Config->Algorithm);
         return QUIC_STATUS_INVALID_PARAMETER;
     }
     if (Config->RotationMs == 0) {
-        QuicTraceLogError(
-            LibrarySetRetryKeyRotationInvalid,
-            "[ lib] Invalid retry key rotation ms: %u.",
-            Config->RotationMs);
         return QUIC_STATUS_INVALID_PARAMETER;
     }
     uint16_t AlgSecretLen = CxPlatKeyLength((CXPLAT_AEAD_TYPE)Config->Algorithm);
     if (Config->SecretLength != AlgSecretLen) {
-        QuicTraceLogError(
-            LibrarySetRetryKeySecretLengthInvalid,
-            "[ lib] Invalid retry key secret length: %u. Expected %u.",
-            Config->SecretLength,
-            AlgSecretLen);
         return QUIC_STATUS_INVALID_PARAMETER;
     }
     CXPLAT_DBG_ASSERT(AlgSecretLen <= sizeof(MsQuicLib.StatelessRetry.BaseSecret));
@@ -2780,11 +2649,6 @@ QuicLibrarySetRetryKeyConfig(
     MsQuicLib.StatelessRetry.AeadAlgorithm = (CXPLAT_AEAD_TYPE)Config->Algorithm;
     MsQuicLib.StatelessRetry.KeyRotationMs = Config->RotationMs;
     CxPlatDispatchRwLockReleaseExclusive(&MsQuicLib.StatelessRetry.Lock, PrevIrql);
-    QuicTraceLogInfo(
-        LibraryRetryKeyUpdated,
-        "[ lib] Stateless Retry Key updated. Algorithm: %d, RotationMs: %u",
-        Config->Algorithm,
-        Config->RotationMs);
     return QUIC_STATUS_SUCCESS;
 }
 
