@@ -363,11 +363,6 @@ QuicPacketGenerateRetryIntegrity(
     uint16_t RetryPseudoPacketLength = sizeof(uint8_t) + OrigDestCidLength + BufferLength;
     RetryPseudoPacket = (uint8_t*)CXPLAT_ALLOC_PAGED(RetryPseudoPacketLength, QUIC_POOL_TMP_ALLOC);
     if (RetryPseudoPacket == NULL) {
-        QuicTraceEvent(
-            AllocFailure,
-            "Allocation of '%s' failed. (%llu bytes)",
-            "RetryPseudoPacket",
-            RetryPseudoPacketLength);
         Status = QUIC_STATUS_OUT_OF_MEMORY;
         goto Exit;
     }
@@ -810,22 +805,8 @@ QuicPacketLogDrop(
 {
     if (Packet->AssignedToConnection) {
         InterlockedIncrement64((int64_t*)&((QUIC_CONNECTION*)Owner)->Stats.Recv.DroppedPackets);
-        QuicTraceEvent(
-            ConnDropPacket,
-            "[conn][%p] DROP packet Dst=%!ADDR! Src=%!ADDR! Reason=%s.",
-            Owner,
-            CASTED_CLOG_BYTEARRAY(sizeof(Packet->Route->LocalAddress), &Packet->Route->LocalAddress),
-            CASTED_CLOG_BYTEARRAY(sizeof(Packet->Route->RemoteAddress), &Packet->Route->RemoteAddress),
-            Reason);
     } else {
         InterlockedIncrement64((int64_t*)&((QUIC_BINDING*)Owner)->Stats.Recv.DroppedPackets);
-        QuicTraceEvent(
-            BindingDropPacket,
-            "[bind][%p] DROP packet Dst=%!ADDR! Src=%!ADDR! Reason=%s.",
-            Owner,
-            CASTED_CLOG_BYTEARRAY(sizeof(Packet->Route->LocalAddress), &Packet->Route->LocalAddress),
-            CASTED_CLOG_BYTEARRAY(sizeof(Packet->Route->RemoteAddress), &Packet->Route->RemoteAddress),
-            Reason);
     }
     QuicPerfCounterIncrement(
         &MsQuicLib.Partitions[Packet->PartitionIndex],
@@ -843,24 +824,8 @@ QuicPacketLogDropWithValue(
 {
     if (Packet->AssignedToConnection) {
         InterlockedIncrement64((int64_t*)&((QUIC_CONNECTION*)Owner)->Stats.Recv.DroppedPackets);
-        QuicTraceEvent(
-            ConnDropPacketEx,
-            "[conn][%p] DROP packet Value=%llu Dst=%!ADDR! Src=%!ADDR! Reason=%s.",
-            Owner,
-            Value,
-            CASTED_CLOG_BYTEARRAY(sizeof(Packet->Route->LocalAddress), &Packet->Route->LocalAddress),
-            CASTED_CLOG_BYTEARRAY(sizeof(Packet->Route->RemoteAddress), &Packet->Route->RemoteAddress),
-            Reason);
     } else {
         InterlockedIncrement64((int64_t*)&((QUIC_BINDING*)Owner)->Stats.Recv.DroppedPackets);
-        QuicTraceEvent(
-            BindingDropPacketEx,
-            "[bind][%p] DROP packet %llu. Dst=%!ADDR! Src=%!ADDR! Reason=%s",
-            Owner,
-            Value,
-            CASTED_CLOG_BYTEARRAY(sizeof(Packet->Route->LocalAddress), &Packet->Route->LocalAddress),
-            CASTED_CLOG_BYTEARRAY(sizeof(Packet->Route->RemoteAddress), &Packet->Route->RemoteAddress),
-            Reason);
     }
     QuicPerfCounterIncrement(
         &MsQuicLib.Partitions[Packet->PartitionIndex],
