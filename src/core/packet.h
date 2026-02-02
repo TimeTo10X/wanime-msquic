@@ -611,16 +611,6 @@ QuicPacketHash(
 //
 _IRQL_requires_max_(DISPATCH_LEVEL)
 void
-QuicPacketLogHeader(
-    _In_opt_ QUIC_CONNECTION* Connection,
-    _In_ BOOLEAN Rx,
-    _In_ uint8_t CIDLength,
-    _In_ uint64_t PacketNumber,
-    _In_ uint16_t PacketLength,
-    _In_reads_bytes_(PacketLength)
-        const uint8_t * const Packet,
-    _In_ uint32_t Version             // Network Byte Order. Used for Short Headers
-    );
 
 _IRQL_requires_max_(DISPATCH_LEVEL)
 void
